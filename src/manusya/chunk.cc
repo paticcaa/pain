@@ -1,5 +1,3 @@
-#pragma once
-
 #include "manusya/chunk.h"
 #include <cerrno>
 

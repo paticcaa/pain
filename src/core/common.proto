@@ -2,6 +2,6 @@ syntax = "proto3";
 package pain;
 
 message UUID {
-    uint64 low = 1;
-    uint64 high = 2;
+  uint64 low = 1;
+  uint64 high = 2;
 }

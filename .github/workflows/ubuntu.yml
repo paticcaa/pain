@@ -12,13 +12,13 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-latest]
-        mode: [debug, release]
+        os: [ubuntu-24.04]
+        mode: [debug, releasedbg]
 
     runs-on: ${{ matrix.os }}
 
     concurrency:
-        group: ${{ github.ref }}-${{ github.base_ref }}-${{ github.head_ref }}-Linux-${{ matrix.kind }}-${{ matrix.mode }}
+        group: ${{ github.ref }}-${{ github.base_ref }}-${{ github.head_ref }}-Linux-${{ matrix.mode }}
         cancel-in-progress: true
     steps:
       - uses: actions/checkout@v1
@@ -29,17 +29,18 @@ jobs:
 
       - name: Installation
         run: |
-          # TODO we will remove it later
           sudo apt-get update
-          sudo apt-get install -y libgl1-mesa-dev libglu1-mesa-dev p7zip
-          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 60
-          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 60
-          sudo update-alternatives --install /usr/bin/cpp cpp /usr/bin/cpp-13 60
-          sudo update-alternatives --set g++ /usr/bin/g++-13
-          sudo update-alternatives --set gcc /usr/bin/gcc-13
-          sudo update-alternatives --set cpp /usr/bin/cpp-13
+          sudo apt-get install -y libgl1-mesa-dev libglu1-mesa-dev p7zip clang-format
+      
+      - name: Format
+        run: |
+          xmake format
+          git diff --exit-code
 
       - name: Build
         run: |
-          xmake f -cv -m ${{ matrix.mode }}
+          xmake f -y -c -m ${{ matrix.mode }}
           xmake b -v
+        env:
+          CC: gcc-13
+          CXX: g++-13
