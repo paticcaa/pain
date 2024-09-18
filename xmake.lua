@@ -19,10 +19,10 @@ add_requires("protobuf-cpp 3.19.4", {configs = {zlib = true}})
 add_requireconfs("**.protobuf-cpp", {version = "3.19.4", override=true, configs = {zlib = true}})
 
 add_requires("brpc")
-add_requires("fmt 10.1.1")
-add_requireconfs("**.fmt", {override=true, version="10.1.1"})
+add_requires("fmt 10.1.1", {configs = {header_only = true}})
+add_requireconfs("**.fmt", {override=true, version="10.1.1", configs = {header_only = true}})
 
-add_requires("spdlog v1.14.1", {configs = {fmt_external = true}})
+add_requires("spdlog v1.14.1", {configs = {fmt_external = true, header_only = true}})
 add_requireconfs("**.spdlog", {override=true, version="v1.14.1"})
 
 add_requires("boost 1.81.0")
