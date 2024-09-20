@@ -2,7 +2,7 @@
 
 #include <spdlog/spdlog.h>
 
-namespace pain::base {
+namespace pain {
 
 BthreadLocalContextStorage::BthreadLocalContextStorage() noexcept {
     SPDLOG_INFO("BthreadLocalContextStorage init");
@@ -131,4 +131,4 @@ OPENTELEMETRY_API_SINGLETON BthreadLocalContextStorage::Stack &
 BthreadLocalContextStorage::GetStack() {
     return *stack_;
 }
-} // namespace pain::base
+} // namespace pain

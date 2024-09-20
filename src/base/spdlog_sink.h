@@ -1,7 +1,7 @@
 #include <butil/logging.h>
 #include <spdlog/spdlog.h>
 
-namespace pain::base {
+namespace pain {
 class SpdlogSink : public logging::LogSink {
 public:
     /*
@@ -49,4 +49,4 @@ public:
     }
 };
 
-} // namespace pain::base
+} // namespace pain

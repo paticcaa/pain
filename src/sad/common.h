@@ -3,12 +3,13 @@
 #include <brpc/controller.h>
 #include <json2pb/pb_to_json.h>
 #include <nlohmann/json.hpp>
+#include "base/types.h"
 
 using json = nlohmann::ordered_json;
 
 namespace pain::sad {
 json pb_to_json(const google::protobuf::Message &message);
-void print(const butil::Status &status);
+void print(const Status &status);
 void print(const brpc::Controller &cntl,
            const google::protobuf::Message *message = nullptr,
            std::function<void(json &)> f = nullptr);

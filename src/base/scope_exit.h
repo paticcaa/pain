@@ -1,7 +1,7 @@
 #pragma once
 #include <utility>
 
-namespace pain::base {
+namespace pain {
 
 template <typename F>
 struct scope_exit {
@@ -35,4 +35,4 @@ scope_exit<F> make_scope_exit(F &&f) noexcept {
     return scope_exit<F>{std::forward<F>(f)};
 }
 
-} // namespace pain::base
+} // namespace pain

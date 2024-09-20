@@ -27,7 +27,7 @@ DECLARE_bool(base_tracer_otlp_http_exporter_enable);
 DECLARE_bool(base_tracer_otlp_file_exporter_enable);
 DECLARE_string(base_tracer_otlp_file_exporter_path);
 
-namespace pain::base {
+namespace pain {
 class TraceLogHandle
     : public opentelemetry::sdk::common::internal_log::LogHandler {
     virtual void
@@ -63,4 +63,4 @@ void cleanup_tracer();
 void inject_tracer(brpc::Controller *cntl);
 opentelemetry::context::Context extract_context(brpc::Controller *cntl);
 using Tracer = opentelemetry::trace::Tracer;
-} // namespace pain::base
+} // namespace pain

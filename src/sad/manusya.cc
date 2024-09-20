@@ -9,11 +9,10 @@
 #include <argparse/argparse.hpp>
 
 #include "base/tracer.h"
+#include "base/types.h"
 #include "base/uuid.h"
 #include "sad/common.h"
 #include "sad/macro.h"
-
-using Status = butil::Status;
 
 #define MANUSYA_CMD(cmd) REGISTER(cmd, manusya_parser)
 
@@ -66,10 +65,10 @@ COMMAND(create_chunk) {
     }
 
     brpc::Controller cntl;
-    pain::manusya::CreateChunkRequest request;
-    pain::manusya::CreateChunkResponse response;
-    pain::manusya::ManusyaService_Stub stub(&channel);
-    base::inject_tracer(&cntl);
+    pain::core::manusya::CreateChunkRequest request;
+    pain::core::manusya::CreateChunkResponse response;
+    pain::core::manusya::ManusyaService_Stub stub(&channel);
+    pain::inject_tracer(&cntl);
     stub.create_chunk(&cntl, &request, &response, nullptr);
     if (cntl.Failed()) {
         return Status(cntl.ErrorCode(), cntl.ErrorText());
@@ -78,7 +77,7 @@ COMMAND(create_chunk) {
     print(cntl, &response, [](json &out) {
         uint64_t low = out["uuid"]["low"];
         uint64_t high = out["uuid"]["high"];
-        pain::base::UUID uuid(high, low);
+        pain::UUID uuid(high, low);
         out["uuid"] = uuid.str();
     });
     return Status::OK();
@@ -106,7 +105,7 @@ COMMAND(append_chunk) {
     auto data = args.get<std::string>("--data");
     auto offset = args.get<uint64_t>("--offset");
 
-    if (!base::UUID::valid(chunk_id)) {
+    if (!UUID::valid(chunk_id)) {
         return Status(EINVAL, "Invalid chunk id");
     }
 
@@ -117,12 +116,12 @@ COMMAND(append_chunk) {
     }
 
     brpc::Controller cntl;
-    pain::manusya::AppendChunkRequest request;
-    pain::manusya::AppendChunkResponse response;
-    pain::manusya::ManusyaService_Stub stub(&channel);
-    base::inject_tracer(&cntl);
+    pain::core::manusya::AppendChunkRequest request;
+    pain::core::manusya::AppendChunkResponse response;
+    pain::core::manusya::ManusyaService_Stub stub(&channel);
+    inject_tracer(&cntl);
 
-    auto uuid = pain::base::UUID::from_str_or_die(chunk_id);
+    auto uuid = pain::UUID::from_str_or_die(chunk_id);
     request.set_offset(offset);
     request.mutable_uuid()->set_low(uuid.low());
     request.mutable_uuid()->set_high(uuid.high());
@@ -148,10 +147,10 @@ COMMAND(list_chunk) {
     }
 
     brpc::Controller cntl;
-    pain::manusya::ListChunkRequest request;
-    pain::manusya::ListChunkResponse response;
-    pain::manusya::ManusyaService::Stub stub(&channel);
-    base::inject_tracer(&cntl);
+    pain::core::manusya::ListChunkRequest request;
+    pain::core::manusya::ListChunkResponse response;
+    pain::core::manusya::ManusyaService::Stub stub(&channel);
+    inject_tracer(&cntl);
     stub.list_chunk(&cntl, &request, &response, nullptr);
     if (cntl.Failed()) {
         return Status(cntl.ErrorCode(), cntl.ErrorText());
@@ -196,7 +195,7 @@ COMMAND(read_chunk) {
     auto length = args.get<uint32_t>("--length");
     auto output = args.get<std::string>("--output");
 
-    if (!base::UUID::valid(chunk_id)) {
+    if (!UUID::valid(chunk_id)) {
         return Status(EINVAL, "Invalid chunk id");
     }
 
@@ -207,12 +206,12 @@ COMMAND(read_chunk) {
     }
 
     brpc::Controller cntl;
-    pain::manusya::ReadChunkRequest request;
-    pain::manusya::ReadChunkResponse response;
-    pain::manusya::ManusyaService::Stub stub(&channel);
-    base::inject_tracer(&cntl);
+    pain::core::manusya::ReadChunkRequest request;
+    pain::core::manusya::ReadChunkResponse response;
+    pain::core::manusya::ManusyaService::Stub stub(&channel);
+    inject_tracer(&cntl);
 
-    auto uuid = pain::base::UUID::from_str_or_die(chunk_id);
+    auto uuid = pain::UUID::from_str_or_die(chunk_id);
 
     request.set_offset(offset);
     request.set_length(length);

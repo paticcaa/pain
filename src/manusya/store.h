@@ -1,11 +1,11 @@
 #pragma once
 
-#include <butil/iobuf.h>
-#include <butil/status.h>
 #include <boost/intrusive_ptr.hpp>
+#include "base/types.h"
 #include "manusya/file_handle.h"
 
 namespace pain::manusya {
+
 class Store;
 using StorePtr = boost::intrusive_ptr<Store>;
 class Store {
@@ -13,10 +13,14 @@ public:
     Store() = default;
     virtual ~Store() = default;
 
-    static StorePtr create();
+    // support:
+    //   file://path/to/file
+    //   memory
+    //   bluefs
+    static StorePtr create(const char *uri);
     virtual FileHandlePtr open(const char *path) = 0;
-    virtual butil::Status append(FileHandlePtr fh, uint64_t offset, butil::IOBuf &buf) = 0;
-    virtual butil::Status read(FileHandlePtr fh, uint64_t offset, uint64_t size, butil::IOBuf *buf) = 0;
+    virtual Status append(FileHandlePtr fh, uint64_t offset, IOBuf &buf) = 0;
+    virtual Status read(FileHandlePtr fh, uint64_t offset, uint64_t size, IOBuf *buf) = 0;
     virtual uint64_t size() = 0;
 
 private:

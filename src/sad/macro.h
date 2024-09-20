@@ -24,23 +24,23 @@
 
 #define ARGS(cmd) cmd##_parser
 
-#define COMMAND(name)                               \
-    butil::Status name(argparse::ArgumentParser &); \
-    struct __add_##name {                           \
-        __add_##name() {                            \
-            add(#name, name);                       \
-        }                                           \
-    } __add_##name##_instance;                      \
-    butil::Status name(argparse::ArgumentParser &args)
+#define COMMAND(name)                        \
+    Status name(argparse::ArgumentParser &); \
+    struct __add_##name {                    \
+        __add_##name() {                     \
+            add(#name, name);                \
+        }                                    \
+    } __add_##name##_instance;               \
+    Status name(argparse::ArgumentParser &args)
 
-#define SPAN_1_ARGS(span)                        \
-    auto tracer = pain::base::get_tracer("sad"); \
-    auto span = tracer->StartSpan(__func__);     \
+#define SPAN_1_ARGS(span)                    \
+    auto tracer = pain::get_tracer("sad");   \
+    auto span = tracer->StartSpan(__func__); \
     auto scope = tracer->WithActiveSpan(span);
 
-#define SPAN_2_ARGS(span, name)                  \
-    auto tracer = pain::base::get_tracer("sad"); \
-    auto span = tracer->StartSpan(name);         \
+#define SPAN_2_ARGS(span, name)            \
+    auto tracer = pain::get_tracer("sad"); \
+    auto span = tracer->StartSpan(name);   \
     auto scope = tracer->WithActiveSpan(span);
 
 #define GET_3TH_ARG(arg1, arg2, arg3, ...) arg3

@@ -1,5 +1,5 @@
 syntax = "proto3";
-package pain;
+package pain.core;
 
 message UUID {
   uint64 low = 1;

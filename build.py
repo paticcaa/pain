@@ -13,7 +13,7 @@ def build_project(args):
     pass
 
 def format_project():
-    run_in_shell('find include src -iname "*.h" -o -iname "*.cc" | xargs clang-format -i')
+    run_in_shell('xmake format -f "**.h:**.cc:**.proto"')
     run_in_shell('git --no-pager diff')
 
 def line_project():

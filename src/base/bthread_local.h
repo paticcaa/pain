@@ -3,7 +3,7 @@
 
 #include <bthread/bthread.h>
 
-namespace pain::base {
+namespace pain {
 template <typename T>
 class BthreadLocal {
 public:
@@ -41,4 +41,4 @@ private:
     bthread_key_t _tls_key;
 };
 
-} // namespace pain::base
+} // namespace pain

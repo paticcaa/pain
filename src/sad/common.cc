@@ -7,7 +7,6 @@
 #include "base/tracer.h"
 
 using json = nlohmann::ordered_json;
-using Status = butil::Status;
 
 namespace pain::sad {
 
@@ -29,7 +28,7 @@ void print(const Status &status) {
     out["header"] = {
         {"status", status.error_code()},
         {"message", status.error_str()},
-        {"trace_id", base::get_current_trace_id()},
+        {"trace_id", get_current_trace_id()},
     };
     fmt::print("{}\n", out.dump(2));
 }
@@ -41,7 +40,7 @@ void print(const brpc::Controller &cntl,
     out["header"] = {
         {"status", cntl.ErrorCode()},
         {"message", cntl.ErrorText()},
-        {"trace_id", base::get_current_trace_id()},
+        {"trace_id", get_current_trace_id()},
         {"remote_side", butil::endpoint2str(cntl.remote_side()).c_str()},
     };
 

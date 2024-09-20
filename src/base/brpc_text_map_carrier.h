@@ -4,7 +4,7 @@
 #include <brpc/http_header.h>
 #include <opentelemetry/context/propagation/text_map_propagator.h>
 
-namespace pain::base {
+namespace pain {
 class BrpcTextMapCarrier
     : public opentelemetry::context::propagation::TextMapCarrier {
 public:
@@ -45,4 +45,4 @@ public:
 
     brpc::Controller *_cntl;
 };
-} // namespace pain::base
+} // namespace pain

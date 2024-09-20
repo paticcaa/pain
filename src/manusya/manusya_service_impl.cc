@@ -1,6 +1,5 @@
 #include "manusya/manusya_service_impl.h"
 #include <brpc/controller.h>
-#include "base/brpc_text_map_carrier.h"
 #include "base/plog.h"
 #include "base/tracer.h"
 #include "butil/endpoint.h"
@@ -11,8 +10,8 @@ namespace pain::manusya {
 
 void ManusyaServiceImpl::create_chunk(
     google::protobuf::RpcController *controller,
-    const CreateChunkRequest *request,
-    CreateChunkResponse *response,
+    const pain::core::manusya::CreateChunkRequest *request,
+    pain::core::manusya::CreateChunkResponse *response,
     google::protobuf::Closure *done) {
     DEFINE_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
@@ -34,8 +33,8 @@ void ManusyaServiceImpl::create_chunk(
 
 void ManusyaServiceImpl::append_chunk(
     google::protobuf::RpcController *controller,
-    const AppendChunkRequest *request,
-    AppendChunkResponse *response,
+    const pain::core::manusya::AppendChunkRequest *request,
+    pain::core::manusya::AppendChunkResponse *response,
     google::protobuf::Closure *done) {
     DEFINE_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
@@ -46,7 +45,7 @@ void ManusyaServiceImpl::append_chunk(
               ("offset", request->offset())                                     //
               ("attached", cntl->request_attachment().size()));
 
-    base::UUID uuid(request->uuid().high(), request->uuid().low());
+    UUID uuid(request->uuid().high(), request->uuid().low());
     auto it = _chunks.find(uuid);
     if (it == _chunks.end()) {
         PLOG_ERROR(("desc", "Chunk not found")("uuid", uuid.str()));
@@ -68,8 +67,8 @@ void ManusyaServiceImpl::append_chunk(
 }
 
 void ManusyaServiceImpl::list_chunk(google::protobuf::RpcController *controller,
-                                    const ListChunkRequest *request,
-                                    ListChunkResponse *response,
+                                    const pain::core::manusya::ListChunkRequest *request,
+                                    pain::core::manusya::ListChunkResponse *response,
                                     google::protobuf::Closure *done) {
     DEFINE_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
@@ -87,8 +86,8 @@ void ManusyaServiceImpl::list_chunk(google::protobuf::RpcController *controller,
 }
 
 void ManusyaServiceImpl::read_chunk(google::protobuf::RpcController *controller,
-                                    const ReadChunkRequest *request,
-                                    ReadChunkResponse *response,
+                                    const pain::core::manusya::ReadChunkRequest *request,
+                                    pain::core::manusya::ReadChunkResponse *response,
                                     google::protobuf::Closure *done) {
     DEFINE_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
@@ -98,7 +97,7 @@ void ManusyaServiceImpl::read_chunk(google::protobuf::RpcController *controller,
               ("remote_side", butil::endpoint2str(cntl->remote_side()).c_str()) //
               ("attached", cntl->request_attachment().size()));
 
-    base::UUID uuid(request->uuid().high(), request->uuid().low());
+    UUID uuid(request->uuid().high(), request->uuid().low());
     auto it = _chunks.find(uuid);
     if (it == _chunks.end()) {
         PLOG_ERROR(("desc", "Chunk not found")("uuid", uuid.str()));

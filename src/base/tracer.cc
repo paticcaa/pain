@@ -12,7 +12,7 @@ DEFINE_bool(base_tracer_otlp_file_exporter_enable, false, "Enable OTLP file expo
 DEFINE_string(base_tracer_otlp_file_exporter_path, "trace_exporter", "OTLP file exporter path");
 namespace otlp = opentelemetry::exporter::otlp;
 
-namespace pain::base {
+namespace pain {
 
 void TraceLogHandle::Handle(
     opentelemetry::sdk::common::internal_log::LogLevel level,
@@ -112,4 +112,4 @@ opentelemetry::context::Context extract_context(brpc::Controller *cntl) {
     return new_context;
 }
 
-} // namespace pain::base
+} // namespace pain

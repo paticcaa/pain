@@ -1,9 +1,8 @@
 #pragma once
 
-#include <butil/iobuf.h>
-#include <butil/status.h>
 #include <cstdint>
 #include <boost/intrusive_ptr.hpp>
+#include "base/types.h"
 #include "base/uuid.h"
 
 namespace pain::manusya {
@@ -17,12 +16,12 @@ public:
 
     static ChunkPtr create();
 
-    const base::UUID &uuid() const {
+    const UUID &uuid() const {
         return _uuid;
     }
-    butil::Status append(butil::IOBuf &buf, uint64_t offset);
-    butil::Status seal();
-    butil::Status read(uint64_t offset, uint64_t size, butil::IOBuf *buf) const;
+    Status append(IOBuf &buf, uint64_t offset);
+    Status seal();
+    Status read(uint64_t offset, uint64_t size, IOBuf *buf) const;
     uint64_t size() const {
         return _size;
     }
@@ -38,11 +37,11 @@ private:
         }
     }
 
-    base::UUID _uuid;
+    UUID _uuid;
     uint64_t _size = 0;
     int _use_count = 0;
 
-    butil::IOBuf _data;
+    IOBuf _data;
 };
 
 } // namespace pain::manusya

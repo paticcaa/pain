@@ -70,7 +70,7 @@
 #define pfmt(seq) PFMT(seq)
 // clang-format on
 
-namespace pain::base {
+namespace pain {
 // log_level: trace, debug, info, warn, err, critical
 typedef spdlog::level::level_enum log_level;
 
@@ -117,4 +117,4 @@ inline static auto make_logger(const LoggerOptions &logger_options) {
     return flush_log;
 }
 
-} // namespace pain::base
+} // namespace pain

@@ -5,7 +5,7 @@
 #include "base/bthread_local.h"
 
 // this file style abide by the opentelemetry style guide
-namespace pain::base {
+namespace pain {
 class BthreadLocalContextStorage
     : public opentelemetry::context::RuntimeContextStorage {
 public:
@@ -59,4 +59,4 @@ private:
     BthreadLocal<Stack> stack_;
 };
 
-} // namespace pain::base
+} // namespace pain

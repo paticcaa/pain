@@ -2,9 +2,8 @@
 #include <cerrno>
 
 namespace pain::manusya {
-using Status = butil::Status;
 
-Status Chunk::append(butil::IOBuf &buf, uint64_t offset) {
+Status Chunk::append(IOBuf &buf, uint64_t offset) {
     if (offset != _size) {
         return Status(EINVAL, "Invalid offset");
     }
@@ -17,7 +16,7 @@ Status Chunk::seal() {
     return Status::OK();
 }
 
-Status Chunk::read(uint64_t offset, uint64_t size, butil::IOBuf *buf) const {
+Status Chunk::read(uint64_t offset, uint64_t size, IOBuf *buf) const {
     if (offset + size > _size) {
         return Status(EINVAL, "Invalid offset or size");
     }

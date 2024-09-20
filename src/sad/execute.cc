@@ -1,11 +1,9 @@
-#include <butil/status.h>
 #include <fmt/format.h>
 #include <argparse/argparse.hpp>
 
 #include "base/tracer.h"
+#include "base/types.h"
 #include "sad/macro.h"
-
-using Status = butil::Status;
 
 namespace pain::sad {
 namespace manusya {

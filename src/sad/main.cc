@@ -10,6 +10,7 @@
 #include "base/scope_exit.h"
 #include "base/spdlog_sink.h"
 #include "base/tracer.h"
+#include "base/types.h"
 #include "sad/common.h"
 #include "sad/macro.h"
 #include "spdlog/common.h"
@@ -17,26 +18,26 @@
 namespace pain::sad {
 extern argparse::ArgumentParser program;
 void init(int argc, char *argv[]);
-butil::Status execute(argparse::ArgumentParser &parser);
+Status execute(argparse::ArgumentParser &parser);
 } // namespace pain::sad
 
 int main(int argc, char *argv[]) {
     pain::sad::init(argc, argv);
-    pain::base::LoggerOptions logger_options = {
+    pain::LoggerOptions logger_options = {
         .file_name = "sad.log",
         .name = "sad",
         .level_log = spdlog::level::from_str(
             pain::sad::program.get<std::string>("--log-level")),
         .async_threads = 1,
     };
-    static auto flush_log = pain::base::make_logger(logger_options);
+    static auto flush_log = pain::make_logger(logger_options);
 
-    static pain::base::SpdlogSink spdlog_sink;
+    static pain::SpdlogSink spdlog_sink;
     logging::SetLogSink(&spdlog_sink);
     PLOG_WARN(("desc", "sad start"));
-    pain::base::init_tracer("sad");
-    auto cleanup_tracer = pain::base::make_scope_exit([] {
-        pain::base::cleanup_tracer();
+    pain::init_tracer("sad");
+    auto cleanup_tracer = pain::make_scope_exit([] {
+        pain::cleanup_tracer();
         PLOG_WARN(("desc", "sad exit"));
     });
 

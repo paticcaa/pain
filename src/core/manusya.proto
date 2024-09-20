@@ -1,5 +1,5 @@
 syntax = "proto3";
-package pain.manusya;
+package pain.core.manusya;
 
 import "core/common.proto";
 
