@@ -32,20 +32,20 @@ class TraceLogHandle
     : public opentelemetry::sdk::common::internal_log::LogHandler {
     virtual void
     Handle(opentelemetry::sdk::common::internal_log::LogLevel level,
-           const char *file,
+           const char* file,
            int line,
-           const char *msg,
-           const opentelemetry::sdk::common::AttributeMap &) noexcept override;
+           const char* msg,
+           const opentelemetry::sdk::common::AttributeMap&) noexcept override;
 };
 
 inline std::shared_ptr<opentelemetry::trace::Tracer>
-get_tracer(const std::string &tracer_name) {
+get_tracer(const std::string& tracer_name) {
     auto provider = opentelemetry::trace::Provider::GetTracerProvider();
     return provider->GetTracer(tracer_name);
 }
 
 inline std::string
-get_trace_id(const std::shared_ptr<opentelemetry::trace::Span> &span) {
+get_trace_id(const std::shared_ptr<opentelemetry::trace::Span>& span) {
     const int TRACE_ID_LEN = 32;
     opentelemetry::trace::SpanContext span_context = span->GetContext();
     char trace_id_buf[TRACE_ID_LEN] = {};
@@ -58,9 +58,9 @@ inline std::string get_current_trace_id() {
     return get_trace_id(opentelemetry::trace::Tracer::GetCurrentSpan());
 }
 
-void init_tracer(const std::string &service_name);
+void init_tracer(const std::string& service_name);
 void cleanup_tracer();
-void inject_tracer(brpc::Controller *cntl);
-opentelemetry::context::Context extract_context(brpc::Controller *cntl);
+void inject_tracer(brpc::Controller* cntl);
+opentelemetry::context::Context extract_context(brpc::Controller* cntl);
 using Tracer = opentelemetry::trace::Tracer;
 } // namespace pain

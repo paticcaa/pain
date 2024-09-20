@@ -17,11 +17,11 @@
 
 namespace pain::sad {
 extern argparse::ArgumentParser program;
-void init(int argc, char *argv[]);
-Status execute(argparse::ArgumentParser &parser);
+void init(int argc, char* argv[]);
+Status execute(argparse::ArgumentParser& parser);
 } // namespace pain::sad
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     pain::sad::init(argc, argv);
     pain::LoggerOptions logger_options = {
         .file_name = "sad.log",

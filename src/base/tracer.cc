@@ -16,10 +16,10 @@ namespace pain {
 
 void TraceLogHandle::Handle(
     opentelemetry::sdk::common::internal_log::LogLevel level,
-    const char *file,
+    const char* file,
     int line,
-    const char *msg,
-    const opentelemetry::sdk::common::AttributeMap &) noexcept {
+    const char* msg,
+    const opentelemetry::sdk::common::AttributeMap&) noexcept {
     const spdlog::level::level_enum levels[5] = {
         spdlog::level::debug, spdlog::level::err, spdlog::level::warn, spdlog::level::info, spdlog::level::debug};
 
@@ -30,7 +30,7 @@ void TraceLogHandle::Handle(
                                       msg);
 }
 
-void init_tracer(const std::string &service_name) {
+void init_tracer(const std::string& service_name) {
     std::shared_ptr<opentelemetry::sdk::common::internal_log::LogHandler>
         log_handler(new TraceLogHandle());
     opentelemetry::sdk::common::internal_log::GlobalLogHandler::SetLogHandler(
@@ -95,7 +95,7 @@ void cleanup_tracer() {
     opentelemetry::context::RuntimeContext::SetRuntimeContextStorage(storage);
 }
 
-void inject_tracer(brpc::Controller *cntl) {
+void inject_tracer(brpc::Controller* cntl) {
     auto current_ctx = opentelemetry::context::RuntimeContext::GetCurrent();
     BrpcTextMapCarrier carrier(cntl);
     auto prop = opentelemetry::context::propagation::GlobalTextMapPropagator::
@@ -103,7 +103,7 @@ void inject_tracer(brpc::Controller *cntl) {
     prop->Inject(carrier, current_ctx);
 }
 
-opentelemetry::context::Context extract_context(brpc::Controller *cntl) {
+opentelemetry::context::Context extract_context(brpc::Controller* cntl) {
     BrpcTextMapCarrier carrier(cntl);
     auto prop = opentelemetry::context::propagation::GlobalTextMapPropagator::
         GetGlobalPropagator();

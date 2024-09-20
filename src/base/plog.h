@@ -31,7 +31,7 @@
 
 #define __PLOG(LEVEL, seq)                                                                                        \
     do {                                                                                                          \
-        constexpr const char *fmt = BOOST_PP_SEQ_FOR_EACH_I(                                                      \
+        constexpr const char* fmt = BOOST_PP_SEQ_FOR_EACH_I(                                                      \
             __PLOG_PROCESS_KEY_ELEMENT, % %, __PLOG_PREPROCESS_PAIRS(seq));                                       \
         SPDLOG_##LEVEL(fmt,                                                                                       \
                        BOOST_PP_SEQ_FOR_EACH_I(__PLOG_PROCESS_VALUE_ELEMENT, % %, __PLOG_PREPROCESS_PAIRS(seq))); \
@@ -93,7 +93,7 @@ struct LoggerOptions {
 };
 
 // defining "log_tp" will start a thread for processing log printing
-inline static auto make_logger(const LoggerOptions &logger_options) {
+inline static auto make_logger(const LoggerOptions& logger_options) {
     auto rotating_sink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
         logger_options.file_name, logger_options.file_size, logger_options.rotate, false);
     spdlog::init_thread_pool(logger_options.queue_size,

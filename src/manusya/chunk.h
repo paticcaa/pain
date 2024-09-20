@@ -4,6 +4,7 @@
 #include <boost/intrusive_ptr.hpp>
 #include "base/types.h"
 #include "base/uuid.h"
+#include "manusya/file_handle.h"
 
 namespace pain::manusya {
 
@@ -14,24 +15,24 @@ public:
     Chunk() = default;
     ~Chunk() = default;
 
-    static ChunkPtr create();
+    static Status create(StorePtr store, ChunkPtr* chunk);
 
-    const UUID &uuid() const {
+    const UUID& uuid() const {
         return _uuid;
     }
-    Status append(IOBuf &buf, uint64_t offset);
+    Status append(IOBuf& buf, uint64_t offset);
     Status seal();
-    Status read(uint64_t offset, uint64_t size, IOBuf *buf) const;
+    Status read(uint64_t offset, uint64_t size, IOBuf* buf) const;
     uint64_t size() const {
         return _size;
     }
 
 private:
-    friend void intrusive_ptr_add_ref(Chunk *chunk) {
+    friend void intrusive_ptr_add_ref(Chunk* chunk) {
         chunk->_use_count++;
     }
 
-    friend void intrusive_ptr_release(Chunk *chunk) {
+    friend void intrusive_ptr_release(Chunk* chunk) {
         if (--chunk->_use_count == 0) {
             delete chunk;
         }
@@ -41,7 +42,7 @@ private:
     uint64_t _size = 0;
     int _use_count = 0;
 
-    IOBuf _data;
+    FileHandlePtr _fh;
 };
 
 } // namespace pain::manusya

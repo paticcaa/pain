@@ -112,7 +112,7 @@ ContinuationIndentWidth:	4
 # 去除C++11的列表初始化的大括号{后和}前的空格
 Cpp11BracedListStyle:	true
 # 继承最常用的指针和引用的对齐方式
-DerivePointerAlignment:	true
+# DerivePointerAlignment:	true
 # 关闭格式化
 DisableFormat:	false
 # 自动检测函数的调用和定义是否被格式为每行一个参数(Experimental)
@@ -191,7 +191,7 @@ PenaltyExcessCharacter:	1000000
 # 将函数的返回类型放到它自己的行的penalty
 PenaltyReturnTypeOnItsOwnLine:	60
 # 指针和引用的对齐: Left, Right, Middle
-PointerAlignment:	Right
+PointerAlignment:	Left
 # 允许重新排版注释
 ReflowComments:	true
 # 允许排序#include

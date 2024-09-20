@@ -24,14 +24,14 @@
 
 #define ARGS(cmd) cmd##_parser
 
-#define COMMAND(name)                        \
-    Status name(argparse::ArgumentParser &); \
-    struct __add_##name {                    \
-        __add_##name() {                     \
-            add(#name, name);                \
-        }                                    \
-    } __add_##name##_instance;               \
-    Status name(argparse::ArgumentParser &args)
+#define COMMAND(name)                       \
+    Status name(argparse::ArgumentParser&); \
+    struct __add_##name {                   \
+        __add_##name() {                    \
+            add(#name, name);               \
+        }                                   \
+    } __add_##name##_instance;              \
+    Status name(argparse::ArgumentParser& args)
 
 #define SPAN_1_ARGS(span)                    \
     auto tracer = pain::get_tracer("sad");   \

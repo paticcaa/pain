@@ -22,7 +22,7 @@ BthreadLocalContextStorage::GetCurrent() noexcept {
 // also detach all child contexts of the passed in token.
 // Returns true if successful, false otherwise.
 bool BthreadLocalContextStorage::Detach(
-    opentelemetry::context::Token &token) noexcept {
+    opentelemetry::context::Token& token) noexcept {
     // In most cases, the context to be detached is on the top of the stack.
     if (token == GetStack().Top()) {
         GetStack().Pop();
@@ -46,7 +46,7 @@ bool BthreadLocalContextStorage::Detach(
 // that can be used to reset to the previous Context.
 std::unique_ptr<opentelemetry::context::Token>
 BthreadLocalContextStorage::Attach(
-    const opentelemetry::context::Context &context) noexcept {
+    const opentelemetry::context::Context& context) noexcept {
     GetStack().Push(context);
     return CreateToken(context);
 }
@@ -71,7 +71,7 @@ void BthreadLocalContextStorage::Stack::Pop() noexcept {
 }
 
 bool BthreadLocalContextStorage::Stack::Contains(
-    const opentelemetry::context::Token &token) const noexcept {
+    const opentelemetry::context::Token& token) const noexcept {
     for (size_t pos = size_; pos > 0; --pos) {
         if (token == base_[pos - 1]) {
             return true;
@@ -93,7 +93,7 @@ BthreadLocalContextStorage::Stack::Top() const noexcept {
 // Pushes the passed in context pointer to the top of the stack
 // and resizes if necessary.
 void BthreadLocalContextStorage::Stack::Push(
-    const opentelemetry::context::Context &context) noexcept {
+    const opentelemetry::context::Context& context) noexcept {
     size_++;
     if (size_ > capacity_) {
         Resize(size_ * 2);
@@ -107,7 +107,7 @@ void BthreadLocalContextStorage::Stack::Resize(size_t new_capacity) noexcept {
     if (new_capacity == 0) {
         new_capacity = 2;
     }
-    opentelemetry::context::Context *temp =
+    opentelemetry::context::Context* temp =
         new opentelemetry::context::Context[new_capacity];
     if (base_ != nullptr) {
         // vs2015 does not like this construct considering it unsafe:
@@ -127,7 +127,7 @@ BthreadLocalContextStorage::Stack::~Stack() noexcept {
     delete[] base_;
 }
 
-OPENTELEMETRY_API_SINGLETON BthreadLocalContextStorage::Stack &
+OPENTELEMETRY_API_SINGLETON BthreadLocalContextStorage::Stack&
 BthreadLocalContextStorage::GetStack() {
     return *stack_;
 }

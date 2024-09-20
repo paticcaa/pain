@@ -10,7 +10,7 @@ using json = nlohmann::ordered_json;
 
 namespace pain::sad {
 
-json pb_to_json(const google::protobuf::Message &message) {
+json pb_to_json(const google::protobuf::Message& message) {
     json2pb::Pb2JsonOptions options;
     options.enable_protobuf_map = true;
     options.enum_option = json2pb::OUTPUT_ENUM_BY_NAME;
@@ -23,7 +23,7 @@ json pb_to_json(const google::protobuf::Message &message) {
     return j;
 }
 
-void print(const Status &status) {
+void print(const Status& status) {
     json out;
     out["header"] = {
         {"status", status.error_code()},
@@ -33,9 +33,9 @@ void print(const Status &status) {
     fmt::print("{}\n", out.dump(2));
 }
 
-void print(const brpc::Controller &cntl,
-           const google::protobuf::Message *message,
-           std::function<void(json &)> f) {
+void print(const brpc::Controller& cntl,
+           const google::protobuf::Message* message,
+           std::function<void(json&)> f) {
     json out;
     out["header"] = {
         {"status", cntl.ErrorCode()},
@@ -53,14 +53,14 @@ void print(const brpc::Controller &cntl,
         if (f) {
             f(out);
         }
-    } catch (const std::exception &e) {
+    } catch (const std::exception& e) {
         PLOG_ERROR(("desc", "failed to call user function")("error", e.what()));
     }
 
     fmt::print("{}\n", out.dump(2));
 }
 
-std::string format_command(const std::string &name) {
+std::string format_command(const std::string& name) {
     std::string name_;
     for (auto c : name) {
         if (c == '_') {

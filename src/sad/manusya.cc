@@ -27,11 +27,11 @@ RUN(manusya_parser.add_description("send cmd to manusya server")
         .add_argument("--host")
         .default_value(std::string("127.0.0.1:8003")));
 
-static std::map<std::string, std::function<Status(argparse::ArgumentParser &)>>
+static std::map<std::string, std::function<Status(argparse::ArgumentParser&)>>
     subcommands = {};
 
-void add(const std::string &name,
-         std::function<Status(argparse::ArgumentParser &parser)> func) {
+void add(const std::string& name,
+         std::function<Status(argparse::ArgumentParser& parser)> func) {
     std::string name_;
     for (auto c : name) {
         if (c == '_') {
@@ -42,8 +42,8 @@ void add(const std::string &name,
     subcommands[name_] = func;
 }
 
-Status execute(argparse::ArgumentParser &parser) {
-    for (const auto &[name, func] : subcommands) {
+Status execute(argparse::ArgumentParser& parser) {
+    for (const auto& [name, func] : subcommands) {
         if (parser.is_subcommand_used(name)) {
             SPAN(span, name);
             return func(parser.at<argparse::ArgumentParser>(name));
@@ -74,7 +74,7 @@ COMMAND(create_chunk) {
         return Status(cntl.ErrorCode(), cntl.ErrorText());
     }
 
-    print(cntl, &response, [](json &out) {
+    print(cntl, &response, [](json& out) {
         uint64_t low = out["uuid"]["low"];
         uint64_t high = out["uuid"]["high"];
         pain::UUID uuid(high, low);
@@ -156,8 +156,8 @@ COMMAND(list_chunk) {
         return Status(cntl.ErrorCode(), cntl.ErrorText());
     }
 
-    print(cntl, &response, [](json &out) {
-        for (auto &uuid : out["uuids"]) {
+    print(cntl, &response, [](json& out) {
+        for (auto& uuid : out["uuids"]) {
             uint64_t low = uuid["low"];
             uint64_t high = uuid["high"];
             UUIDv4::UUID uuid_(high, low);
