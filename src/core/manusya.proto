@@ -6,7 +6,9 @@ import "core/common.proto";
 option cc_generic_services = true;
 
 message CreateChunkRequest {};
-message CreateChunkResponse { UUID uuid = 1; };
+message CreateChunkResponse {
+  UUID uuid = 1;
+};
 
 message AppendChunkRequest {
   UUID uuid = 1;
@@ -28,7 +30,9 @@ message ListChunkRequest {
   uint32 limit = 2;
 };
 
-message ListChunkResponse { repeated UUID uuids = 1; };
+message ListChunkResponse {
+  repeated UUID uuids = 1;
+};
 
 message ReadChunkRequest {
   UUID uuid = 1;

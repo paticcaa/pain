@@ -30,30 +30,32 @@ DECLARE_string(base_tracer_otlp_file_exporter_path);
 namespace pain::base {
 class TraceLogHandle
     : public opentelemetry::sdk::common::internal_log::LogHandler {
-  virtual void
-  Handle(opentelemetry::sdk::common::internal_log::LogLevel level,
-         const char *file, int line, const char *msg,
-         const opentelemetry::sdk::common::AttributeMap &) noexcept override;
+    virtual void
+    Handle(opentelemetry::sdk::common::internal_log::LogLevel level,
+           const char *file,
+           int line,
+           const char *msg,
+           const opentelemetry::sdk::common::AttributeMap &) noexcept override;
 };
 
 inline std::shared_ptr<opentelemetry::trace::Tracer>
 get_tracer(const std::string &tracer_name) {
-  auto provider = opentelemetry::trace::Provider::GetTracerProvider();
-  return provider->GetTracer(tracer_name);
+    auto provider = opentelemetry::trace::Provider::GetTracerProvider();
+    return provider->GetTracer(tracer_name);
 }
 
 inline std::string
 get_trace_id(const std::shared_ptr<opentelemetry::trace::Span> &span) {
-  const int TRACE_ID_LEN = 32;
-  opentelemetry::trace::SpanContext span_context = span->GetContext();
-  char trace_id_buf[TRACE_ID_LEN] = {};
-  span_context.trace_id().ToLowerBase16(trace_id_buf);
-  std::string trace_id = std::string(trace_id_buf, TRACE_ID_LEN);
-  return trace_id;
+    const int TRACE_ID_LEN = 32;
+    opentelemetry::trace::SpanContext span_context = span->GetContext();
+    char trace_id_buf[TRACE_ID_LEN] = {};
+    span_context.trace_id().ToLowerBase16(trace_id_buf);
+    std::string trace_id = std::string(trace_id_buf, TRACE_ID_LEN);
+    return trace_id;
 }
 
 inline std::string get_current_trace_id() {
-  return get_trace_id(opentelemetry::trace::Tracer::GetCurrentSpan());
+    return get_trace_id(opentelemetry::trace::Tracer::GetCurrentSpan());
 }
 
 void init_tracer(const std::string &service_name);

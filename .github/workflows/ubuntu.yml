@@ -34,7 +34,7 @@ jobs:
       
       - name: Format
         run: |
-          xmake format
+          xmake format -f "**.h:**.cc:**.proto"
           git diff --exit-code
 
       - name: Build
