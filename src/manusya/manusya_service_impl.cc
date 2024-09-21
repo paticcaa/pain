@@ -26,10 +26,14 @@ void ManusyaServiceImpl::create_chunk(google::protobuf::RpcController* controlle
                ("remote_side", butil::endpoint2str(cntl->remote_side()).c_str()) //
                ("attached", cntl->request_attachment().size()));
 
+    ChunkOptions options;
+    options.append_out_of_order = request->chunk_options().append_out_of_order();
+    options.digest = request->chunk_options().digest();
+
     ChunkPtr chunk;
-    auto status = Chunk::create(_store, &chunk);
+    auto status = Chunk::create(options, _store, &chunk);
     if (!status.ok()) {
-        PLOG_ERROR(("desc", "Failed to create chunk")("error", status.error_str()));
+        PLOG_ERROR(("desc", "failed to create chunk")("error", status.error_str()));
         cntl->SetFailed(status.error_code(), "%s", status.error_cstr());
         return;
     }
@@ -57,7 +61,7 @@ void ManusyaServiceImpl::append_chunk(google::protobuf::RpcController* controlle
 
     auto it = _chunks.find(uuid);
     if (it == _chunks.end()) {
-        PLOG_ERROR(("desc", "Chunk not found")("uuid", uuid.str()));
+        PLOG_ERROR(("desc", "chunk not found")("uuid", uuid.str()));
         cntl->SetFailed(ENOENT, "Chunk not found");
         return;
     }
@@ -67,7 +71,7 @@ void ManusyaServiceImpl::append_chunk(google::protobuf::RpcController* controlle
     auto chunk = it->second;
     auto status = chunk->append(cntl->request_attachment(), request->offset());
     if (!status.ok()) {
-        PLOG_ERROR(("desc", "Failed to append chunk")("uuid", uuid.str())("error", status.error_str()));
+        PLOG_ERROR(("desc", "failed to append chunk")("uuid", uuid.str())("error", status.error_str()));
         cntl->SetFailed(status.error_code(), "%s", status.error_cstr());
         return;
     }
@@ -111,7 +115,7 @@ void ManusyaServiceImpl::read_chunk(google::protobuf::RpcController* controller,
 
     auto it = _chunks.find(uuid);
     if (it == _chunks.end()) {
-        PLOG_ERROR(("desc", "Chunk not found")("uuid", uuid.str()));
+        PLOG_ERROR(("desc", "chunk not found")("uuid", uuid.str()));
         cntl->SetFailed(ENOENT, "Chunk not found");
         return;
     }
@@ -119,7 +123,7 @@ void ManusyaServiceImpl::read_chunk(google::protobuf::RpcController* controller,
     auto chunk = it->second;
     auto status = chunk->read(request->offset(), request->length(), &cntl->response_attachment());
     if (!status.ok()) {
-        PLOG_ERROR(("desc", "Failed to read chunk")("uuid", uuid.str())("error", status.error_str()));
+        PLOG_ERROR(("desc", "failed to read chunk")("uuid", uuid.str())("error", status.error_str()));
         cntl->SetFailed(status.error_code(), "%s", status.error_cstr());
         return;
     }

@@ -1,5 +1,7 @@
 #include <brpc/server.h>
+#include "base/plog.h"
 #include "base/scope_exit.h"
+#include "base/spdlog_sink.h"
 #include "base/tracer.h"
 #include "manusya/manusya_service_impl.h"
 
@@ -8,9 +10,21 @@ DEFINE_int32(idle_timeout_s,
              -1,
              "Connection will be closed if there is no "
              "read/write operations during the last `idle_timeout_s'");
+DEFINE_string(log_level, "debug", "Log level");
 
 int main(int argc, char* argv[]) {
     gflags::ParseCommandLineFlags(&argc, &argv, true);
+
+    pain::LoggerOptions logger_options = {
+        .file_name = "manusya.log",
+        .name = "manusya",
+        .level_log = spdlog::level::from_str(FLAGS_log_level),
+        .async_threads = 1,
+    };
+    static auto flush_log = pain::make_logger(logger_options);
+
+    static pain::SpdlogSink spdlog_sink;
+    logging::SetLogSink(&spdlog_sink);
 
     brpc::Server server;
 

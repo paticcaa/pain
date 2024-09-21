@@ -1,4 +1,5 @@
 #include "manusya/mem_store.h"
+#include <memory>
 #include "manusya/file_handle.h"
 #include "manusya/macro.h"
 
@@ -27,6 +28,7 @@ Future<Status> MemStore::open(const char* path, int flags, FileHandlePtr* fh) {
 
 Future<Status> MemStore::append(FileHandlePtr fh, uint64_t offset, IOBuf buf) {
     SPAN(span);
+    std::unique_lock lock(_mutex);
     auto path = fh->as<MemFileHandle>()->handle();
     auto& iobuf = _files[path];
 
@@ -36,6 +38,7 @@ Future<Status> MemStore::append(FileHandlePtr fh, uint64_t offset, IOBuf buf) {
 
 Future<Status> MemStore::read(FileHandlePtr fh, uint64_t offset, uint64_t size, IOBuf* buf) {
     SPAN(span);
+    std::unique_lock lock(_mutex);
     auto path = fh->as<MemFileHandle>()->handle();
     auto& iobuf = _files[path];
     iobuf.append_to(buf, size, offset);
@@ -49,6 +52,7 @@ Future<Status> MemStore::seal(FileHandlePtr fh) {
 
 Future<Status> MemStore::size(FileHandlePtr fh, uint64_t* size) {
     SPAN(span);
+    std::unique_lock lock(_mutex);
     auto path = fh->as<MemFileHandle>()->handle();
     auto& iobuf = _files[path];
     *size = iobuf.size();

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <bthread/mutex.h>
 #include "manusya/store.h"
 
 namespace pain::manusya {
@@ -18,6 +19,7 @@ protected:
 
 private:
     std::map<std::string, IOBuf> _files;
+    mutable bthread::Mutex _mutex;
 
     friend class FileHandle;
 };

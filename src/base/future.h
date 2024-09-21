@@ -267,6 +267,10 @@ public:
         _state->set_exception(std::move(ex));
     }
 
+    bool is_ready() const {
+        return _state->available();
+    }
+
 private:
     std::shared_ptr<FutureState<T>> _state;
 };

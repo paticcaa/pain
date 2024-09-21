@@ -18,7 +18,7 @@ void TraceLogHandle::Handle(opentelemetry::sdk::common::internal_log::LogLevel l
                             const char* msg,
                             const opentelemetry::sdk::common::AttributeMap&) noexcept {
     const spdlog::level::level_enum levels[5] = {
-        spdlog::level::debug, spdlog::level::err, spdlog::level::warn, spdlog::level::info, spdlog::level::debug};
+        spdlog::level::debug, spdlog::level::err, spdlog::level::warn, spdlog::level::debug, spdlog::level::trace};
 
     auto l = static_cast<int>(level);
     spdlog::default_logger_raw()->log(spdlog::source_loc{file, line, ""}, levels[l], "{}", msg);

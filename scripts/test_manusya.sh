@@ -2,10 +2,16 @@
 
 # This script is used to test the Manusya program
 
-SAD=./output/bin/sad
+SCRIPT_DIR=$(dirname $0)
+SAD=${SCRIPT_DIR}/../output/bin/sad
 
-uuid=$($SAD manusya create-chunk| jq .uuid | tr -d '"')
+uuid=$($SAD manusya create-chunk --enable-append-out-of-order | jq .uuid | tr -d '"')
 echo "chunk uuid: $uuid"
+
+if [ -z $uuid ]; then
+    echo "Failed to create chunk"
+    exit 1
+fi
 
 $SAD manusya append-chunk -c $uuid -d 4 -o 4 &
 $SAD manusya append-chunk -c $uuid -d 3 -o 3 &

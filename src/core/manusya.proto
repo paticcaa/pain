@@ -5,7 +5,15 @@ import "core/common.proto";
 
 option cc_generic_services = true;
 
-message CreateChunkRequest {};
+message ChunkOptions {
+  bool append_out_of_order = 1;
+  bool digest = 2;
+};
+
+message CreateChunkRequest {
+  ChunkOptions chunk_options = 1;
+};
+
 message CreateChunkResponse {
   UUID uuid = 1;
 };

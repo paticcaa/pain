@@ -52,14 +52,22 @@ Status execute(argparse::ArgumentParser& parser) {
 }
 
 MANUSYA_CMD(create_chunk)
-RUN(ARGS(create_chunk).add_description("create chunk"))
+RUN(ARGS(create_chunk)
+        .add_description("create chunk")
+        .add_argument("--enable-append-out-of-order")
+        .default_value(false)
+        .implicit_value(true))
+RUN(ARGS(create_chunk).add_argument("--enable-digest").default_value(false).implicit_value(true))
 COMMAND(create_chunk) {
     SPAN(span);
     auto host = args.get<std::string>("--host");
+    auto append_out_of_order = args.get<bool>("--enable-append-out-of-order");
+    auto digest = args.get<bool>("--enable-digest");
     brpc::Channel channel;
     brpc::ChannelOptions options;
     options.connect_timeout_ms = 2000;
     options.timeout_ms = 10000;
+    options.max_retry = 0;
     if (channel.Init(host.c_str(), &options) != 0) {
         return Status(EAGAIN, "Fail to initialize channel");
     }
@@ -69,6 +77,9 @@ COMMAND(create_chunk) {
     pain::core::manusya::CreateChunkResponse response;
     pain::core::manusya::ManusyaService_Stub stub(&channel);
     pain::inject_tracer(&cntl);
+
+    request.mutable_chunk_options()->set_append_out_of_order(append_out_of_order);
+    request.mutable_chunk_options()->set_digest(digest);
     stub.create_chunk(&cntl, &request, &response, nullptr);
     if (cntl.Failed()) {
         return Status(cntl.ErrorCode(), cntl.ErrorText());
@@ -110,6 +121,7 @@ COMMAND(append_chunk) {
     brpc::ChannelOptions options;
     options.connect_timeout_ms = 2000;
     options.timeout_ms = 10000;
+    options.max_retry = 0;
     if (channel.Init(host.c_str(), &options) != 0) {
         return Status(EAGAIN, "Fail to initialize channel");
     }
@@ -143,6 +155,7 @@ COMMAND(list_chunk) {
     brpc::ChannelOptions options;
     options.connect_timeout_ms = 2000;
     options.timeout_ms = 10000;
+    options.max_retry = 0;
     if (channel.Init(host.c_str(), &options) != 0) {
         return Status(EAGAIN, "Fail to initialize channel");
     }
@@ -198,6 +211,7 @@ COMMAND(read_chunk) {
     brpc::ChannelOptions options;
     options.connect_timeout_ms = 2000;
     options.timeout_ms = 10000;
+    options.max_retry = 0;
     if (channel.Init(host.c_str(), &options) != 0) {
         return Status(EAGAIN, "Fail to initialize channel");
     }
