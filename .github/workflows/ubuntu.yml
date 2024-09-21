@@ -2,11 +2,11 @@ name: Linux
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+    paths-ignore: ['**.md', '**.txt']
   pull_request:
-    branches:
-      - main
+    branches: [main]
+    paths-ignore: ['**.md', '**.txt']
 
 jobs:
   build:
