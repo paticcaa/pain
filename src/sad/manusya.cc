@@ -27,11 +27,9 @@ RUN(manusya_parser.add_description("send cmd to manusya server")
         .add_argument("--host")
         .default_value(std::string("127.0.0.1:8003")));
 
-static std::map<std::string, std::function<Status(argparse::ArgumentParser&)>>
-    subcommands = {};
+static std::map<std::string, std::function<Status(argparse::ArgumentParser&)>> subcommands = {};
 
-void add(const std::string& name,
-         std::function<Status(argparse::ArgumentParser& parser)> func) {
+void add(const std::string& name, std::function<Status(argparse::ArgumentParser& parser)> func) {
     std::string name_;
     for (auto c : name) {
         if (c == '_') {
@@ -60,6 +58,8 @@ COMMAND(create_chunk) {
     auto host = args.get<std::string>("--host");
     brpc::Channel channel;
     brpc::ChannelOptions options;
+    options.connect_timeout_ms = 2000;
+    options.timeout_ms = 10000;
     if (channel.Init(host.c_str(), &options) != 0) {
         return Status(EAGAIN, "Fail to initialize channel");
     }
@@ -94,10 +94,7 @@ RUN(ARGS(append_chunk)
         .default_value(0ul)
         .help("offset to append data")
         .scan<'i', uint64_t>())
-RUN(ARGS(append_chunk)
-        .add_argument("-d", "--data")
-        .required()
-        .help("data to append"))
+RUN(ARGS(append_chunk).add_argument("-d", "--data").required().help("data to append"))
 COMMAND(append_chunk) {
     SPAN(span);
     auto chunk_id = args.get<std::string>("--chunk-id");
@@ -111,6 +108,8 @@ COMMAND(append_chunk) {
 
     brpc::Channel channel;
     brpc::ChannelOptions options;
+    options.connect_timeout_ms = 2000;
+    options.timeout_ms = 10000;
     if (channel.Init(host.c_str(), &options) != 0) {
         return Status(EAGAIN, "Fail to initialize channel");
     }
@@ -142,6 +141,8 @@ COMMAND(list_chunk) {
     auto host = args.get<std::string>("--host");
     brpc::Channel channel;
     brpc::ChannelOptions options;
+    options.connect_timeout_ms = 2000;
+    options.timeout_ms = 10000;
     if (channel.Init(host.c_str(), &options) != 0) {
         return Status(EAGAIN, "Fail to initialize channel");
     }
@@ -174,19 +175,13 @@ RUN(ARGS(read_chunk)
         .add_argument("-c", "--chunk-id")
         .required()
         .help("chunk uuid, such as 123e4567-e89b-12d3-a456-426655440000"))
-RUN(ARGS(read_chunk)
-        .add_argument("--offset")
-        .default_value(0ul)
-        .help("offset to read data")
-        .scan<'i', uint64_t>())
+RUN(ARGS(read_chunk).add_argument("--offset").default_value(0ul).help("offset to read data").scan<'i', uint64_t>())
 RUN(ARGS(read_chunk)
         .add_argument("-l", "--length")
         .default_value(1024u)
         .help("length to read data")
         .scan<'i', uint32_t>())
-RUN(ARGS(read_chunk)
-        .add_argument("-o", "--output")
-        .default_value(std::string("-")))
+RUN(ARGS(read_chunk).add_argument("-o", "--output").default_value(std::string("-")))
 COMMAND(read_chunk) {
     SPAN(span);
     auto chunk_id = args.get<std::string>("--chunk-id");
@@ -201,6 +196,8 @@ COMMAND(read_chunk) {
 
     brpc::Channel channel;
     brpc::ChannelOptions options;
+    options.connect_timeout_ms = 2000;
+    options.timeout_ms = 10000;
     if (channel.Init(host.c_str(), &options) != 0) {
         return Status(EAGAIN, "Fail to initialize channel");
     }
@@ -228,8 +225,7 @@ COMMAND(read_chunk) {
         fmt::print("{}\n", cntl.response_attachment().to_string());
     } else {
         std::ofstream ofs(output, std::ios::binary);
-        ofs.write(cntl.response_attachment().to_string().data(),
-                  cntl.response_attachment().size());
+        ofs.write(cntl.response_attachment().to_string().data(), cntl.response_attachment().size());
     }
     return Status::OK();
 }

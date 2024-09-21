@@ -2,6 +2,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <boost/intrusive_ptr.hpp>
+#include "base/future.h"
 #include "base/types.h"
 
 namespace pain::manusya {
@@ -20,10 +21,11 @@ public:
     //   memory
     //   bluefs
     static StorePtr create(const char* uri);
-    virtual Status open(const char* path, int flags, FileHandlePtr* fh) = 0;
-    virtual Status append(FileHandlePtr fh, uint64_t offset, IOBuf buf) = 0;
-    virtual Status read(FileHandlePtr fh, uint64_t offset, uint64_t size, IOBuf* buf) = 0;
-    virtual Status size(FileHandlePtr fh, uint64_t* size) = 0;
+    virtual Future<Status> open(const char* path, int flags, FileHandlePtr* fh) = 0;
+    virtual Future<Status> append(FileHandlePtr fh, uint64_t offset, IOBuf buf) = 0;
+    virtual Future<Status> read(FileHandlePtr fh, uint64_t offset, uint64_t size, IOBuf* buf) = 0;
+    virtual Future<Status> seal(FileHandlePtr fh) = 0;
+    virtual Future<Status> size(FileHandlePtr fh, uint64_t* size) = 0;
 
 private:
     friend void intrusive_ptr_add_ref(Store* store) {

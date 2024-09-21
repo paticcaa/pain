@@ -13,16 +13,14 @@ BthreadLocalContextStorage::~BthreadLocalContextStorage() noexcept {
 }
 
 // Return the current context.
-opentelemetry::context::Context
-BthreadLocalContextStorage::GetCurrent() noexcept {
+opentelemetry::context::Context BthreadLocalContextStorage::GetCurrent() noexcept {
     return GetStack().Top();
 }
 
 // Resets the context to the value previous to the passed in token. This will
 // also detach all child contexts of the passed in token.
 // Returns true if successful, false otherwise.
-bool BthreadLocalContextStorage::Detach(
-    opentelemetry::context::Token& token) noexcept {
+bool BthreadLocalContextStorage::Detach(opentelemetry::context::Token& token) noexcept {
     // In most cases, the context to be detached is on the top of the stack.
     if (token == GetStack().Top()) {
         GetStack().Pop();
@@ -45,17 +43,12 @@ bool BthreadLocalContextStorage::Detach(
 // Sets the current 'Context' object. Returns a token
 // that can be used to reset to the previous Context.
 std::unique_ptr<opentelemetry::context::Token>
-BthreadLocalContextStorage::Attach(
-    const opentelemetry::context::Context& context) noexcept {
+BthreadLocalContextStorage::Attach(const opentelemetry::context::Context& context) noexcept {
     GetStack().Push(context);
     return CreateToken(context);
 }
 
-BthreadLocalContextStorage::Stack::Stack() noexcept
-    :
-    size_(0),
-    capacity_(0),
-    base_(nullptr) {}
+BthreadLocalContextStorage::Stack::Stack() noexcept : size_(0), capacity_(0), base_(nullptr) {}
 
 // Pops the top Context off the stack.
 void BthreadLocalContextStorage::Stack::Pop() noexcept {
@@ -70,8 +63,7 @@ void BthreadLocalContextStorage::Stack::Pop() noexcept {
     size_ -= 1;
 }
 
-bool BthreadLocalContextStorage::Stack::Contains(
-    const opentelemetry::context::Token& token) const noexcept {
+bool BthreadLocalContextStorage::Stack::Contains(const opentelemetry::context::Token& token) const noexcept {
     for (size_t pos = size_; pos > 0; --pos) {
         if (token == base_[pos - 1]) {
             return true;
@@ -82,8 +74,7 @@ bool BthreadLocalContextStorage::Stack::Contains(
 }
 
 // Returns the Context at the top of the stack.
-opentelemetry::context::Context
-BthreadLocalContextStorage::Stack::Top() const noexcept {
+opentelemetry::context::Context BthreadLocalContextStorage::Stack::Top() const noexcept {
     if (size_ == 0) {
         return opentelemetry::context::Context();
     }
@@ -92,8 +83,7 @@ BthreadLocalContextStorage::Stack::Top() const noexcept {
 
 // Pushes the passed in context pointer to the top of the stack
 // and resizes if necessary.
-void BthreadLocalContextStorage::Stack::Push(
-    const opentelemetry::context::Context& context) noexcept {
+void BthreadLocalContextStorage::Stack::Push(const opentelemetry::context::Context& context) noexcept {
     size_++;
     if (size_ > capacity_) {
         Resize(size_ * 2);
@@ -107,8 +97,7 @@ void BthreadLocalContextStorage::Stack::Resize(size_t new_capacity) noexcept {
     if (new_capacity == 0) {
         new_capacity = 2;
     }
-    opentelemetry::context::Context* temp =
-        new opentelemetry::context::Context[new_capacity];
+    opentelemetry::context::Context* temp = new opentelemetry::context::Context[new_capacity];
     if (base_ != nullptr) {
         // vs2015 does not like this construct considering it unsafe:
         // - std::copy(base_, base_ + old_size, temp);
@@ -127,8 +116,7 @@ BthreadLocalContextStorage::Stack::~Stack() noexcept {
     delete[] base_;
 }
 
-OPENTELEMETRY_API_SINGLETON BthreadLocalContextStorage::Stack&
-BthreadLocalContextStorage::GetStack() {
+OPENTELEMETRY_API_SINGLETON BthreadLocalContextStorage::Stack& BthreadLocalContextStorage::GetStack() {
     return *stack_;
 }
 } // namespace pain

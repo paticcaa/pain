@@ -15,18 +15,16 @@ ManusyaServiceImpl::ManusyaServiceImpl() {
     _store = Store::create(FLAGS_manusya_store.c_str());
 }
 
-void ManusyaServiceImpl::create_chunk(
-    google::protobuf::RpcController* controller,
-    const pain::core::manusya::CreateChunkRequest* request,
-    pain::core::manusya::CreateChunkResponse* response,
-    google::protobuf::Closure* done) {
+void ManusyaServiceImpl::create_chunk(google::protobuf::RpcController* controller,
+                                      const pain::core::manusya::CreateChunkRequest* request,
+                                      pain::core::manusya::CreateChunkResponse* response,
+                                      google::protobuf::Closure* done) {
     DEFINE_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
 
-    PLOG_INFO(("desc", "Received request")                                      //
-              ("log_id", cntl->log_id())                                        //
-              ("remote_side", butil::endpoint2str(cntl->remote_side()).c_str()) //
-              ("attached", cntl->request_attachment().size()));
+    PLOG_DEBUG(("desc", __func__)                                                //
+               ("remote_side", butil::endpoint2str(cntl->remote_side()).c_str()) //
+               ("attached", cntl->request_attachment().size()));
 
     ChunkPtr chunk;
     auto status = Chunk::create(_store, &chunk);
@@ -39,26 +37,24 @@ void ManusyaServiceImpl::create_chunk(
     // BUGS: not thread safe
     _chunks[chunk->uuid()] = chunk;
 
-    PLOG_INFO(("desc", "Created chunk")("uuid", chunk->uuid().str()));
     response->mutable_uuid()->set_low(chunk->uuid().low());
     response->mutable_uuid()->set_high(chunk->uuid().high());
 }
 
-void ManusyaServiceImpl::append_chunk(
-    google::protobuf::RpcController* controller,
-    const pain::core::manusya::AppendChunkRequest* request,
-    pain::core::manusya::AppendChunkResponse* response,
-    google::protobuf::Closure* done) {
+void ManusyaServiceImpl::append_chunk(google::protobuf::RpcController* controller,
+                                      const pain::core::manusya::AppendChunkRequest* request,
+                                      pain::core::manusya::AppendChunkResponse* response,
+                                      google::protobuf::Closure* done) {
     DEFINE_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
-
-    PLOG_INFO(("desc", "Received request")                                      //
-              ("log_id", cntl->log_id())                                        //
-              ("remote_side", butil::endpoint2str(cntl->remote_side()).c_str()) //
-              ("offset", request->offset())                                     //
-              ("attached", cntl->request_attachment().size()));
-
     UUID uuid(request->uuid().high(), request->uuid().low());
+    span->SetAttribute("chunk", uuid.str());
+    PLOG_DEBUG(("desc", __func__)                                                //
+               ("remote_side", butil::endpoint2str(cntl->remote_side()).c_str()) //
+               ("chunk", uuid.str())                                             //
+               ("offset", request->offset())                                     //
+               ("attached", cntl->request_attachment().size()));
+
     auto it = _chunks.find(uuid);
     if (it == _chunks.end()) {
         PLOG_ERROR(("desc", "Chunk not found")("uuid", uuid.str()));
@@ -66,17 +62,18 @@ void ManusyaServiceImpl::append_chunk(
         return;
     }
 
+    auto offset = request->offset();
+    auto length = cntl->request_attachment().size();
     auto chunk = it->second;
     auto status = chunk->append(cntl->request_attachment(), request->offset());
     if (!status.ok()) {
-        PLOG_ERROR(("desc", "Failed to append chunk")("uuid", uuid.str())(
-            "error", status.error_str()));
+        PLOG_ERROR(("desc", "Failed to append chunk")("uuid", uuid.str())("error", status.error_str()));
         cntl->SetFailed(status.error_code(), "%s", status.error_cstr());
         return;
     }
 
-    PLOG_INFO(
-        ("desc", "Appended chunk")("uuid", uuid.str())("size", chunk->size()));
+    // return new offset
+    response->set_offset(chunk->size());
 }
 
 void ManusyaServiceImpl::list_chunk(google::protobuf::RpcController* controller,
@@ -86,10 +83,9 @@ void ManusyaServiceImpl::list_chunk(google::protobuf::RpcController* controller,
     DEFINE_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
 
-    PLOG_INFO(("desc", "Received request")                                      //
-              ("log_id", cntl->log_id())                                        //
-              ("remote_side", butil::endpoint2str(cntl->remote_side()).c_str()) //
-              ("attached", cntl->request_attachment().size()));
+    PLOG_DEBUG(("desc", __func__)                                                //
+               ("remote_side", butil::endpoint2str(cntl->remote_side()).c_str()) //
+               ("attached", cntl->request_attachment().size()));
 
     for (const auto& [uuid, chunk] : _chunks) {
         auto c = response->add_uuids();
@@ -104,13 +100,15 @@ void ManusyaServiceImpl::read_chunk(google::protobuf::RpcController* controller,
                                     google::protobuf::Closure* done) {
     DEFINE_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
-
-    PLOG_INFO(("desc", "Received request")                                      //
-              ("log_id", cntl->log_id())                                        //
-              ("remote_side", butil::endpoint2str(cntl->remote_side()).c_str()) //
-              ("attached", cntl->request_attachment().size()));
-
     UUID uuid(request->uuid().high(), request->uuid().low());
+    span->SetAttribute("chunk", uuid.str());
+
+    PLOG_DEBUG(("desc", __func__)                                                //
+               ("remote_side", butil::endpoint2str(cntl->remote_side()).c_str()) //
+               ("chunk", uuid.str())                                             //
+               ("offset", request->offset())                                     //
+               ("attached", cntl->request_attachment().size()));
+
     auto it = _chunks.find(uuid);
     if (it == _chunks.end()) {
         PLOG_ERROR(("desc", "Chunk not found")("uuid", uuid.str()));
@@ -121,13 +119,10 @@ void ManusyaServiceImpl::read_chunk(google::protobuf::RpcController* controller,
     auto chunk = it->second;
     auto status = chunk->read(request->offset(), request->length(), &cntl->response_attachment());
     if (!status.ok()) {
-        PLOG_ERROR(("desc", "Failed to read chunk")("uuid", uuid.str())(
-            "error", status.error_str()));
+        PLOG_ERROR(("desc", "Failed to read chunk")("uuid", uuid.str())("error", status.error_str()));
         cntl->SetFailed(status.error_code(), "%s", status.error_cstr());
         return;
     }
-
-    PLOG_INFO(("desc", "Read chunk")("uuid", uuid.str()));
 }
 
 } // namespace pain::manusya

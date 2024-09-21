@@ -1,3 +1,5 @@
+#pragma once
+
 #include <butil/logging.h>
 #include <spdlog/spdlog.h>
 
@@ -25,23 +27,20 @@ public:
     */
     // Called when a log is ready to be written out.
     // Returns true to stop further processing.
-    const spdlog::level::level_enum severity_to_level[5] = {
-        spdlog::level::debug,
-        spdlog::level::info,
-        spdlog::level::warn,
-        spdlog::level::err,
-        spdlog::level::critical};
+    const spdlog::level::level_enum severity_to_level[5] = {spdlog::level::debug,
+                                                            spdlog::level::info,
+                                                            spdlog::level::warn,
+                                                            spdlog::level::err,
+                                                            spdlog::level::critical};
 
-    virtual bool OnLogMessage(int severity, const char* file, int line, const butil::StringPiece& log_content) override {
+    virtual bool
+    OnLogMessage(int severity, const char* file, int line, const butil::StringPiece& log_content) override {
         if (severity < 0) [[unlikely]] {
             severity = 0;
         }
         spdlog::level::level_enum level = severity_to_level[severity];
         std::string_view log_content_view(log_content.data(), log_content.size());
-        spdlog::default_logger_raw()->log(spdlog::source_loc{file, line, nullptr},
-                                          level,
-                                          "{}",
-                                          log_content_view);
+        spdlog::default_logger_raw()->log(spdlog::source_loc{file, line, nullptr}, level, "{}", log_content_view);
         if (severity == logging::BLOG_FATAL) {
             spdlog::default_logger_raw()->flush();
         }

@@ -7,13 +7,8 @@ template <typename F>
 struct scope_exit {
     F _func;
     bool _run;
-    explicit scope_exit(F f) noexcept :
-        _func(std::move(f)),
-        _run(true) {}
-    scope_exit(scope_exit&& rhs) noexcept
-        :
-        _func((rhs._run = false, std::move(rhs._func))),
-        _run(true) {}
+    explicit scope_exit(F f) noexcept : _func(std::move(f)), _run(true) {}
+    scope_exit(scope_exit&& rhs) noexcept : _func((rhs._run = false, std::move(rhs._func))), _run(true) {}
     ~scope_exit() {
         if (_run) {
             _func(); // RAII semantics apply, expected not to throw

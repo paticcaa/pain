@@ -6,8 +6,7 @@
 
 // this file style abide by the opentelemetry style guide
 namespace pain {
-class BthreadLocalContextStorage
-    : public opentelemetry::context::RuntimeContextStorage {
+class BthreadLocalContextStorage : public opentelemetry::context::RuntimeContextStorage {
 public:
     BthreadLocalContextStorage() noexcept;
     ~BthreadLocalContextStorage() noexcept;

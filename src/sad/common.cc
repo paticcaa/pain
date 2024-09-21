@@ -33,9 +33,7 @@ void print(const Status& status) {
     fmt::print("{}\n", out.dump(2));
 }
 
-void print(const brpc::Controller& cntl,
-           const google::protobuf::Message* message,
-           std::function<void(json&)> f) {
+void print(const brpc::Controller& cntl, const google::protobuf::Message* message, std::function<void(json&)> f) {
     json out;
     out["header"] = {
         {"status", cntl.ErrorCode()},
@@ -53,9 +51,7 @@ void print(const brpc::Controller& cntl,
         if (f) {
             f(out);
         }
-    } catch (const std::exception& e) {
-        PLOG_ERROR(("desc", "failed to call user function")("error", e.what()));
-    }
+    } catch (const std::exception& e) { PLOG_ERROR(("desc", "failed to call user function")("error", e.what())); }
 
     fmt::print("{}\n", out.dump(2));
 }

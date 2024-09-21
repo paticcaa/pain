@@ -12,5 +12,8 @@ A distributed storage system.
 ## Build
 
 ```
-./build.py build
+./build.py config -m debug
+./build.py build --install
 ```
+
+Using `./build.py -h` for more infomations.

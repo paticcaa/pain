@@ -13,8 +13,7 @@ using FileHandlePtr = boost::intrusive_ptr<FileHandle>;
 
 class FileHandle {
 public:
-    FileHandle(StorePtr store) :
-        _store(store) {}
+    FileHandle(StorePtr store) : _store(store) {}
     virtual ~FileHandle() = default;
 
     template <typename T>
@@ -22,13 +21,16 @@ public:
         return static_cast<T*>(this);
     }
 
-    Status append(uint64_t offset, IOBuf buf) {
+    Future<Status> append(uint64_t offset, IOBuf buf) {
         return _store->append(this, offset, buf);
     }
-    Status read(uint64_t offset, uint64_t size, IOBuf* buf) {
+    Future<Status> read(uint64_t offset, uint64_t size, IOBuf* buf) {
         return _store->read(this, offset, size, buf);
     }
-    Status size(uint64_t* size) {
+    Future<Status> seal() {
+        return _store->seal(this);
+    }
+    Future<Status> size(uint64_t* size) {
         return _store->size(this, size);
     }
 

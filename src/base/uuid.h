@@ -9,8 +9,7 @@ class UUID : public UUIDv4::UUID {
 public:
     using UUIDv4::UUID::UUID;
 
-    UUID(const UUIDv4::UUID& uuid) :
-        UUIDv4::UUID(uuid) {}
+    UUID(const UUIDv4::UUID& uuid) : UUIDv4::UUID(uuid) {}
 
     uint64_t low() const {
         const char* _data = reinterpret_cast<const char*>(this);

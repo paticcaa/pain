@@ -17,7 +17,9 @@ message AppendChunkRequest {
   uint32 digest = 4;
 };
 
-message AppendChunkResponse {};
+message AppendChunkResponse {
+  uint64 offset = 1;
+};
 
 message SealChunkRequest {};
 message SealChunkResponse {};

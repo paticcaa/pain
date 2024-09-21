@@ -13,9 +13,7 @@ namespace pain::manusya {
 
 class LocalFileHandle : public FileHandle {
 public:
-    LocalFileHandle(int fd, StorePtr store) :
-        FileHandle(store),
-        _fd(fd) {}
+    LocalFileHandle(int fd, StorePtr store) : FileHandle(store), _fd(fd) {}
 
     virtual ~LocalFileHandle() {
         BOOST_ASSERT(_fd > 0);
@@ -30,34 +28,33 @@ private:
     int64_t _fd = 0;
 };
 
-LocalStore::LocalStore(const char* data_path) :
-    _data_path(data_path) {}
+LocalStore::LocalStore(const char* data_path) : _data_path(data_path) {}
 
-Status LocalStore::open(const char* path, int flags, FileHandlePtr* fh) {
+Future<Status> LocalStore::open(const char* path, int flags, FileHandlePtr* fh) {
     auto data_path = std::format("{}/{}", _data_path, path);
     int fd = ::open(path, flags | O_APPEND);
     if (fd < 0) {
-        return Status(errno, "Failed to open file");
+        return make_ready_future(Status(errno, "Failed to open file"));
     }
     *fh = FileHandlePtr(new LocalFileHandle(fd, this));
-    return Status::OK();
+    return make_ready_future(Status::OK());
 }
 
-Status LocalStore::append(FileHandlePtr fh, uint64_t offset, IOBuf buf) {
+Future<Status> LocalStore::append(FileHandlePtr fh, uint64_t offset, IOBuf buf) {
     int fd = fh->as<LocalFileHandle>()->handle();
 
     auto buf_size = buf.size();
     auto nw = buf.cut_into_file_descriptor(fd, buf_size);
     if (nw < 0) {
-        return Status(errno, "Failed to write to file");
+        return make_ready_future(Status(errno, "Failed to write to file"));
     }
 
     BOOST_ASSERT(nw == buf_size);
 
-    return Status::OK();
+    return make_ready_future(Status::OK());
 }
 
-Status LocalStore::read(FileHandlePtr fh, uint64_t offset, uint64_t size, IOBuf* buf) {
+Future<Status> LocalStore::read(FileHandlePtr fh, uint64_t offset, uint64_t size, IOBuf* buf) {
     int fd = fh->as<LocalFileHandle>()->handle();
 
     butil::IOPortal iop;
@@ -65,25 +62,34 @@ Status LocalStore::read(FileHandlePtr fh, uint64_t offset, uint64_t size, IOBuf*
     lseek(fd, offset, SEEK_SET);
     auto nr = iop.append_from_file_descriptor(fd, size);
     if (nr < 0) {
-        return Status(errno, "Failed to read from file");
+        return make_ready_future(Status(errno, "Failed to read from file"));
     }
 
     BOOST_ASSERT(nr == size);
 
     iop.swap(*buf);
 
-    return Status::OK();
+    return make_ready_future(Status::OK());
 }
 
-Status LocalStore::size(FileHandlePtr fh, uint64_t* size) {
+Future<Status> LocalStore::seal(FileHandlePtr fh) {
+    int fd = fh->as<LocalFileHandle>()->handle();
+    int r = ::fchmod(fd, 0444);
+    if (r < 0) {
+        return make_ready_future(Status(errno, "Failed to fchmod"));
+    }
+    return make_ready_future(Status::OK());
+}
+
+Future<Status> LocalStore::size(FileHandlePtr fh, uint64_t* size) {
     int fd = fh->as<LocalFileHandle>()->handle();
     struct stat st;
     if (fstat(fd, &st) < 0) {
-        return Status(errno, "Failed to fstat");
+        return make_ready_future(Status(errno, "Failed to fstat"));
     }
 
     *size = st.st_size;
-    return Status::OK();
+    return make_ready_future(Status::OK());
 }
 
 }; // namespace pain::manusya

@@ -5,11 +5,9 @@
 #include <opentelemetry/context/propagation/text_map_propagator.h>
 
 namespace pain {
-class BrpcTextMapCarrier
-    : public opentelemetry::context::propagation::TextMapCarrier {
+class BrpcTextMapCarrier : public opentelemetry::context::propagation::TextMapCarrier {
 public:
-    BrpcTextMapCarrier(brpc::Controller* cntl) :
-        _cntl(cntl) {}
+    BrpcTextMapCarrier(brpc::Controller* cntl) : _cntl(cntl) {}
     BrpcTextMapCarrier() = default;
     virtual std::string_view Get(std::string_view key) const noexcept override {
         auto protocol = _cntl->request_protocol();
@@ -32,8 +30,7 @@ public:
         return "";
     }
 
-    virtual void Set(std::string_view key,
-                     std::string_view value) noexcept override {
+    virtual void Set(std::string_view key, std::string_view value) noexcept override {
         auto protocol = _cntl->request_protocol();
         if (protocol == brpc::PROTOCOL_HTTP || protocol == brpc::PROTOCOL_H2) {
             auto& headers = _cntl->http_request();
