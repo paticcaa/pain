@@ -10,6 +10,12 @@ message ChunkOptions {
   bool digest = 2;
 };
 
+enum ChunkState {
+  CHUNK_STATE_INIT = 0;
+  CHUNK_STATE_OPEN = 1;
+  CHUNK_STATE_SEALED = 2;
+};
+
 message CreateChunkRequest {
   ChunkOptions chunk_options = 1;
 };
@@ -29,10 +35,16 @@ message AppendChunkResponse {
   uint64 offset = 1;
 };
 
-message SealChunkRequest {};
+message SealChunkRequest {
+  UUID uuid = 1;
+};
+
 message SealChunkResponse {};
 
-message RemoveChunkRequest {};
+message RemoveChunkRequest {
+  UUID uuid = 1;
+};
+
 message RemoveChunkResponse {};
 
 message ListChunkRequest {
@@ -56,6 +68,17 @@ message ReadChunkResponse {
   uint32 digest = 3;
 };
 
+message QueryChunkRequest {
+  UUID uuid = 1;
+};
+
+message QueryChunkResponse {
+  ChunkOptions chunk_options = 1;
+  uint64 size = 2;
+  ChunkState chunk_state = 3;
+  repeated Pair attrs = 4;
+};
+
 service ManusyaService {
   rpc create_chunk(CreateChunkRequest) returns (CreateChunkResponse);
   rpc append_chunk(AppendChunkRequest) returns (AppendChunkResponse);
@@ -63,4 +86,5 @@ service ManusyaService {
   rpc remove_chunk(RemoveChunkRequest) returns (RemoveChunkResponse);
   rpc list_chunk(ListChunkRequest) returns (ListChunkResponse);
   rpc read_chunk(ReadChunkRequest) returns (ReadChunkResponse);
+  rpc query_chunk(QueryChunkRequest) returns (QueryChunkResponse);
 };

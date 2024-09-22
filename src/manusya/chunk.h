@@ -83,6 +83,10 @@ public:
         return _state;
     }
 
+    const ChunkOptions& options() const {
+        return _options;
+    }
+
 private:
     friend void intrusive_ptr_add_ref(Chunk* chunk) {
         chunk->_use_count++;

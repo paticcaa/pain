@@ -24,6 +24,18 @@ public:
                     const pain::core::manusya::ReadChunkRequest* request,
                     pain::core::manusya::ReadChunkResponse* response,
                     google::protobuf::Closure* done) override;
+    void seal_chunk(google::protobuf::RpcController* controller,
+                    const pain::core::manusya::SealChunkRequest* request,
+                    pain::core::manusya::SealChunkResponse* response,
+                    google::protobuf::Closure* done) override;
+    void remove_chunk(google::protobuf::RpcController* controller,
+                      const pain::core::manusya::RemoveChunkRequest* request,
+                      pain::core::manusya::RemoveChunkResponse* response,
+                      google::protobuf::Closure* done) override;
+    void query_chunk(google::protobuf::RpcController* controller,
+                     const pain::core::manusya::QueryChunkRequest* request,
+                     pain::core::manusya::QueryChunkResponse* response,
+                     google::protobuf::Closure* done) override;
 };
 
 } // namespace pain::manusya

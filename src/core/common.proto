@@ -5,3 +5,8 @@ message UUID {
   uint64 low = 1;
   uint64 high = 2;
 }
+
+message Pair {
+  string key = 1;
+  string value = 2;
+}

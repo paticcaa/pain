@@ -259,4 +259,130 @@ COMMAND(read_chunk) {
     return Status::OK();
 }
 
+MANUSYA_CMD(seal_chunk)
+RUN(ARGS(seal_chunk)
+        .add_description("seal chunk")
+        .add_argument("-c", "--chunk-id")
+        .required()
+        .help("chunk uuid, such as 123e4567-e89b-12d3-a456-426655440000"))
+COMMAND(seal_chunk) {
+    SPAN(span);
+    auto chunk_id = args.get<std::string>("--chunk-id");
+    auto host = args.get<std::string>("--host");
+
+    if (!UUID::valid(chunk_id)) {
+        return Status(EINVAL, "Invalid chunk id");
+    }
+
+    brpc::Channel channel;
+    brpc::ChannelOptions options;
+    options.connect_timeout_ms = 2000;
+    options.timeout_ms = 10000;
+    options.max_retry = 0;
+    if (channel.Init(host.c_str(), &options) != 0) {
+        return Status(EAGAIN, "Fail to initialize channel");
+    }
+
+    brpc::Controller cntl;
+    pain::core::manusya::SealChunkRequest request;
+    pain::core::manusya::SealChunkResponse response;
+    pain::core::manusya::ManusyaService::Stub stub(&channel);
+    inject_tracer(&cntl);
+
+    auto uuid = pain::UUID::from_str_or_die(chunk_id);
+    request.mutable_uuid()->set_low(uuid.low());
+    request.mutable_uuid()->set_high(uuid.high());
+    stub.seal_chunk(&cntl, &request, &response, nullptr);
+    if (cntl.Failed()) {
+        return Status(cntl.ErrorCode(), cntl.ErrorText());
+    }
+
+    print(cntl, &response);
+    return Status::OK();
+}
+
+MANUSYA_CMD(remove_chunk)
+RUN(ARGS(remove_chunk)
+        .add_description("remove chunk")
+        .add_argument("-c", "--chunk-id")
+        .required()
+        .help("chunk uuid, such as 123e4567-e89b-12d3-a456-426655440000"))
+COMMAND(remove_chunk) {
+    SPAN(span);
+    auto chunk_id = args.get<std::string>("--chunk-id");
+    auto host = args.get<std::string>("--host");
+
+    if (!UUID::valid(chunk_id)) {
+        return Status(EINVAL, "Invalid chunk id");
+    }
+
+    brpc::Channel channel;
+    brpc::ChannelOptions options;
+    options.connect_timeout_ms = 2000;
+    options.timeout_ms = 10000;
+    options.max_retry = 0;
+    if (channel.Init(host.c_str(), &options) != 0) {
+        return Status(EAGAIN, "Fail to initialize channel");
+    }
+
+    brpc::Controller cntl;
+    pain::core::manusya::RemoveChunkRequest request;
+    pain::core::manusya::RemoveChunkResponse response;
+    pain::core::manusya::ManusyaService::Stub stub(&channel);
+    inject_tracer(&cntl);
+
+    auto uuid = pain::UUID::from_str_or_die(chunk_id);
+    request.mutable_uuid()->set_low(uuid.low());
+    request.mutable_uuid()->set_high(uuid.high());
+    stub.remove_chunk(&cntl, &request, &response, nullptr);
+    if (cntl.Failed()) {
+        return Status(cntl.ErrorCode(), cntl.ErrorText());
+    }
+
+    print(cntl, &response);
+    return Status::OK();
+}
+
+MANUSYA_CMD(query_chunk)
+RUN(ARGS(query_chunk)
+        .add_description("query chunk")
+        .add_argument("-c", "--chunk-id")
+        .required()
+        .help("chunk uuid, such as 123e4567-e89b-12d3-a456-426655440000"))
+COMMAND(query_chunk) {
+    SPAN(span);
+    auto chunk_id = args.get<std::string>("--chunk-id");
+    auto host = args.get<std::string>("--host");
+
+    if (!UUID::valid(chunk_id)) {
+        return Status(EINVAL, "Invalid chunk id");
+    }
+
+    brpc::Channel channel;
+    brpc::ChannelOptions options;
+    options.connect_timeout_ms = 2000;
+    options.timeout_ms = 10000;
+    options.max_retry = 0;
+    if (channel.Init(host.c_str(), &options) != 0) {
+        return Status(EAGAIN, "Fail to initialize channel");
+    }
+
+    brpc::Controller cntl;
+    pain::core::manusya::QueryChunkRequest request;
+    pain::core::manusya::QueryChunkResponse response;
+    pain::core::manusya::ManusyaService::Stub stub(&channel);
+    inject_tracer(&cntl);
+
+    auto uuid = pain::UUID::from_str_or_die(chunk_id);
+    request.mutable_uuid()->set_low(uuid.low());
+    request.mutable_uuid()->set_high(uuid.high());
+    stub.query_chunk(&cntl, &request, &response, nullptr);
+    if (cntl.Failed()) {
+        return Status(cntl.ErrorCode(), cntl.ErrorText());
+    }
+
+    print(cntl, &response);
+    return Status::OK();
+}
+
 } // namespace pain::sad::manusya

@@ -52,6 +52,7 @@ Status Chunk::append(const IOBuf& buf, uint64_t offset) {
         lock.unlock();
         auto status = rq->promise.get_future().get();
         rq->end = butil::cpuwide_time_ns();
+
         return status;
     }
     if (_state == ChunkState::SEALED) {
@@ -60,12 +61,13 @@ Status Chunk::append(const IOBuf& buf, uint64_t offset) {
     if (_state == ChunkState::INIT) {
         _state = ChunkState::OPEN;
     }
-    _size += buf.size();
     auto status = _fh->append(offset, buf).get();
 
     if (!status.ok()) {
         return status;
     }
+
+    _size += buf.size();
 
     while (!_append_request_queue.empty()) {
         auto it = _append_request_queue.begin();
@@ -78,8 +80,10 @@ Status Chunk::append(const IOBuf& buf, uint64_t offset) {
                            std::format("invalid offset at {}@{}, current size:{}", rq->offset, rq->buf.size(), _size)));
             }
         } else if (rq->offset == _size) {
-            _size += rq->buf.size();
             auto status = _fh->append(rq->offset, rq->buf).get();
+            if (status.ok()) {
+                _size += rq->buf.size();
+            }
             rq->unlink();
             if (!rq->promise.is_ready()) {
                 rq->promise.set_value(status);
