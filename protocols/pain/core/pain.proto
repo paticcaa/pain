@@ -1,0 +1,38 @@
+
+syntax = "proto3";
+package pain.core;
+import "pain/core/common.proto";
+
+option cc_generic_services = true;
+
+message AppendRequest {}
+
+message AppendResponse {
+  uint64 offset = 1;
+}
+
+message ReadRequest {
+  uint64 offset = 1;
+  uint32 length = 2;
+}
+
+message ReadResponse {}
+
+message SealRequest {
+  UUID uuid = 1;
+}
+
+message SealResponse {}
+
+message CloseRequest {
+  UUID uuid = 1;
+}
+
+message CloseResponse {}
+
+service FileService {
+  rpc append(AppendRequest) returns (AppendResponse);
+  rpc read(ReadRequest) returns (ReadResponse);
+  rpc seal(SealRequest) returns (SealResponse);
+  rpc close(CloseRequest) returns (CloseResponse);
+}

@@ -1,0 +1,5 @@
+target("core")
+    set_kind("static")
+    add_files("*.proto", {proto_rootdir = "protocols", proto_public = true})
+    add_rules("protobuf.cpp")
+    add_packages("protobuf-cpp", {public = true})

@@ -2,12 +2,12 @@
 #include <brpc/controller.h>
 #include <butil/guid.h>
 #include <butil/status.h>
-#include <core/manusya.pb.h>
 #include <json2pb/pb_to_json.h>
 #include <fstream>
 #include <fmt/format.h>
 #include <argparse/argparse.hpp>
 
+#include "pain/core/manusya.pb.h"
 #include "base/tracer.h"
 #include "base/types.h"
 #include "base/uuid.h"

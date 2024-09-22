@@ -7,6 +7,7 @@
 #include <spdlog/spdlog.h>
 
 #include "base/scope_exit.h"
+#include "base/tracer.h"
 
 // __PLOG_PREPROCESS_PAIRS
 // __PLOG_PREPROCESS_PAIRS((a, 1)(b, 2)(c, 3)) -> ((a, 1))((b, 2))((c, 3))

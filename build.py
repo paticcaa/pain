@@ -25,7 +25,7 @@ def build_project(args):
     pass
 
 def format_project():
-    run_in_shell('xmake format -f "src/**.h:src/**.cc:src/**.proto:include/**.h"')
+    run_in_shell('xmake format -f "src/**.h:src/**.cc:protocols/**.proto:include/**.h"')
     run_in_shell('git --no-pager diff')
 
 def line_project():

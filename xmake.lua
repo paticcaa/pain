@@ -39,3 +39,4 @@ add_includedirs("include")
 add_includedirs("src")
 
 includes("src")
+includes("protocols/pain/core")

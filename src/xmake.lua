@@ -1,6 +1,7 @@
 includes("base")
-includes("core")
 includes("deva")
 includes("manusya")
 includes("asura")
 includes("sad")
+includes("pain")
+includes("test")

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/manusya.pb.h"
+#include "pain/core/manusya.pb.h"
 
 namespace pain::manusya {
 class ManusyaServiceImpl : public pain::core::manusya::ManusyaService {

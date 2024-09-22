@@ -1,0 +1,77 @@
+syntax = "proto3";
+package pain.core.deva;
+
+import "pain/core/common.proto";
+
+option cc_generic_services = true;
+
+service DevaService {
+  rpc open(OpenRequest) returns (OpenResponse);
+  rpc close(CloseRequest) returns (CloseResponse);
+  rpc remove(RemoveRequest) returns (RemoveResponse);
+  rpc seal(SealRequest) returns (SealResponse);
+
+  rpc create_chunk(CreateChunkRequest) returns (CreateChunkResponse);
+  rpc append_chunk(AppendChunkRequest) returns (AppendChunkResponse);
+  rpc seal_chunk(SealChunkRequest) returns (SealChunkResponse);
+  rpc seal_and_new_chunk(SealAndNewChunkRequest)
+      returns (SealAndNewChunkResponse);
+}
+
+message OpenRequest {
+  string path = 1;
+  int32 flags = 2;
+}
+
+message OpenResponse {
+  UUID uuid = 1;
+}
+
+message CloseRequest {
+  UUID uuid = 1;
+}
+
+message CloseResponse {}
+
+message RemoveRequest {
+  string path = 1;
+}
+
+message RemoveResponse {}
+
+message SealRequest {
+  UUID uuid = 1;
+}
+
+message SealResponse {}
+
+message SealAndNewChunkRequest {
+  UUID uuid = 1;
+}
+
+message SealAndNewChunkResponse {
+  UUID uuid = 1;
+}
+
+message CreateChunkRequest {}
+
+message CreateChunkResponse {
+  UUID uuid = 1;
+}
+
+message AppendChunkRequest {
+  UUID uuid = 1;
+  uint64 offset = 2;
+  uint32 length = 3;
+  uint32 digest = 4;
+}
+
+message AppendChunkResponse {
+  uint64 offset = 1;
+}
+
+message SealChunkRequest {
+  UUID uuid = 1;
+}
+
+message SealChunkResponse {}
