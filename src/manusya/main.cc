@@ -3,6 +3,7 @@
 #include "base/scope_exit.h"
 #include "base/spdlog_sink.h"
 #include "base/tracer.h"
+#include "manusya/bank.h"
 #include "manusya/manusya_service_impl.h"
 
 DEFINE_int32(port, 8003, "TCP Port of this server");
@@ -27,6 +28,12 @@ int main(int argc, char* argv[]) {
     logging::SetLogSink(&spdlog_sink);
 
     brpc::Server server;
+
+    auto status = pain::manusya::Bank::instance().load();
+    if (!status.ok()) {
+        LOG(ERROR) << "Failed to load bank";
+        return -1;
+    }
 
     pain::manusya::ManusyaServiceImpl manusya_service_impl;
     pain::init_tracer("manusya");

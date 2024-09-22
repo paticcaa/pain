@@ -67,11 +67,12 @@ public:
     ~Chunk() = default;
 
     static Status create(const ChunkOptions& options, StorePtr store, ChunkPtr* chunk);
+    static Status create(const ChunkOptions& options, StorePtr store, const UUID& uuid, ChunkPtr* chunk);
 
     const UUID& uuid() const {
         return _uuid;
     }
-    Status append(IOBuf& buf, uint64_t offset);
+    Status append(const IOBuf& buf, uint64_t offset);
     Status seal();
     Status read(uint64_t offset, uint64_t size, IOBuf* buf) const;
     uint64_t size() const {
@@ -101,6 +102,7 @@ private:
 
     FileHandlePtr _fh;
     AppendRequestQueue _append_request_queue;
+    StorePtr _store;
     mutable bthread::Mutex _mutex;
 };
 

@@ -5,15 +5,13 @@
 #include "base/plog.h"
 #include "base/tracer.h"
 #include "butil/endpoint.h"
+#include "manusya/bank.h"
+#include "manusya/chunk.h"
 #include "manusya/macro.h"
-
-DEFINE_string(manusya_store, "memory", "The path to store the data of manusya");
 
 namespace pain::manusya {
 
-ManusyaServiceImpl::ManusyaServiceImpl() {
-    _store = Store::create(FLAGS_manusya_store.c_str());
-}
+ManusyaServiceImpl::ManusyaServiceImpl() {}
 
 void ManusyaServiceImpl::create_chunk(google::protobuf::RpcController* controller,
                                       const pain::core::manusya::CreateChunkRequest* request,
@@ -31,15 +29,12 @@ void ManusyaServiceImpl::create_chunk(google::protobuf::RpcController* controlle
     options.digest = request->chunk_options().digest();
 
     ChunkPtr chunk;
-    auto status = Chunk::create(options, _store, &chunk);
+    auto status = Bank::instance().create_chunk(options, &chunk);
     if (!status.ok()) {
         PLOG_ERROR(("desc", "failed to create chunk")("error", status.error_str()));
         cntl->SetFailed(status.error_code(), "%s", status.error_cstr());
         return;
     }
-
-    // BUGS: not thread safe
-    _chunks[chunk->uuid()] = chunk;
 
     response->mutable_uuid()->set_low(chunk->uuid().low());
     response->mutable_uuid()->set_high(chunk->uuid().high());
@@ -59,8 +54,9 @@ void ManusyaServiceImpl::append_chunk(google::protobuf::RpcController* controlle
                ("offset", request->offset())                                     //
                ("attached", cntl->request_attachment().size()));
 
-    auto it = _chunks.find(uuid);
-    if (it == _chunks.end()) {
+    ChunkPtr chunk;
+    auto status = Bank::instance().get_chunk(uuid, &chunk);
+    if (!status.ok()) {
         PLOG_ERROR(("desc", "chunk not found")("uuid", uuid.str()));
         cntl->SetFailed(ENOENT, "Chunk not found");
         return;
@@ -68,10 +64,12 @@ void ManusyaServiceImpl::append_chunk(google::protobuf::RpcController* controlle
 
     auto offset = request->offset();
     auto length = cntl->request_attachment().size();
-    auto chunk = it->second;
-    auto status = chunk->append(cntl->request_attachment(), request->offset());
+    status = chunk->append(cntl->request_attachment(), request->offset());
     if (!status.ok()) {
-        PLOG_ERROR(("desc", "failed to append chunk")("uuid", uuid.str())("error", status.error_str()));
+        PLOG_ERROR(("desc", "failed to append chunk") //
+                   ("uuid", uuid.str())               //
+                   ("errno", status.error_code())     //
+                   ("error", status.error_str()));
         cntl->SetFailed(status.error_code(), "%s", status.error_cstr());
         return;
     }
@@ -87,15 +85,18 @@ void ManusyaServiceImpl::list_chunk(google::protobuf::RpcController* controller,
     DEFINE_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
 
+    auto uuid = UUID(request->start().high(), request->start().low());
+
     PLOG_DEBUG(("desc", __func__)                                                //
                ("remote_side", butil::endpoint2str(cntl->remote_side()).c_str()) //
-               ("attached", cntl->request_attachment().size()));
+               ("start", uuid.str())                                             //
+               ("limit", request->limit()));
 
-    for (const auto& [uuid, chunk] : _chunks) {
-        auto c = response->add_uuids();
-        c->set_low(uuid.low());
-        c->set_high(uuid.high());
-    }
+    Bank::instance().list_chunk(uuid, request->limit(), [&](UUID uuid) {
+        auto* u = response->add_uuids();
+        u->set_low(uuid.low());
+        u->set_high(uuid.high());
+    });
 }
 
 void ManusyaServiceImpl::read_chunk(google::protobuf::RpcController* controller,
@@ -113,15 +114,15 @@ void ManusyaServiceImpl::read_chunk(google::protobuf::RpcController* controller,
                ("offset", request->offset())                                     //
                ("attached", cntl->request_attachment().size()));
 
-    auto it = _chunks.find(uuid);
-    if (it == _chunks.end()) {
+    ChunkPtr chunk;
+    auto status = Bank::instance().get_chunk(uuid, &chunk);
+    if (!status.ok()) {
         PLOG_ERROR(("desc", "chunk not found")("uuid", uuid.str()));
         cntl->SetFailed(ENOENT, "Chunk not found");
         return;
     }
 
-    auto chunk = it->second;
-    auto status = chunk->read(request->offset(), request->length(), &cntl->response_attachment());
+    status = chunk->read(request->offset(), request->length(), &cntl->response_attachment());
     if (!status.ok()) {
         PLOG_ERROR(("desc", "failed to read chunk")("uuid", uuid.str())("error", status.error_str()));
         cntl->SetFailed(status.error_code(), "%s", status.error_cstr());

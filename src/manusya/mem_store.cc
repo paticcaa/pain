@@ -59,4 +59,19 @@ Future<Status> MemStore::size(FileHandlePtr fh, uint64_t* size) {
     return make_ready_future(Status::OK());
 }
 
+Future<Status> MemStore::remove(const char* path) {
+    SPAN(span);
+    std::unique_lock lock(_mutex);
+    _files.erase(path);
+    return make_ready_future(Status::OK());
+}
+
+void MemStore::for_each(std::function<void(const char* path)> cb) {
+    SPAN(span);
+    std::unique_lock lock(_mutex);
+    for (const auto& [path, _] : _files) {
+        cb(path.c_str());
+    }
+}
+
 } // namespace pain::manusya

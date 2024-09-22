@@ -24,7 +24,6 @@
     BOOST_PP_COMMA_IF(idx)                                                                                             \
     BOOST_PP_TUPLE_ELEM(2, 1, elem)
 
-// dynamic debug support
 #define GET_FIRST_VA_ARG(arg1, ...) arg1
 #define FIRST_VA_ARG(...) GET_FIRST_VA_ARG(__VA_ARGS__)
 

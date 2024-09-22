@@ -17,15 +17,16 @@ public:
     virtual ~Store() = default;
 
     // support:
-    //   local://path/to/dir
-    //   memory
-    //   bluefs
+    //   local:///path/to/dir
+    //   memory://
     static StorePtr create(const char* uri);
     virtual Future<Status> open(const char* path, int flags, FileHandlePtr* fh) = 0;
     virtual Future<Status> append(FileHandlePtr fh, uint64_t offset, IOBuf buf) = 0;
     virtual Future<Status> read(FileHandlePtr fh, uint64_t offset, uint64_t size, IOBuf* buf) = 0;
     virtual Future<Status> seal(FileHandlePtr fh) = 0;
     virtual Future<Status> size(FileHandlePtr fh, uint64_t* size) = 0;
+    virtual Future<Status> remove(const char* path) = 0;
+    virtual void for_each(std::function<void(const char* path)> cb) = 0;
 
 private:
     friend void intrusive_ptr_add_ref(Store* store) {
@@ -33,11 +34,11 @@ private:
     }
 
     friend void intrusive_ptr_release(Store* store) {
-        if (--store->_use_count == 0) {
+        if (store->_use_count.fetch_sub(1) == 1) {
             delete store;
         }
     }
 
-    int _use_count = 0;
+    std::atomic<int> _use_count = 0;
 };
 } // namespace pain::manusya

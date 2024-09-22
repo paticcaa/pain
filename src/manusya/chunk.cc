@@ -1,13 +1,15 @@
 #include "manusya/chunk.h"
+#include <fcntl.h>
 #include <cerrno>
 #include <format>
 #include <mutex>
 #include "base/plog.h"
+#include "manusya/file_handle.h"
 #include "manusya/macro.h"
 
 namespace pain::manusya {
 
-Status Chunk::append(IOBuf& buf, uint64_t offset) {
+Status Chunk::append(const IOBuf& buf, uint64_t offset) {
     SPAN(span);
     std::unique_lock lock(_mutex);
     if (offset < _size) {
@@ -61,6 +63,10 @@ Status Chunk::append(IOBuf& buf, uint64_t offset) {
     _size += buf.size();
     auto status = _fh->append(offset, buf).get();
 
+    if (!status.ok()) {
+        return status;
+    }
+
     while (!_append_request_queue.empty()) {
         auto it = _append_request_queue.begin();
         auto rq = &*it;
@@ -97,9 +103,15 @@ Status Chunk::read(uint64_t offset, uint64_t size, IOBuf* buf) const {
     SPAN(span);
     std::lock_guard lock(_mutex);
     if (offset + size > _size) {
-        return Status(EINVAL, "invalid offset or size");
+        return Status(EINVAL,
+                      std::format("read out of range, offset:{}, size:{}, current size:{}", offset, size, _size));
     }
-    auto status = _fh->read(offset, size, buf).get();
+    FileHandlePtr fh;
+    auto status = _store->open(_uuid.str().c_str(), O_RDONLY, &fh).get();
+    if (!status.ok()) {
+        return status;
+    }
+    status = fh->read(offset, size, buf).get();
     return status;
 }
 
@@ -109,7 +121,31 @@ Status Chunk::create(const ChunkOptions& options, StorePtr store, ChunkPtr* chun
     auto c = ChunkPtr(new Chunk());
     c->_uuid = uuid_gen.getUUID();
     c->_options = options;
-    auto status = store->open(c->_uuid.str().c_str(), O_CREAT | O_RDWR, &c->_fh).get();
+    c->_store = store;
+    c->_size = 0;
+    auto status = store->open(c->_uuid.str().c_str(), O_CREAT | O_WRONLY | O_EXCL, &c->_fh).get();
+
+    if (!status.ok()) {
+        return status;
+    }
+
+    *chunk = c;
+    return Status::OK();
+}
+
+Status Chunk::create(const ChunkOptions& options, StorePtr store, const UUID& uuid, ChunkPtr* chunk) {
+    SPAN(span);
+    auto c = ChunkPtr(new Chunk());
+    c->_uuid = uuid;
+    c->_options = options;
+    c->_store = store;
+    auto status = store->open(c->_uuid.str().c_str(), O_RDONLY, &c->_fh).get();
+
+    if (!status.ok()) {
+        return status;
+    }
+
+    status = c->_fh->size(&c->_size).get();
 
     if (!status.ok()) {
         return status;

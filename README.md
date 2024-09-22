@@ -13,7 +13,15 @@ A distributed storage system.
 
 ```
 ./build.py config -m debug
+
+# build and install to ${PROJECT_DIR}/output
 ./build.py build --install
+
+# only build
+./build.py build
+
+# only build sad target
+./build.py build sad
 ```
 
 Using `./build.py -h` for more infomations.

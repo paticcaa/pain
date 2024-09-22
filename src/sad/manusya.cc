@@ -148,9 +148,18 @@ COMMAND(append_chunk) {
 
 MANUSYA_CMD(list_chunk)
 RUN(ARGS(list_chunk).add_description("list chunk"))
+RUN(ARGS(list_chunk).add_argument("--start").default_value(std::string("00000000-0000-0000-0000-000000000000")))
+RUN(ARGS(list_chunk).add_argument("--limit").default_value(10u).scan<'i', uint32_t>())
 COMMAND(list_chunk) {
     SPAN(span);
     auto host = args.get<std::string>("--host");
+    auto start = args.get<std::string>("--start");
+    auto limit = args.get<uint32_t>("--limit");
+
+    if (!UUID::valid(start)) {
+        return Status(EINVAL, "Invalid start id");
+    }
+
     brpc::Channel channel;
     brpc::ChannelOptions options;
     options.connect_timeout_ms = 2000;
@@ -165,6 +174,12 @@ COMMAND(list_chunk) {
     pain::core::manusya::ListChunkResponse response;
     pain::core::manusya::ManusyaService::Stub stub(&channel);
     inject_tracer(&cntl);
+
+    auto uuid = pain::UUID::from_str_or_die(start);
+    request.mutable_start()->set_low(uuid.low());
+    request.mutable_start()->set_high(uuid.high());
+    request.set_limit(limit);
+
     stub.list_chunk(&cntl, &request, &response, nullptr);
     if (cntl.Failed()) {
         return Status(cntl.ErrorCode(), cntl.ErrorText());

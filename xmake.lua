@@ -8,6 +8,7 @@ add_rules("plugin.compile_commands.autoupdate", {outputdir = "build"})
 set_policy("build.across_targets_in_parallel", false)
 set_policy("check.auto_ignore_flags", false)
 add_defines("SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE")
+add_defines("BOOST_ENABLE_ASSERT_HANDLER")
 
 add_repositories("pain-repo pain-repo")
 
@@ -15,6 +16,7 @@ if is_mode("debug") then
     add_cxxflags("-fsanitize=address")
     add_ldflags("-fsanitize=address")
 end
+add_cxxflags("-fno-omit-frame-pointer")
 
 add_requires("argparse 3.1")
 add_requires("brpc 1.10.0")
