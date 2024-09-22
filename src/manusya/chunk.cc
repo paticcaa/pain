@@ -133,6 +133,15 @@ Status Chunk::create(const ChunkOptions& options, StorePtr store, ChunkPtr* chun
         return status;
     }
 
+    status = c->_fh->set_attr("user.append-out-of-order", options.append_out_of_order ? "1" : "0").get();
+    if (!status.ok()) {
+        return status;
+    }
+    status = c->_fh->set_attr("user.digest", options.digest ? "1" : "0").get();
+    if (!status.ok()) {
+        return status;
+    }
+
     *chunk = c;
     return Status::OK();
 }
@@ -153,6 +162,20 @@ Status Chunk::create(const ChunkOptions& options, StorePtr store, const UUID& uu
 
     if (!status.ok()) {
         return status;
+    }
+
+    std::string value;
+    status = c->_fh->get_attr("user.append-out-of-order", &value).get();
+    if (status.ok()) {
+        c->_options.append_out_of_order = value == "1";
+    } else {
+        PLOG_ERROR(("desc", "failed to get append-out-of-order attribute")("error", status.error_str()));
+    }
+    status = c->_fh->get_attr("user.digest", &value).get();
+    if (status.ok()) {
+        c->_options.digest = value == "1";
+    } else {
+        PLOG_ERROR(("desc", "failed to get digest attribute")("error", status.error_str()));
     }
 
     *chunk = c;

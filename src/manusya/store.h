@@ -26,6 +26,9 @@ public:
     virtual Future<Status> seal(FileHandlePtr fh) = 0;
     virtual Future<Status> size(FileHandlePtr fh, uint64_t* size) = 0;
     virtual Future<Status> remove(const char* path) = 0;
+    virtual Future<Status> set_attr(FileHandlePtr fh, const char* key, const char* value) = 0;
+    virtual Future<Status> get_attr(FileHandlePtr fh, const char* key, std::string* value) = 0;
+    virtual Future<Status> list_attrs(FileHandlePtr fh, std::map<std::string, std::string>* attrs) = 0;
     virtual void for_each(std::function<void(const char* path)> cb) = 0;
 
 private:

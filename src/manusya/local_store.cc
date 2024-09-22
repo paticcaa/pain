@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/xattr.h>
 #include <unistd.h>
 #include <format>
 #include <boost/assert.hpp>
@@ -117,6 +118,52 @@ Future<Status> LocalStore::remove(const char* path) {
     if (r < 0) {
         return make_ready_future(Status(errno, "failed to unlink"));
     }
+    return make_ready_future(Status::OK());
+}
+
+Future<Status> LocalStore::set_attr(FileHandlePtr fh, const char* key, const char* value) {
+    int fd = fh->as<LocalFileHandle>()->handle();
+    int r = fsetxattr(fd, key, value, strlen(value), 0);
+    if (r < 0) {
+        return make_ready_future(Status(errno, "failed to fsetxattr"));
+    }
+    return make_ready_future(Status::OK());
+}
+
+Future<Status> LocalStore::get_attr(FileHandlePtr fh, const char* key, std::string* value) {
+    int fd = fh->as<LocalFileHandle>()->handle();
+    char buf[1024];
+    int r = fgetxattr(fd, key, buf, sizeof(buf));
+    if (r < 0) {
+        return make_ready_future(Status(errno, "failed to fgetxattr"));
+    }
+    *value = std::string(buf, r);
+    return make_ready_future(Status::OK());
+}
+
+Future<Status> LocalStore::list_attrs(FileHandlePtr fh, std::map<std::string, std::string>* attrs) {
+    int fd = fh->as<LocalFileHandle>()->handle();
+    char buf[1024];
+    int r = flistxattr(fd, buf, sizeof(buf));
+    if (r < 0) {
+        return make_ready_future(Status(errno, "failed to flistxattr"));
+    }
+
+    for (int i = 0; i < r; i++) {
+        char key[1024];
+        int n = fgetxattr(fd, buf + i, key, sizeof(key));
+        if (n < 0) {
+            return make_ready_future(Status(errno, "failed to fgetxattr"));
+        }
+        std::string value;
+        auto status = get_attr(fh, key, &value).get();
+        if (!status.ok()) {
+            return make_ready_future(std::move(status));
+        }
+        (*attrs)[key] = value;
+        i += strlen(buf + i);
+    }
+
     return make_ready_future(Status::OK());
 }
 

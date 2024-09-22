@@ -34,6 +34,18 @@ public:
         return _store->size(this, size);
     }
 
+    Future<Status> set_attr(const char* key, const char* value) {
+        return _store->set_attr(this, key, value);
+    }
+
+    Future<Status> get_attr(const char* key, std::string* value) {
+        return _store->get_attr(this, key, value);
+    }
+
+    Future<Status> list_attrs(std::map<std::string, std::string>* attrs) {
+        return _store->list_attrs(this, attrs);
+    }
+
     int use_count() const {
         return _use_count;
     }

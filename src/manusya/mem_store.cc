@@ -66,6 +66,34 @@ Future<Status> MemStore::remove(const char* path) {
     return make_ready_future(Status::OK());
 }
 
+Future<Status> MemStore::set_attr(FileHandlePtr fh, const char* key, const char* value) {
+    SPAN(span);
+    std::unique_lock lock(_mutex);
+    auto path = fh->as<MemFileHandle>()->handle();
+    _attrs[path][key] = value;
+    return make_ready_future(Status::OK());
+}
+
+Future<Status> MemStore::get_attr(FileHandlePtr fh, const char* key, std::string* value) {
+    SPAN(span);
+    std::unique_lock lock(_mutex);
+    auto path = fh->as<MemFileHandle>()->handle();
+    auto it = _attrs[path].find(key);
+    if (it == _attrs[path].end()) {
+        return make_ready_future(Status(ENOENT, "attribute not found"));
+    }
+    *value = it->second;
+    return make_ready_future(Status::OK());
+}
+
+Future<Status> MemStore::list_attrs(FileHandlePtr fh, std::map<std::string, std::string>* attrs) {
+    SPAN(span);
+    std::unique_lock lock(_mutex);
+    auto path = fh->as<MemFileHandle>()->handle();
+    *attrs = _attrs[path];
+    return make_ready_future(Status::OK());
+}
+
 void MemStore::for_each(std::function<void(const char* path)> cb) {
     SPAN(span);
     std::unique_lock lock(_mutex);
