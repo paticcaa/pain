@@ -1,44 +1,31 @@
 #pragma once
 
+#include <butil/iobuf.h>
 #include <google/protobuf/service.h>
 
 namespace pain {
 
+class ControllerImpl;
 class Controller : public google::protobuf::RpcController {
 public:
-    void Reset() override {}
-    bool Failed() const override {
-        return false;
-    }
-    std::string ErrorText() const override {
-        return "";
-    }
-    void StartCancel() override {}
-    void SetFailed(const std::string& reason) override {}
-    bool IsCanceled() const override {
-        return false;
-    }
-    void NotifyOnCancel(google::protobuf::Closure* callback) override {}
-
-    void set_timeout_us(int timeout_us) {
-        _timeout_us = timeout_us;
-    }
-
-    int timeout_us() const {
-        return _timeout_us;
-    }
-
-    void set_direct_io(bool direct_io) {
-        _direct_io = direct_io;
-    }
-
-    bool direct_io() const {
-        return _direct_io;
-    }
+    Controller();
+    virtual ~Controller();
+    void Reset() override;
+    bool Failed() const override;
+    std::string ErrorText() const override;
+    void StartCancel() override;
+    void SetFailed(const std::string& reason) override;
+    bool IsCanceled() const override;
+    void NotifyOnCancel(google::protobuf::Closure* callback) override;
+    void set_timeout_us(int timeout_us);
+    int timeout_us() const;
+    void set_direct_io(bool direct_io);
+    bool direct_io() const;
+    butil::IOBuf& request_attachment();
+    butil::IOBuf& response_attachment();
 
 private:
-    int _timeout_us = 1000000;
-    bool _direct_io = false;
+    ControllerImpl* _impl;
 };
 
 } // namespace pain

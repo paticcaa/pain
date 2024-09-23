@@ -11,7 +11,19 @@ void FileStreamImpl::append(::google::protobuf::RpcController* controller,
                             ::pain::core::AppendResponse* response,
                             ::google::protobuf::Closure* done) {
     pain::Controller* cntl = static_cast<pain::Controller*>(controller);
-    PLOG_DEBUG(("desc", __func__));
+    PLOG_DEBUG(("desc", __func__)               //
+               ("uuid", _uuid.str())            //
+               ("direct_io", cntl->direct_io()) //
+               ("data_size", cntl->request_attachment().size()));
+
+    // append to chunk
+    // if _chunks is empty, create a new chunk
+    // if the last chunk is full(64MB), create a new chunk
+    // if append timeout, seal and new chunk
+    // chunk = get_last_chunk();
+    // foreach subchunk in chunk:
+    //   subchunk->append(cntl->request_attachment());
+    //   if timeout, seal and new chunk
     brpc::ClosureGuard done_guard(done);
 }
 

@@ -1,4 +1,7 @@
 #pragma once
+#include <list>
+
+#include "pain/chunk.h"
 #include "pain/core/pain.pb.h"
 #include "base/uuid.h"
 
@@ -31,7 +34,7 @@ public:
 private:
     ~FileStreamImpl() = default;
     UUID _uuid;
-
+    std::list<Chunk> _chunks;
     friend class FileStream;
 };
 

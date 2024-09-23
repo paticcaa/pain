@@ -9,6 +9,7 @@ int main() {
     pain::Controller cntl;
     pain::core::AppendRequest request;
     pain::core::AppendResponse response;
+    cntl.request_attachment().append("hello world");
     stub.append(&cntl, &request, &response, nullptr);
     if (cntl.Failed()) {
         std::cerr << "append failed: " << cntl.ErrorText() << std::endl;
