@@ -24,7 +24,7 @@ A distributed storage system.
 ./build.py build sad
 ```
 
-Using `./build.py -h` for more informations.
+Using `./build.py -h` for more information.
 
 ## Trace
 
