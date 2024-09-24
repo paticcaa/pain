@@ -40,3 +40,5 @@ add_includedirs("src")
 
 includes("src")
 includes("protocols/pain/core")
+
+add_headerfiles("include/(pain/*.h)")

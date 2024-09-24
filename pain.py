@@ -24,37 +24,43 @@ def build_project(args):
         run_in_shell('xmake install -o output')
     pass
 
-def format_project():
+def format_project(args):
     run_in_shell('xmake format -f "src/**.h:src/**.cc:protocols/**.proto:include/**.h"')
-    run_in_shell('git --no-pager diff')
 
-def line_project():
+def line_project(args):
     run_in_shell('find include src -iname "*.h" -o -iname "*.cc" | xargs wc -l')
 
-def main(args):
-    if args.subparser_name == 'format':
-        format_project()
-    elif args.subparser_name == 'build':
-        build_project(args)
-    elif args.subparser_name == 'line':
-        line_project()
+def install_project(args):
+    if not args.rest:
+        run_in_shell('xmake install -o output')
+        return
+    for target in args.rest:
+        run_in_shell('xmake install -o output {}'.format(target))
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Description of your program')
     parser.add_argument('-g', '--global')
     subparsers = parser.add_subparsers(dest="subparser_name", required=True)
-    format_parser = subparsers.add_parser('format')
+    format_parser = subparsers.add_parser('format', aliases=['f'])
+    format_parser.set_defaults(func=format_project)
 
     config_parser = subparsers.add_parser('config')
+    config_parser.set_defaults(func=config_project)
     config_parser.add_argument('-c', '--clean', action='store_true')
     config_parser.add_argument('-m', '--mode', default='debug', choices=['debug', 'releasedbg'])
 
-    build_parser = subparsers.add_parser('build')
+    build_parser = subparsers.add_parser('build', aliases=['b'])
+    build_parser.set_defaults(func=build_project)
     build_parser.add_argument('-i', '--install', action='store_true')
     build_parser.add_argument('rest', nargs=argparse.REMAINDER)
 
     line_parser = subparsers.add_parser('line')
+    line_parser.set_defaults(func=line_project)
+
+    install_parser = subparsers.add_parser('install')
+    install_parser.set_defaults(func=install_project)
+    install_parser.add_argument('rest', nargs=argparse.REMAINDER)
 
     args = parser.parse_args()
-    main(args)
+    args.func(args)

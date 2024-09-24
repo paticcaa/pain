@@ -11,22 +11,37 @@ A distributed storage system.
 
 ## Build
 
+- Config your project with debug mode.
+
+```py
+./pain.py config -m debug
 ```
-./build.py config -m debug
 
+- Build
+
+```py
 # build and install to ${PROJECT_DIR}/output
-./build.py build --install
+./pain.py build -i/--install
+```
 
-# only build
-./build.py build
+- More commands
+
+```
+# build without install
+./pain.py build
 
 # only build sad target
-./build.py build sad
+./pain.py build sad
+
+# format your project and it's useful before pulling a request
+./pain.py format
 ```
 
-Using `./build.py -h` for more information.
+Using `./pain.py -h` for more information.
 
 ## Trace
+
+Pain supports opentelemetry. You can install jaeger using follow command.
 
 ```
 docker run --rm \
@@ -41,17 +56,17 @@ docker run --rm \
 ## SDK Examples
 
 ```c++
-#include "pain/pain.h"
-#include "spdlog/spdlog.h"
+#include <pain/pain.h>
 
 int main() {
-    spdlog::set_level(spdlog::level::debug);
     auto fs = pain::FileSystem::create("list://192.168.10.1:8001,192.168.10.2:8001,192.168.10.3:8001");
     auto file = fs->open("/tmp/hello.txt", O_CREAT | O_WRONLY);
     pain::core::FileService::Stub stub(file.get());
     pain::Controller cntl;
     pain::core::AppendRequest request;
     pain::core::AppendResponse response;
+    
+    request.set_direct_io(true);
     cntl.request_attachment().append("hello world");
     stub.append(&cntl, &request, &response, nullptr);
     if (cntl.Failed()) {
