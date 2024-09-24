@@ -44,3 +44,7 @@ jobs:
         env:
           CC: gcc-13
           CXX: g++-13
+      
+      - name: Test
+        run: |
+          xmake test -v
