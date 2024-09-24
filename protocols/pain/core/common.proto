@@ -10,3 +10,41 @@ message Pair {
   string key = 1;
   string value = 2;
 }
+
+message Location {
+  string uri = 1;
+}
+
+enum ChunkState {
+  CHUNK_STATE_INIT = 0;
+  CHUNK_STATE_OPEN = 1;
+  CHUNK_STATE_SEALED = 2;
+};
+
+message SubChunk {
+  UUID uuid = 1;
+  uint64 length = 2;
+  Location location = 3;
+}
+
+message Chunk {
+  UUID uuid = 1;
+  uint64 index = 2;   // chunk index
+  uint64 offset = 3;  // offset in file
+  uint64 length = 4;  // length of chunk
+  ChunkState state = 5;
+  repeated SubChunk sub_chunks = 6;
+}
+
+message FileMeta {
+  UUID inode = 1;
+  uint64 size = 2;
+  uint64 atime = 3;
+  uint64 mtime = 4;
+  uint64 ctime = 5;
+  uint32 mode = 6;
+  uint32 uid = 7;
+  uint32 gid = 8;
+  repeated Pair xattrs = 9;
+  repeated Chunk chunks = 10;
+}

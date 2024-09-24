@@ -25,7 +25,7 @@ message OpenRequest {
 }
 
 message OpenResponse {
-  UUID uuid = 1;
+  FileMeta file_meta = 1;
 }
 
 message CloseRequest {

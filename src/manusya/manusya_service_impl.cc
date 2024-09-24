@@ -204,7 +204,7 @@ void ManusyaServiceImpl::query_chunk(google::protobuf::RpcController* controller
     response->set_size(chunk->size());
     response->mutable_chunk_options()->set_append_out_of_order(chunk->options().append_out_of_order);
     response->mutable_chunk_options()->set_digest(chunk->options().digest);
-    response->set_chunk_state(static_cast<pain::core::manusya::ChunkState>(chunk->state()));
+    response->set_chunk_state(static_cast<pain::core::ChunkState>(chunk->state()));
 }
 
 } // namespace pain::manusya

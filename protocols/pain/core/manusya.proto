@@ -10,12 +10,6 @@ message ChunkOptions {
   bool digest = 2;
 };
 
-enum ChunkState {
-  CHUNK_STATE_INIT = 0;
-  CHUNK_STATE_OPEN = 1;
-  CHUNK_STATE_SEALED = 2;
-};
-
 message CreateChunkRequest {
   ChunkOptions chunk_options = 1;
 };
