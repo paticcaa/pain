@@ -13,6 +13,7 @@ service DevaService {
 
   rpc create_chunk(CreateChunkRequest) returns (CreateChunkResponse);
   rpc append_chunk(AppendChunkRequest) returns (AppendChunkResponse);
+  rpc remove_chunk(RemoveChunkRequest) returns (RemoveChunkResponse);
   rpc seal_chunk(SealChunkRequest) returns (SealChunkResponse);
   rpc seal_and_new_chunk(SealAndNewChunkRequest)
       returns (SealAndNewChunkResponse);
@@ -69,6 +70,12 @@ message AppendChunkRequest {
 message AppendChunkResponse {
   uint64 offset = 1;
 }
+
+message RemoveChunkRequest {
+  UUID uuid = 1;
+}
+
+message RemoveChunkResponse {}
 
 message SealChunkRequest {
   UUID uuid = 1;

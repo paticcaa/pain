@@ -1,4 +1,4 @@
-target("base")
+target("pain_base")
     set_kind("static")
     add_files("**.cc")
     add_packages("boost", {public = true})

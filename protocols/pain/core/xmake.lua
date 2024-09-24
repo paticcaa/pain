@@ -1,4 +1,4 @@
-target("core")
+target("pain_core")
     set_kind("static")
     add_files("*.proto", {proto_rootdir = "protocols", proto_public = true})
     add_rules("protobuf.cpp")
