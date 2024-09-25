@@ -1,0 +1,11 @@
+add_defines("UNIT_TEST")
+add_cxxflags("-fno-access-control")
+add_packages("gtest")
+
+target("test_base_result")
+    set_kind("binary")
+    add_files("test_result.cc")
+    add_tests("pain_base")
+    add_deps("pain_base")
+    add_deps("pain_core")
+    add_packages("uuid_v4")
