@@ -10,29 +10,35 @@ Namespace& Namespace::instance() {
 
 Namespace::Namespace() {
     _root = UUID::from_str_or_die("00000000-0000-0000-0000-000000000000");
+    _entries[_root] = {};
 }
 
 Status Namespace::load() {
     return Status::OK();
 }
 
-void Namespace::create(const UUID& parent, const std::string& name, FileType type, const UUID& inode) {
+Status Namespace::create(const UUID& parent, const std::string& name, FileType type, const UUID& inode) {
     std::unique_lock guard(_mutex);
     auto it = _entries.find(parent);
     if (it == _entries.end()) {
-        _entries[parent] = {};
+        return Status(ENOENT, "No such file or directory");
     }
     _entries[parent].push_back({inode, name, type});
+    if (type == FileType::DIRECTORY) {
+        _entries[inode] = {};
+    }
+    return Status::OK();
 }
 
-void Namespace::remove(const UUID& parent, const std::string& name) {
+Status Namespace::remove(const UUID& parent, const std::string& name) {
     std::unique_lock guard(_mutex);
     auto it = _entries.find(parent);
     if (it == _entries.end()) {
-        return;
+        return Status(ENOENT, "No such file or directory");
     }
     auto& entries = it->second;
     entries.remove_if([&name](const DirEntry& entry) { return entry.name == name; });
+    return Status::OK();
 }
 
 void Namespace::list(const UUID& parent, std::list<DirEntry>* entries) const {
@@ -66,7 +72,7 @@ Status Namespace::parse_path(const char* path, std::list<std::string_view>* comp
     return Status::OK();
 }
 
-Status Namespace::lookup(const char* path, UUID* inode) const {
+Status Namespace::lookup(const char* path, UUID* inode, FileType* file_type) const {
     std::list<std::string_view> components;
     auto status = parse_path(path, &components);
     if (!status.ok()) {
@@ -75,6 +81,7 @@ Status Namespace::lookup(const char* path, UUID* inode) const {
 
     std::unique_lock guard(_mutex);
     UUID parent = _root;
+    *file_type = FileType::DIRECTORY;
     for (const auto& component : components) {
         auto it = _entries.find(parent);
         if (it == _entries.end()) {
@@ -92,6 +99,7 @@ Status Namespace::lookup(const char* path, UUID* inode) const {
             return Status(ENOENT, "Not a directory");
         }
         parent = entry->inode;
+        *file_type = entry->type;
     }
     *inode = parent;
     return Status::OK();
