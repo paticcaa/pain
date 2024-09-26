@@ -30,7 +30,8 @@ jobs:
       - name: Installation
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgl1-mesa-dev libglu1-mesa-dev p7zip clang-format
+          sudo apt-get install -y libgl1-mesa-dev libglu1-mesa-dev p7zip clang-format-16
+          sudo ln -sf /usr/bin/clang-format-16 /usr/bin/clang-format
       
       - name: Format
         run: |
