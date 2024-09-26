@@ -20,6 +20,7 @@ add_cxxflags("-fno-omit-frame-pointer")
 
 add_requires("argparse 3.1")
 add_requires("brpc 1.10.0")
+add_requires("braft 1.1.3")
 add_requires("boost 1.81.0")
 add_requires("fmt 10.1.1", {configs = {header_only = true}})
 add_requires("gtest 1.12.1")
