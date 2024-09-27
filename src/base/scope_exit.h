@@ -4,30 +4,26 @@
 namespace pain {
 
 template <typename F>
-struct scope_exit {
+struct ScopeExit {
     F _func;
     bool _run;
-    explicit scope_exit(F f) noexcept : _func(std::move(f)), _run(true) {}
-    scope_exit(scope_exit&& rhs) noexcept : _func((rhs._run = false, std::move(rhs._func))), _run(true) {}
-    ~scope_exit() {
+    explicit ScopeExit(F f) noexcept : _func(std::move(f)), _run(true) {}
+    ScopeExit(ScopeExit&& rhs) noexcept : _func((rhs._run = false, std::move(rhs._func))), _run(true) {}
+    ~ScopeExit() noexcept {
         if (_run) {
-            _func(); // RAII semantics apply, expected not to throw
+            _func();
         }
     }
 
-    // "in place" construction expected, no default ctor provided either
-    // also unclear what should be done with the old functor, should it
-    // be called since it is no longer needed, or not since *this is not
-    // going out of scope just yet...
-    scope_exit& operator=(scope_exit&& rhs) = delete;
-    // to be explicit...
-    scope_exit(scope_exit const&) = delete;
-    scope_exit& operator=(scope_exit const&) = delete;
+    ScopeExit& operator=(ScopeExit&& rhs) = delete;
+    ScopeExit(ScopeExit const&) = delete;
+    ScopeExit& operator=(ScopeExit const&) = delete;
+    void release() noexcept { _run = false; }
 };
 
 template <typename F>
-scope_exit<F> make_scope_exit(F&& f) noexcept {
-    return scope_exit<F>{std::forward<F>(f)};
+ScopeExit<F> make_scope_exit(F&& f) noexcept {
+    return ScopeExit<F>{std::forward<F>(f)};
 }
 
 } // namespace pain
