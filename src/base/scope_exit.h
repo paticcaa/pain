@@ -18,7 +18,9 @@ struct ScopeExit {
     ScopeExit& operator=(ScopeExit&& rhs) = delete;
     ScopeExit(ScopeExit const&) = delete;
     ScopeExit& operator=(ScopeExit const&) = delete;
-    void release() noexcept { _run = false; }
+    void release() noexcept {
+        _run = false;
+    }
 };
 
 template <typename F>

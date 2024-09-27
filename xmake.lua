@@ -27,6 +27,7 @@ add_requires("gtest 1.12.1")
 add_requires("nlohmann_json v3.11.3")
 add_requires("opentelemetry-cpp 1.16.1")
 add_requires("protobuf-cpp 3.19.4", {configs = {zlib = true}})
+add_requires("rocksdb v9.0.0")
 add_requires("spdlog v1.14.1", {configs = {fmt_external = true, header_only = true}})
 add_requires("uuid_v4 1.0.0")
 
