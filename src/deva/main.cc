@@ -5,6 +5,7 @@
 #include "base/spdlog_sink.h"
 #include "base/tracer.h"
 #include "deva/deva_service_impl.h"
+#include "rsm.h"
 
 DEFINE_string(deva_listen_address, "127.0.0.1:8001", "Listen address of deva");
 DEFINE_int32(idle_timeout_s,
@@ -50,6 +51,12 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
+    auto rsm = pain::deva::default_rsm();
+    rsm->start();
     server.RunUntilAskedToQuit();
+    rsm->shutdown();
+    server.Stop(0);
+    rsm->join();
+    server.Join();
     return 0;
 }

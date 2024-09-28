@@ -1,4 +1,5 @@
 #include "deva/deva_service_impl.h"
+#include "deva/bridge.h"
 
 namespace pain::deva {
 
@@ -7,7 +8,9 @@ DevaServiceImpl::DevaServiceImpl() {}
 void DevaServiceImpl::open(::google::protobuf::RpcController* controller,
                            const pain::core::deva::OpenRequest* request,
                            pain::core::deva::OpenResponse* response,
-                           ::google::protobuf::Closure* done) {}
+                           ::google::protobuf::Closure* done) {
+    bridge<OpType::OPEN>(controller, request, response, done);
+}
 
 void DevaServiceImpl::close(::google::protobuf::RpcController* controller,
                             const pain::core::deva::CloseRequest* request,
