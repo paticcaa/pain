@@ -1,38 +1,7 @@
 syntax = "proto3";
-package pain.core.deva;
+package pain.core.deva.store;
 
 import "pain/core/common.proto";
-
-option cc_generic_services = true;
-
-service DevaService {
-  rpc create(CreateRequest) returns (CreateResponse);
-  rpc open(OpenRequest) returns (OpenResponse);
-  rpc close(CloseRequest) returns (CloseResponse);
-  rpc remove(RemoveRequest) returns (RemoveResponse);
-  rpc seal(SealRequest) returns (SealResponse);
-
-  rpc create_chunk(CreateChunkRequest) returns (CreateChunkResponse);
-  rpc append_chunk(AppendChunkRequest) returns (AppendChunkResponse);
-  rpc remove_chunk(RemoveChunkRequest) returns (RemoveChunkResponse);
-  rpc seal_chunk(SealChunkRequest) returns (SealChunkResponse);
-  rpc seal_and_new_chunk(SealAndNewChunkRequest)
-      returns (SealAndNewChunkResponse);
-}
-
-message CreatePoolRequest {
-  UUID uuid = 1;
-}
-
-message CreatePoolResponse {}
-
-message CreateRequest {
-  UUID pool = 1;
-}
-
-message CreateResponse {
-  UUID uuid = 1;
-}
 
 message OpenRequest {
   UUID pool = 1;
@@ -90,7 +59,8 @@ message AppendChunkRequest {
 }
 
 message AppendChunkResponse {
-  uint64 offset = 1;
+  UUID pool = 1;
+  UUID uuid = 2;
 }
 
 message RemoveChunkRequest {

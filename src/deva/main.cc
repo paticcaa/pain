@@ -5,7 +5,7 @@
 #include "base/spdlog_sink.h"
 #include "base/tracer.h"
 #include "deva/deva_service_impl.h"
-#include "rsm.h"
+#include "deva/rsm.h"
 
 DEFINE_string(deva_listen_address, "127.0.0.1:8001", "Listen address of deva");
 DEFINE_int32(idle_timeout_s,

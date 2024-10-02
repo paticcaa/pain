@@ -7,15 +7,22 @@
 
 namespace pain::sad {
 namespace manusya {
-
 Status execute(argparse::ArgumentParser& parser);
-
 } // namespace manusya
+
+namespace deva {
+Status execute(argparse::ArgumentParser& parser);
+} // namespace deva
 
 Status execute(argparse::ArgumentParser& parser) {
     if (parser.is_subcommand_used("manusya")) {
         SPAN(span, "manusya");
         return manusya::execute(parser.at<argparse::ArgumentParser>("manusya"));
+    }
+
+    if (parser.is_subcommand_used("deva")) {
+        SPAN(span, "deva");
+        return deva::execute(parser.at<argparse::ArgumentParser>("deva"));
     }
     std::cerr << parser;
     std::exit(1);

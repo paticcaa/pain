@@ -3,7 +3,7 @@
 #include <braft/raft.h>    // braft::Node braft::StateMachine
 #include <braft/storage.h> // braft::SnapshotWriter
 #include <boost/intrusive_ptr.hpp>
-#include "base/types.h"
+#include "deva/deva.h"
 
 namespace pain::deva {
 
@@ -48,6 +48,10 @@ public:
     void on_stop_following(const ::braft::LeaderChangeContext& ctx);
     void on_start_following(const ::braft::LeaderChangeContext& ctx);
 
+    DevaPtr deva() {
+        return _deva;
+    }
+
 private:
     braft::Node* volatile _node;
     butil::atomic<int64_t> _leader_term;
@@ -63,6 +67,8 @@ private:
             delete rsm;
         }
     }
+
+    DevaPtr _deva;
 };
 
 RsmPtr default_rsm();

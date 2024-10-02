@@ -234,19 +234,13 @@ public:
     }
 
     Promise(Promise&& other) noexcept {
-        if (_state && !_state->available()) {
-            _state->set_exception(std::make_exception_ptr(std::runtime_error("Broken Promise")));
-        }
-        _state = std::move(other._state);
+        _state = std::exchange(other._state, nullptr);
         _state->promise = this;
     }
 
     Promise& operator=(Promise&& other) noexcept {
         if (this == &other) {
             return *this;
-        }
-        if (_state && !_state->available()) {
-            _state->set_exception(std::make_exception_ptr(std::runtime_error("Broken Promise")));
         }
         _state = std::move(other._state);
         _state->promise = this;
@@ -293,19 +287,13 @@ public:
     }
 
     Promise(Promise&& other) noexcept {
-        if (_state && !_state->available()) {
-            _state->set_exception(std::make_exception_ptr(std::runtime_error("Broken Promise")));
-        }
-        _state = std::move(other._state);
+        _state = std::exchange(other._state, nullptr);
         _state->promise = this;
     }
 
     Promise& operator=(Promise&& other) noexcept {
         if (this == &other) {
             return *this;
-        }
-        if (_state && !_state->available()) {
-            _state->set_exception(std::make_exception_ptr(std::runtime_error("Broken Promise")));
         }
         _state = std::move(other._state);
         _state->promise = this;

@@ -1,21 +1,22 @@
 #pragma once
 #include <atomic>
 #include <cstdint>
+#include <fmt/format.h>
 #include <boost/intrusive_ptr.hpp>
 #include "base/types.h"
 
 namespace pain::deva {
 
 enum class OpType {
-    INVALIDE = 0,
-    OPEN = 1,
-    CLOSE = 2,
-    REMOVE = 3,
-    SEAL = 4,
-    CREATE_CHUNK = 5,
-    REMOVE_CHUNK = 6,
-    SEAL_CHUNK = 7,
-    SEAL_AND_NEW_CHUNK = 8,
+    kInvalid = 0,
+    kOpen = 1,
+    kClose = 2,
+    kRemove = 3,
+    kSeal = 4,
+    kCreateChunk = 5,
+    kRemoveChunk = 6,
+    kSealChunk = 7,
+    kSealAndNewChunk = 8,
 };
 
 struct OpMeta {
@@ -36,7 +37,8 @@ public:
     virtual ~Op() = default;
     virtual OpType type() const = 0;
     virtual void apply() = 0;
-    virtual void on_apply() = 0;
+    virtual void on_apply(int64_t index) = 0;
+    virtual void on_finish(Status status) = 0;
     virtual void encode(IOBuf* buf) = 0;
     virtual void decode(IOBuf* buf) = 0;
 
@@ -52,7 +54,30 @@ private:
     }
 };
 
+class Rsm;
+using RsmPtr = boost::intrusive_ptr<Rsm>;
+
 void encode(OpPtr op, IOBuf* buf);
-OpPtr decode(IOBuf* buf);
+OpPtr decode(IOBuf* buf, RsmPtr rsm);
 
 } // namespace pain::deva
+
+template <>
+struct fmt::formatter<pain::deva::OpType> : public fmt::formatter<std::string_view> {
+    template <typename FormatContext>
+    auto format(pain::deva::OpType type, FormatContext& ctx) const {
+        std::string_view name;
+        switch (type) {
+        case pain::deva::OpType::kOpen: name = "Open"; break;
+        case pain::deva::OpType::kClose: name = "Close"; break;
+        case pain::deva::OpType::kRemove: name = "Remove"; break;
+        case pain::deva::OpType::kSeal: name = "Seal"; break;
+        case pain::deva::OpType::kCreateChunk: name = "CreateChunk"; break;
+        case pain::deva::OpType::kRemoveChunk: name = "RemoveChunk"; break;
+        case pain::deva::OpType::kSealChunk: name = "SealChunk"; break;
+        case pain::deva::OpType::kSealAndNewChunk: name = "SealAndNewChunk"; break;
+        default: name = "Invalid"; break;
+        }
+        return fmt::formatter<std::string_view>::format(name, ctx);
+    }
+};

@@ -10,8 +10,7 @@
 #include <gflags/gflags.h>       // DEFINE_*
 #include <sys/types.h>           // O_CREAT
 #include "base/plog.h"
-#include "base/tracer.h"
-#include "base/types.h"
+#include "deva/bridge.h"
 #include "deva/op.h"
 
 DEFINE_bool(check_term, true, "Check if the leader changed to another term");
@@ -25,7 +24,7 @@ DECLARE_string(deva_listen_address);
 
 namespace pain::deva {
 
-Rsm::Rsm(int id) : _node(NULL), _leader_term(-1), _id(id) {}
+Rsm::Rsm(int id) : _node(NULL), _leader_term(-1), _id(id), _deva(new Deva) {}
 Rsm::~Rsm() {
     delete _node;
 }
@@ -63,7 +62,10 @@ int Rsm::start() {
 }
 
 bool Rsm::is_leader() const {
-    return _leader_term.load(butil::memory_order_acquire) > 0;
+    if (!_node) {
+        return false;
+    }
+    return _node->is_leader();
 }
 
 void Rsm::shutdown() {
@@ -90,15 +92,17 @@ void Rsm::on_apply(braft::Iterator& iter) {
         butil::IOBuf data;
         off_t offset = 0;
         if (iter.done()) {
-            // Do nothing
+            // Run at closure_guard destructed
+            auto c = static_cast<OpClosure*>(iter.done());
+            c->set_index(iter.index());
         } else {
             butil::IOBuf saved_log = iter.data();
-            auto op = decode(&saved_log);
-            op->on_apply();
+            auto op = decode(&saved_log, this);
+            op->on_apply(iter.index());
         }
 
-        LOG_IF(INFO, FLAGS_log_applied_task) << "Write " << data.size() << " bytes"
-                                             << " from offset=" << offset << " at log_index=" << iter.index();
+        LOG(INFO) << "Write " << data.size() << " bytes"
+                  << " from offset=" << offset << " at log_index=" << iter.index();
     }
 }
 

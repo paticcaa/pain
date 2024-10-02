@@ -1,5 +1,4 @@
 #include "deva/namespace.h"
-#include <cerrno>
 
 namespace pain::deva {
 

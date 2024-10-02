@@ -1,5 +1,9 @@
 #include "deva/deva_service_impl.h"
+#include <brpc/closure_guard.h>
+
+#include "pain/core/deva_store.pb.h"
 #include "deva/bridge.h"
+#include "deva/macro.h"
 
 namespace pain::deva {
 
@@ -9,7 +13,19 @@ void DevaServiceImpl::open(::google::protobuf::RpcController* controller,
                            const pain::core::deva::OpenRequest* request,
                            pain::core::deva::OpenResponse* response,
                            ::google::protobuf::Closure* done) {
-    bridge<OpType::OPEN>(controller, request, response, done);
+    brpc::ClosureGuard done_guard(done);
+    DEFINE_SPAN(span, controller);
+    core::deva::store::OpenRequest req;
+    core::deva::store::OpenResponse resp;
+
+    req.mutable_uuid()->CopyFrom(request->uuid());
+
+    auto status = bridge<OpType::kOpen>(req, &resp).get();
+    if (!status.ok()) {
+        cntl->SetFailed(status.error_code(), "%s", status.error_cstr());
+    }
+
+    response->mutable_file_meta()->Swap(resp.mutable_file_meta());
 }
 
 void DevaServiceImpl::close(::google::protobuf::RpcController* controller,

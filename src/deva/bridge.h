@@ -1,12 +1,12 @@
 #pragma once
 
 #include <braft/raft.h>
+#include <functional>
+#include "base/future.h"
+#include "base/plog.h"
 #include "base/types.h"
 #include "deva/op.h"
 #include "deva/rsm.h"
-#include "google/protobuf/message.h"
-#include "google/protobuf/service.h"
-#include "google/protobuf/stubs/callback.h"
 
 namespace pain::deva {
 
@@ -15,36 +15,36 @@ public:
     OpClosure(OpPtr op) : _op(op) {}
 
     void Run() {
-        _op->on_apply();
-        delete this;
+        std::unique_ptr<OpClosure> guard(this);
+        if (status().ok()) {
+            _op->on_apply(_index);
+            return;
+        }
+        _op->on_finish(status());
+    }
+
+    void set_index(int64_t index) {
+        _index = index;
     }
 
 private:
+    int64_t _index = 0;
     OpPtr _op;
 };
 
+OpPtr decode(OpType op_type, IOBuf* buf, RsmPtr rsm);
+
 template <typename Request, typename Response>
-class BaseOp : public Op {
+class DevaOp : public Op {
 public:
-    using Task = std::move_only_function<void(const Request*, Response*)>;
-    BaseOp(OpType type,
-           Task task,
-           RsmPtr rsm,
-           ::google::protobuf::RpcController* controller = nullptr,
-           const google::protobuf::Message* request = nullptr,
-           google::protobuf::Message* response = nullptr,
-           google::protobuf::Closure* done = nullptr) :
+    using OnFinish = std::move_only_function<void(Status)>;
+    DevaOp(OpType type, RsmPtr rsm, Request request, Response* response = nullptr, OnFinish finish = nullptr) :
         _type(type),
-        _task(std::move(task)),
         _rsm(rsm),
-        _controller(controller),
-        _request(request),
+        _request(std::move(request)),
         _response(response),
-        _done(done) {
-        if (_request == nullptr) {
-            _request = &_internal_request;
-        }
-        if (_response == nullptr) {
+        _finish(std::move(finish)) {
+        if (response == nullptr) {
             _response = &_internal_response;
         }
     }
@@ -56,56 +56,69 @@ public:
     void apply() override {
         braft::Task task;
         IOBuf buf;
-        encode(&buf);
+        OpPtr self(this);
+        pain::deva::encode(self, &buf);
         task.data = &buf;
-        task.done = new OpClosure(this);
+        task.done = new OpClosure(self);
         task.expected_term = -1;
         _rsm->apply(task);
+        PLOG_DEBUG(("desc", "apply op")("type", _type));
     }
 
-    void on_apply() override {
-        _task(static_cast<const Request*>(_request), static_cast<Response*>(_response));
-        if (_done) {
-            _done->Run();
-        }
+    void on_apply(int64_t index) override {
+        PLOG_DEBUG(("desc", "on apply op")("type", _type)("index", index));
+        auto status = _rsm->deva()->process(&_request, _response, index);
+        on_finish(std::move(status));
     }
 
     void encode(IOBuf* buf) override {
         butil::IOBufAsZeroCopyOutputStream wrapper(buf);
-        if (!_request->SerializeToZeroCopyStream(&wrapper)) {
+        if (!_request.SerializeToZeroCopyStream(&wrapper)) {
             BOOST_ASSERT_MSG(false, "serialize response failed");
         }
     }
 
     void decode(IOBuf* buf) override {
         butil::IOBufAsZeroCopyInputStream wrapper(*buf);
-        if (!_internal_request.ParseFromZeroCopyStream(&wrapper)) {
+        if (!_request.ParseFromZeroCopyStream(&wrapper)) {
             BOOST_ASSERT_MSG(false, "parse request failed");
+        }
+    }
+
+    void on_finish(Status status) override {
+        PLOG_DEBUG(("desc", "on finish op")("type", _type)("status", status.error_str()));
+        if (_finish) {
+            _finish(std::move(status));
         }
     }
 
 private:
     OpType _type;
-    Task _task;
+    OnFinish _finish;
     RsmPtr _rsm;
-    ::google::protobuf::RpcController* _controller;
-    const google::protobuf::Message* _request;
-    google::protobuf::Message* _response;
-    google::protobuf::Closure* _done;
-
-    Request _internal_request;
+    Request _request;
+    Response* _response;
     Response _internal_response;
 };
 
 template <OpType OpType, typename Request, typename Response>
-void bridge(google::protobuf::RpcController* controller,
-            const Request* request,
-            Response* response,
-            google::protobuf::Closure* done) {
+void bridge(const Request& request, Response* response, std::move_only_function<void(Status)> cb) {
+    // TODO: get rsm by pool id and partition id
     auto rsm = default_rsm();
-    auto op = new BaseOp<Request, Response>(
-        OpType, [](auto* request, auto* response) {}, rsm, controller, request, response, done);
-    op->apply();
+    (new DevaOp<Request, Response>(OpType, rsm, request, response, [cb = std::move(cb)](Status status) mutable {
+        cb(std::move(status));
+    }))->apply();
+}
+
+// Future style
+template <OpType OpType, typename Request, typename Response>
+Future<Status> bridge(const Request& request, Response* response) {
+    Promise<Status> promise;
+    auto future = promise.get_future();
+    bridge<OpType>(request, response, [promise = std::move(promise)](Status status) mutable {
+        promise.set_value(std::move(status));
+    });
+    return future;
 }
 
 } // namespace pain::deva
