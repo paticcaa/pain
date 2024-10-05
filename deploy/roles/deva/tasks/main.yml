@@ -1,0 +1,79 @@
+---
+
+- name: deploy deva
+  tags:
+    - start
+    - deva
+    - start-deva
+  vars:
+    main_nodes_ips_with_port: "{% for host in groups['deva'] %}{{hostvars[host]['ansible_default_ipv4']['address']}}:{{listen_port}},{% endfor %}"
+    gflags_: "{% for flag in gflags %}--{{ flag }}={{ gflags[flag] }} {% endfor %}"
+  block:
+    - name: debug
+      debug:
+        var: gflags
+    - name: copy files
+      copy: src={{ playbook_dir }}/../output/bin/deva dest={{ ansible_user_dir }}/deployment/deva/ mode=0775
+    - name: create working dir
+      file: path={{ ansible_user_dir }}/deployment/deva/{{ listen_port }} state=directory
+    - name: start deva
+      shell:
+        chdir: ./deployment/deva/{{ listen_port }}
+        cmd: >
+          start-stop-daemon --output $(pwd)/stdout.log --start --chdir $(pwd) --pidfile deva.pid --make-pidfile --background 
+          --exec $(pwd)/../deva -- --deva_listen_address={{ ansible_default_ipv4.address }}:{{ listen_port }} --conf={{ main_nodes_ips_with_port }} {{ gflags_ }}
+
+- name: stop deva
+  tags:
+    - stop
+    - stop-deva
+  block:
+    - name: stop deva
+      shell: 
+        chdir: "{{ ansible_user_dir }}/deployment/deva/{{ listen_port }}"
+        cmd: >
+          start-stop-daemon --stop --pidfile deva.pid --remove-pidfile
+      ignore_errors: yes
+
+
+- name: status deva
+  tags:
+    - status
+    - deva
+    - status-deva
+  block:
+    - name: status deva
+      shell: 
+        chdir: ./deployment/deva/{{ listen_port }}
+        cmd: |
+          start-stop-daemon --status --pidfile deva.pid && exit_status=$? || exit_status=$?
+          case "$exit_status" in
+              0)
+                  echo "Running"
+                  ;;
+              1)
+                  echo "Stopped but pid existed"
+                  ;;
+              3)
+                  echo "Stopped"
+                  ;;
+              *)
+                  echo "Unknown exit status: $exit_status"
+                  ;;
+          esac
+      register: output
+    - debug:
+        msg: "{{ output.stdout }}"
+
+- name: clean deva
+  tags:
+    - clean
+    - clean-deva
+  block:
+    - name: stop deva
+      shell: 
+        chdir: ./deployment/deva/{{ listen_port }}
+        cmd: >
+          start-stop-daemon --stop --pidfile deva.pid
+    - name: remove working dir
+      file: path=./deployment/deva/{{ listen_port }} state=absent

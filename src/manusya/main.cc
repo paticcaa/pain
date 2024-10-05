@@ -6,7 +6,7 @@
 #include "manusya/bank.h"
 #include "manusya/manusya_service_impl.h"
 
-DEFINE_int32(port, 8003, "TCP Port of this server");
+DEFINE_string(manusya_listen_address, "127.0.0.1:8101", "Listen address of manusya");
 DEFINE_int32(idle_timeout_s,
              -1,
              "Connection will be closed if there is no "
@@ -46,7 +46,7 @@ int main(int argc, char* argv[]) {
 
     brpc::ServerOptions options;
     options.idle_timeout_sec = FLAGS_idle_timeout_s;
-    if (server.Start(FLAGS_port, &options) != 0) {
+    if (server.Start(FLAGS_manusya_listen_address.c_str(), &options) != 0) {
         LOG(ERROR) << "Fail to start EchoServer";
         return -1;
     }

@@ -1,0 +1,84 @@
+---
+
+- name: deploy manusya
+  tags:
+    - start
+    - manusya
+    - start-manusya
+  vars:
+    gflags_: "{% for flag in gflags %}--{{ flag }}={{ gflags[flag] }} {% endfor %}"
+  block:
+    - name: debug
+      debug:
+        var: gflags
+    - name: copy files
+      copy: src={{ playbook_dir }}/../output/bin/manusya dest=./deployment/manusya/ mode=0775
+    - name: create working dir
+      file: path=./deployment/manusya/{{ listen_port }} state=directory
+    - name: start manusya
+      shell:
+        chdir: ./deployment/manusya/{{ listen_port }}
+        cmd: >
+          start-stop-daemon --output $(pwd)/stdout.log --start --chdir $(pwd) --pidfile manusya.pid --make-pidfile --background 
+          --exec $(pwd)/../manusya -- --manusya_listen_address={{ ansible_default_ipv4.address }}:{{ listen_port }} {{ gflags_ }}
+    - name: wait for manusya
+      wait_for:
+        port: "{{ listen_port }}"
+        delay: 5
+        timeout: 60
+        state: started
+
+  
+- name: stop manusya
+  tags:
+    - stop
+    - stop-manusya
+  block:
+    - name: stop manusya
+      shell: 
+        chdir: ./deployment/manusya/{{ listen_port }}
+        cmd: >
+          start-stop-daemon --stop --pidfile manusya.pid
+      ignore_errors: yes 
+
+- name: status manusya
+  tags:
+    - status
+    - manusya
+    - status-manusya
+  block:
+    - name: status manusya
+      shell: 
+        chdir: ./deployment/manusya/{{ listen_port }}
+        cmd: |
+          start-stop-daemon --status --pidfile manusya.pid && exit_status=$? || exit_status=$?
+          case "$exit_status" in
+              0)
+                  echo "Running"
+                  ;;
+              1)
+                  echo "Stopped but pid existed"
+                  ;;
+              3)
+                  echo "Stopped"
+                  ;;
+              *)
+                  echo "Unknown exit status: $exit_status"
+                  ;;
+          esac
+      register: output
+    - debug:
+        msg: "{{ output.stdout }}"
+
+- name: clean manusya
+  tags:
+    - clean
+    - clean-manusya
+  block:
+    - name: stop manusya
+      shell: 
+        chdir: ./deployment/manusya/{{ listen_port }}
+        cmd: >
+          start-stop-daemon --stop --pidfile manusya.pid --remove-pidfile
+    - name: remove working dir
+      file: path=./deployment/manusya/{{ listen_port }} state=absent

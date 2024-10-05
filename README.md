@@ -8,6 +8,18 @@ A distributed storage system.
 
 - xmake
 - python3
+- ansible
+
+```
+# install xmake
+curl -fsSL https://xmake.io/shget.text | bash
+
+# install ansible
+sudo apt install ansible
+
+# install prometheus roles
+ansible-galaxy collection install prometheus.prometheus
+```
 
 ## Build
 
@@ -38,6 +50,21 @@ A distributed storage system.
 ```
 
 Using `./pain.py -h` for more information.
+
+## Deploy
+
+Pain provide a easy ansible script to deploy minimal cluster
+
+```
+# deploy deva/manusya
+ansible-playbook -i ./deploy/hosts ./deploy/deploy.yml -t start
+
+# deploy jaeger
+ansible-playbook -i ./deploy/hosts ./deploy/deploy.yml -t start-jaeger
+
+# deploy promethues
+ansible-playbook -i ./deploy/hosts ./deploy/deploy.yml -t start-prometheus
+```
 
 ## Trace
 

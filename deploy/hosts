@@ -1,0 +1,13 @@
+[deva]
+node1 ansible_ssh_host=127.0.0.1 listen_port=8001
+node2 ansible_ssh_host=127.0.0.1 listen_port=8002
+node3 ansible_ssh_host=127.0.0.1 listen_port=8003
+
+[manusya]
+node4 ansible_ssh_host=127.0.0.1 listen_port=8101
+
+[jaeger]
+node5 ansible_ssh_host=127.0.0.1
+
+[prometheus]
+node6 ansible_ssh_host=127.0.0.1
