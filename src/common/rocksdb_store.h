@@ -1,10 +1,10 @@
 #pragma once
-#include "deva/store.h"
+#include "common/store.h"
 
 namespace rocksdb {
 class DB;
 }
-namespace pain::deva {
+namespace pain::common {
 class RocksdbStore;
 using RocksdbStorePtr = boost::intrusive_ptr<RocksdbStore>;
 class RocksdbStore : public Store {
@@ -22,6 +22,7 @@ public:
     Status hdel(std::string_view key, std::string_view field) override;
     Status hlen(std::string_view key, size_t* len) override;
     std::shared_ptr<Iterator> hgetall(std::string_view key) override;
+    bool hexists(std::string_view key, std::string_view field) override;
 
 private:
     std::string make_key(std::string_view key, std::string_view field) const;
@@ -30,4 +31,4 @@ private:
     rocksdb::DB* _db;
 };
 
-} // namespace pain::deva
+} // namespace pain::common

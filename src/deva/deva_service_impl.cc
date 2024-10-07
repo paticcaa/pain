@@ -3,6 +3,7 @@
 
 #include "pain/core/deva_store.pb.h"
 #include "deva/bridge.h"
+#include "deva/deva.h"
 #include "deva/macro.h"
 
 namespace pain::deva {
@@ -20,7 +21,7 @@ void DevaServiceImpl::open(::google::protobuf::RpcController* controller,
 
     req.mutable_uuid()->CopyFrom(request->uuid());
 
-    auto status = bridge<OpType::kOpen>(req, &resp).get();
+    auto status = bridge<Deva, OpType::kOpen>(req, &resp).get();
     if (!status.ok()) {
         cntl->SetFailed(status.error_code(), "%s", status.error_cstr());
     }

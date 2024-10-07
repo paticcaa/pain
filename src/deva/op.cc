@@ -1,7 +1,7 @@
 #include "deva/op.h"
+#include <functional>
 #include "butil/iobuf.h"
 #include "butil/time.h"
-#include "deva/bridge.h"
 
 namespace pain::deva {
 
@@ -18,7 +18,7 @@ void encode(OpPtr op, IOBuf* buf) {
     buf->append(meta);
 }
 
-OpPtr decode(IOBuf* buf, RsmPtr rsm) {
+OpPtr decode(IOBuf* buf, std::move_only_function<OpPtr(OpType, IOBuf*)> decode) {
     OpMeta op_meta = {};
     static_assert(sizeof(op_meta) == 64, "OpMeta size must be 64byte");
     uint32_t meta_size = 0;
@@ -26,7 +26,7 @@ OpPtr decode(IOBuf* buf, RsmPtr rsm) {
     meta_size = op_meta.size;
     butil::IOBuf meta;
     buf->cutn(&meta, meta_size);
-    auto op = decode(op_meta.type, &meta, rsm);
+    auto op = decode(op_meta.type, &meta);
     return op;
 }
 

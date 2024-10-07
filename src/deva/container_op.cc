@@ -1,19 +1,25 @@
-#include "deva/bridge.h"
+#include "deva/container_op.h"
 #include <boost/assert.hpp>
+#include "pain/core/deva_store.pb.h"
 #include "base/types.h"
+#include "deva/deva.h"
 
 namespace pain::deva {
 
 template <OpType OpType, typename Request, typename Response>
-OpPtr create(IOBuf* buf, RsmPtr rsm) {
+OpPtr create(RsmPtr rsm) {
     Request request;
-    auto op = new DevaOp<Request, Response>(OpType, rsm, request, nullptr);
+    OpPtr op = nullptr;
+
+    if constexpr (static_cast<int>(OpType) < 100) {
+        op = new ContainerOp<Deva, Request, Response>(OpType, rsm, request, nullptr);
+    }
     return op;
 }
 
 #define BRANCH(name)                                                                                                   \
     case OpType::k##name:                                                                                              \
-        return create<OpType::k##name, core::deva::store::name##Request, core::deva::store::name##Response>(buf, rsm); \
+        return create<OpType::k##name, core::deva::store::name##Request, core::deva::store::name##Response>(rsm);      \
         break;
 
 OpPtr decode(OpType op_type, IOBuf* buf, RsmPtr rsm) {

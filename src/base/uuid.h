@@ -54,5 +54,10 @@ public:
         auto uuid = UUIDv4::UUID::fromStrFactory(str);
         return UUID(uuid);
     }
+
+    static UUID generate() {
+        static thread_local UUIDv4::UUIDGenerator<std::mt19937_64> uuid_gen;
+        return UUID(uuid_gen.getUUID());
+    }
 };
 } // namespace pain

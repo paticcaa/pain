@@ -3,6 +3,7 @@
 #include <boost/intrusive_ptr.hpp>
 #include "pain/core/deva_store.pb.h"
 #include "base/types.h"
+#include "deva/container.h"
 
 #define DEVA_ENTRY(name)                                                                                               \
     Status name(const pain::core::deva::store::name##Request* request,                                                 \
@@ -18,7 +19,7 @@ namespace pain::deva {
 
 class Deva;
 using DevaPtr = boost::intrusive_ptr<Deva>;
-class Deva {
+class Deva : public Container {
 public:
     DEVA_ENTRY(Open);
     DEVA_ENTRY(Close);
@@ -28,6 +29,9 @@ public:
     DEVA_ENTRY(RemoveChunk);
     DEVA_ENTRY(SealChunk);
     DEVA_ENTRY(SealAndNewChunk);
+
+    Status save_snapshot(std::string_view path, std::vector<std::string>* files) override;
+    Status load_snapshot(std::string_view path) override;
 
 private:
     std::atomic<int> _use_count = {};

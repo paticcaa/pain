@@ -7,25 +7,25 @@
 #include <fmt/format.h>
 #include <argparse/argparse.hpp>
 
-#include "pain/core/deva.pb.h"
+#include "pain/core/asura.pb.h"
 #include "base/tracer.h"
 #include "base/types.h"
 #include "base/uuid.h"
 #include "sad/common.h"
 #include "sad/macro.h"
 
-#define DEVA_CMD(cmd) REGISTER(cmd, deva_parser)
+#define ASURA_CMD(cmd) REGISTER(cmd, asura_parser)
 
 namespace pain::sad {
 argparse::ArgumentParser& program();
 }
-namespace pain::sad::deva {
-argparse::ArgumentParser deva_parser("deva", "1.0", argparse::default_arguments::none);
+namespace pain::sad::asura {
+argparse::ArgumentParser asura_parser("asura", "1.0", argparse::default_arguments::none);
 
-RUN(program().add_subparser(deva_parser));
-RUN(deva_parser.add_description("send cmd to deva server")
+RUN(program().add_subparser(asura_parser));
+RUN(asura_parser.add_description("send cmd to asura server")
         .add_argument("--host")
-        .default_value(std::string("127.0.0.1:8001")));
+        .default_value(std::string("127.0.0.1:8201")));
 
 static std::map<std::string, std::function<Status(argparse::ArgumentParser&)>> subcommands = {};
 
@@ -51,16 +51,15 @@ Status execute(argparse::ArgumentParser& parser) {
     std::exit(1);
 }
 
-DEVA_CMD(open)
-RUN(ARGS(open).add_description("open file").add_argument("--uuid").required())
-COMMAND(open) {
+ASURA_CMD(register_deva)
+RUN(ARGS(register_deva).add_description("add deva"))
+RUN(ARGS(register_deva).add_argument("--ip").required())
+RUN(ARGS(register_deva).add_argument("--port").default_value(0u).scan<'i', uint32_t>().required())
+COMMAND(register_deva) {
     SPAN(span);
     auto host = args.get<std::string>("--host");
-    auto uuid = args.get<std::string>("--uuid");
-
-    if (!UUID::valid(uuid)) {
-        return Status(EINVAL, "Invalid uuid id");
-    }
+    auto ip = args.get<std::string>("--ip");
+    auto port = args.get<uint32_t>("--port");
 
     brpc::Channel channel;
     brpc::ChannelOptions options;
@@ -72,15 +71,18 @@ COMMAND(open) {
     }
 
     brpc::Controller cntl;
-    pain::core::deva::OpenRequest request;
-    pain::core::deva::OpenResponse response;
-    pain::core::deva::DevaService::Stub stub(&channel);
+    pain::core::asura::RegisterDevaRequest request;
+    pain::core::asura::RegisterDevaResponse response;
+    pain::core::asura::TopologyService::Stub stub(&channel);
     pain::inject_tracer(&cntl);
 
-    auto id = pain::UUID::from_str_or_die(uuid);
-    request.mutable_uuid()->set_low(id.low());
-    request.mutable_uuid()->set_high(id.high());
-    stub.open(&cntl, &request, &response, nullptr);
+    auto id = pain::UUID::generate();
+    auto deva_server = request.add_deva_servers();
+    deva_server->mutable_id()->set_low(id.low());
+    deva_server->mutable_id()->set_high(id.high());
+    deva_server->set_ip(ip);
+    deva_server->set_port(port);
+    stub.RegisterDeva(&cntl, &request, &response, nullptr);
     if (cntl.Failed()) {
         return Status(cntl.ErrorCode(), cntl.ErrorText());
     }
@@ -89,4 +91,4 @@ COMMAND(open) {
     return Status::OK();
 }
 
-} // namespace pain::sad::deva
+} // namespace pain::sad::asura

@@ -9,6 +9,7 @@ namespace pain::deva {
 
 enum class OpType {
     kInvalid = 0,
+    // DevaOp: 1 ~ 100
     kOpen = 1,
     kClose = 2,
     kRemove = 3,
@@ -58,7 +59,7 @@ class Rsm;
 using RsmPtr = boost::intrusive_ptr<Rsm>;
 
 void encode(OpPtr op, IOBuf* buf);
-OpPtr decode(IOBuf* buf, RsmPtr rsm);
+OpPtr decode(IOBuf* buf, std::move_only_function<OpPtr(OpType, IOBuf*)> decode);
 
 } // namespace pain::deva
 

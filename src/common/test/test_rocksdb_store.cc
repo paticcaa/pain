@@ -4,10 +4,10 @@
 #include <fmt/ranges.h>
 #include <fmt/std.h>
 
-#include "deva/rocksdb_store.h"
+#include "common/rocksdb_store.h"
 
 using namespace pain;
-using namespace pain::deva;
+using namespace pain::common;
 
 class RocksdbStoreTest : public testing::Test {
 protected:
@@ -91,6 +91,19 @@ TEST_F(RocksdbStoreTest, hsetget) {
     ASSERT_TRUE(status.ok()) << status.error_str();
     create_data(store);
     check(store);
+    store->close();
+}
+
+TEST_F(RocksdbStoreTest, hexists) {
+    RocksdbStorePtr store;
+    auto status = RocksdbStore::open("./test_rocksdb", &store);
+    ASSERT_TRUE(status.ok()) << status.error_str();
+    create_data(store);
+    check(store);
+    bool exists = store->hexists("pain", "name");
+    ASSERT_TRUE(exists);
+    exists = store->hexists("pain", "not_exists");
+    ASSERT_FALSE(exists);
     store->close();
 }
 

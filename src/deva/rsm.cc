@@ -10,8 +10,8 @@
 #include <gflags/gflags.h>       // DEFINE_*
 #include <sys/types.h>           // O_CREAT
 #include "base/plog.h"
-#include "deva/bridge.h"
-#include "deva/op.h"
+#include "deva/container.h"
+#include "deva/container_op.h"
 
 DEFINE_bool(check_term, true, "Check if the leader changed to another term");
 DEFINE_bool(disable_cli, false, "Don't allow raft_cli access this node");
@@ -24,7 +24,11 @@ DECLARE_string(deva_listen_address);
 
 namespace pain::deva {
 
-Rsm::Rsm(int id) : _node(NULL), _leader_term(-1), _id(id), _deva(new Deva) {}
+Rsm::Rsm(const std::string& group, ContainerPtr container) :
+    _node(NULL),
+    _leader_term(-1),
+    _group(group),
+    _container(container) {}
 Rsm::~Rsm() {
     delete _node;
 }
@@ -47,11 +51,11 @@ int Rsm::start() {
     node_options.node_owns_fsm = false;
     node_options.snapshot_interval_s = FLAGS_snapshot_interval;
     std::string prefix = "local://" + FLAGS_data_path;
-    node_options.log_uri = fmt::format("{}/{}/log", prefix, _id);
-    node_options.raft_meta_uri = fmt::format("{}/{}/raft_meta", prefix, _id);
-    node_options.snapshot_uri = fmt::format("{}/{}/snapshot", prefix, _id);
+    node_options.log_uri = fmt::format("{}/{}/log", prefix, _group);
+    node_options.raft_meta_uri = fmt::format("{}/{}/raft_meta", prefix, _group);
+    node_options.snapshot_uri = fmt::format("{}/{}/snapshot", prefix, _group);
     node_options.disable_cli = FLAGS_disable_cli;
-    braft::Node* node = new braft::Node(fmt::format("deva_{}", _id), braft::PeerId(addr));
+    braft::Node* node = new braft::Node(_group, braft::PeerId(addr));
     if (node->init(node_options) != 0) {
         LOG(ERROR) << "Fail to init raft node";
         delete node;
@@ -97,7 +101,11 @@ void Rsm::on_apply(braft::Iterator& iter) {
             c->set_index(iter.index());
         } else {
             butil::IOBuf saved_log = iter.data();
-            auto op = decode(&saved_log, this);
+            // clang-format off
+            auto op = decode(&saved_log, [rsm = RsmPtr(this)](OpType op_type, IOBuf* buf) {
+                return decode(op_type, buf, rsm);
+            });
+            // clang-format on
             op->on_apply(iter.index());
         }
 
@@ -158,7 +166,7 @@ void Rsm::on_start_following(const ::braft::LeaderChangeContext& ctx) {
 }
 
 RsmPtr default_rsm() {
-    static RsmPtr rsm = new Rsm(0);
+    static RsmPtr rsm = new Rsm("default", nullptr);
     return rsm;
 }
 

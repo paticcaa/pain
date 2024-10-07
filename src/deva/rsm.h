@@ -3,7 +3,7 @@
 #include <braft/raft.h>    // braft::Node braft::StateMachine
 #include <braft/storage.h> // braft::SnapshotWriter
 #include <boost/intrusive_ptr.hpp>
-#include "deva/deva.h"
+#include "deva/container.h"
 
 namespace pain::deva {
 
@@ -11,12 +11,9 @@ class Rsm;
 using RsmPtr = boost::intrusive_ptr<Rsm>;
 class Rsm : public braft::StateMachine {
 public:
-    Rsm(int id);
+    Rsm(const std::string& group, ContainerPtr container);
     ~Rsm();
 
-    int id() const {
-        return _id;
-    }
     int start();
 
     bool is_leader() const;
@@ -48,15 +45,15 @@ public:
     void on_stop_following(const ::braft::LeaderChangeContext& ctx);
     void on_start_following(const ::braft::LeaderChangeContext& ctx);
 
-    DevaPtr deva() {
-        return _deva;
+    ContainerPtr container() {
+        return _container;
     }
 
 private:
     braft::Node* volatile _node;
     butil::atomic<int64_t> _leader_term;
     std::atomic<int> _use_count = {0};
-    int _id = 0;
+    std::string _group;
 
     friend void intrusive_ptr_add_ref(Rsm* rsm) {
         ++rsm->_use_count;
@@ -68,7 +65,7 @@ private:
         }
     }
 
-    DevaPtr _deva;
+    ContainerPtr _container;
 };
 
 RsmPtr default_rsm();

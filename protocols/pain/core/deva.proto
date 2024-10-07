@@ -28,6 +28,7 @@ message CreatePoolResponse {}
 
 message CreateRequest {
   UUID pool = 1;
+  string path = 2;
 }
 
 message CreateResponse {

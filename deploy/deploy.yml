@@ -1,6 +1,14 @@
 ---
-# Deploy deva
+# Deploy asura
+- name: deploy asura
+  hosts: asura
+  vars:
+    gflags:
+      log_level: debug
+  roles:
+    - asura
 
+# Deploy deva
 - name: deploy/stop/clean deva
   hosts: deva
   vars:

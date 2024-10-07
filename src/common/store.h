@@ -6,7 +6,7 @@
 #include <boost/intrusive_ptr.hpp>
 #include "base/types.h"
 
-namespace pain::deva {
+namespace pain::common {
 class Store;
 using StorePtr = boost::intrusive_ptr<Store>;
 // Store is a key-value store like redis
@@ -27,6 +27,7 @@ public:
     virtual Status hdel(std::string_view key, std::string_view field) = 0;
     virtual Status hlen(std::string_view key, size_t* len) = 0;
     virtual std::shared_ptr<Iterator> hgetall(std::string_view key) = 0;
+    virtual bool hexists(std::string_view key, std::string_view field) = 0;
 
 private:
     std::atomic<int> _use_count;
@@ -41,4 +42,4 @@ private:
     }
 };
 
-} // namespace pain::deva
+} // namespace pain::common

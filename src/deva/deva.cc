@@ -66,4 +66,12 @@ Status Deva::SealAndNewChunk(const pain::core::deva::store::SealAndNewChunkReque
     return Status::OK();
 }
 
+Status Deva::save_snapshot(std::string_view path, std::vector<std::string>* files) {
+    return Status::OK();
+}
+
+Status Deva::load_snapshot(std::string_view path) {
+    return Status::OK();
+}
+
 } // namespace pain::deva

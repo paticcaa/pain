@@ -1,4 +1,4 @@
-#include "deva/rocksdb_store.h"
+#include "common/rocksdb_store.h"
 #include <braft/file_system_adaptor.h>
 #include <rocksdb/db.h>
 #include <rocksdb/utilities/checkpoint.h>
@@ -8,7 +8,7 @@
 #include "base/scope_exit.h"
 #include "base/types.h"
 
-namespace pain::deva {
+namespace pain::common {
 
 RocksdbStore::RocksdbStore() {}
 
@@ -23,6 +23,18 @@ RocksdbStore::~RocksdbStore() {
 Status RocksdbStore::open(const char* data_path, RocksdbStorePtr* store) {
     BOOST_ASSERT(data_path != nullptr);
     BOOST_ASSERT(store != nullptr);
+    auto fs = braft::default_file_system();
+
+    if (!fs->directory_exists(data_path)) {
+        butil::File::Error error = butil::File::FILE_OK;
+        if (!fs->create_directory(data_path, &error, true)) {
+            if (error != butil::File::FILE_OK) {
+                PLOG_ERROR(("desc", "create dir failed") //
+                           ("path", data_path)("error", static_cast<int>(error)));
+                return Status(EIO, "create dir %s failed", data_path);
+            }
+        }
+    }
     rocksdb::Options options;
     options.create_if_missing = true;
     PLOG_INFO(("desc", "open rocksdb") //
@@ -288,4 +300,10 @@ std::shared_ptr<RocksdbStore::Iterator> RocksdbStore::hgetall(std::string_view k
     return std::make_shared<RocksdbStoreIterator>(iter, key);
 }
 
-} // namespace pain::deva
+bool RocksdbStore::hexists(std::string_view key, std::string_view field) {
+    std::string value;
+    auto status = hget(key, field, &value);
+    return status.ok();
+}
+
+} // namespace pain::common

@@ -17,12 +17,12 @@
 #define MANUSYA_CMD(cmd) REGISTER(cmd, manusya_parser)
 
 namespace pain::sad {
-extern argparse::ArgumentParser program;
+argparse::ArgumentParser& program();
 }
 namespace pain::sad::manusya {
 argparse::ArgumentParser manusya_parser("manusya", "1.0", argparse::default_arguments::none);
 
-RUN(program.add_subparser(manusya_parser));
+RUN(program().add_subparser(manusya_parser));
 RUN(manusya_parser.add_description("send cmd to manusya server")
         .add_argument("--host")
         .default_value(std::string("127.0.0.1:8003")));

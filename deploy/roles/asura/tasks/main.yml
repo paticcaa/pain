@@ -1,0 +1,90 @@
+---
+
+- name: deploy asura
+  tags:
+    - start
+    - asura
+    - start-asura
+  vars:
+    gflags_: "{% for flag in gflags %}--{{ flag }}={{ gflags[flag] }} {% endfor %}"
+  block:
+    - name: debug
+      debug:
+        var: gflags
+    - name: copy files
+      copy: src={{ playbook_dir }}/../output/bin/asura dest=./deployment/asura/ mode=0775
+    - name: create working dir
+      file: path=./deployment/asura/{{ listen_port }} state=directory
+    - name: start asura
+      shell:
+        chdir: ./deployment/asura/{{ listen_port }}
+        cmd: >
+          start-stop-daemon --output $(pwd)/stdout.log --start --chdir $(pwd) --pidfile asura.pid --make-pidfile --background 
+          --exec $(pwd)/../asura -- --asura_listen_address={{ ansible_default_ipv4.address }}:{{ listen_port }} {{ gflags_ }}
+    - name: wait for asura
+      wait_for:
+        host: "{{ ansible_default_ipv4.address }}"
+        port: "{{ listen_port }}"
+        delay: 5
+        timeout: 60
+        state: started
+
+  
+- name: stop asura
+  tags:
+    - stop
+    - stop-asura
+  block:
+    - name: stop asura
+      shell: 
+        chdir: ./deployment/asura/{{ listen_port }}
+        cmd: >
+          start-stop-daemon --stop --pidfile asura.pid
+      ignore_errors: yes 
+
+- name: status asura
+  tags:
+    - status
+    - asura
+    - status-asura
+  block:
+    - name: status asura
+      shell: 
+        chdir: ./deployment/asura/{{ listen_port }}
+        cmd: |
+          start-stop-daemon --status --pidfile asura.pid && exit_status=$? || exit_status=$?
+          case "$exit_status" in
+              0)
+                  echo "Running"
+                  ;;
+              1)
+                  echo "Stopped but pid existed"
+                  ;;
+              3)
+                  echo "Stopped"
+                  ;;
+              *)
+                  echo "Unknown exit status: $exit_status"
+                  ;;
+          esac
+      register: output
+    - debug:
+        msg: "{{ output.stdout }}"
+
+- name: clean asura
+  tags:
+    - clean
+    - clean-asura
+  block:
+    - name: Check that the somefile.conf exists
+      stat:
+        path: "./deployment/asura/{{ listen_port }}/asura.pid"
+      register: stat_result
+    - name: stop asura
+      shell: 
+        chdir: ./deployment/asura/{{ listen_port }}
+        cmd: >
+          start-stop-daemon --stop --pidfile asura.pid --remove-pidfile
+      when: stat_result.stat.exists
+    - name: remove working dir
+      file: path=./deployment/asura/{{ listen_port }} state=absent

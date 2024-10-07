@@ -16,7 +16,7 @@
 #include "spdlog/common.h"
 
 namespace pain::sad {
-extern argparse::ArgumentParser program;
+argparse::ArgumentParser& program();
 void init(int argc, char* argv[]);
 Status execute(argparse::ArgumentParser& parser);
 } // namespace pain::sad
@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
     pain::LoggerOptions logger_options = {
         .file_name = "sad.log",
         .name = "sad",
-        .level_log = spdlog::level::from_str(pain::sad::program.get<std::string>("--log-level")),
+        .level_log = spdlog::level::from_str(pain::sad::program().get<std::string>("--log-level")),
         .async_threads = 1,
     };
     static auto flush_log = pain::make_logger(logger_options);
@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {
 
     {
         SPAN(span, "sad");
-        auto status = pain::sad::execute(pain::sad::program);
+        auto status = pain::sad::execute(pain::sad::program());
         if (!status.ok()) {
             PLOG_ERROR(("desc", "sad exit")("status", status.error_str()));
             pain::sad::print(status);

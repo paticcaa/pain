@@ -1,0 +1,10 @@
+target("pain_common")
+    set_kind("static")
+    add_files("**.cc|test/**.cc")
+    add_deps("pain_base")
+    add_packages("brpc", {public = true})
+    add_packages("boost", {public = true})
+    add_packages("braft", {public = true})
+    add_packages("rocksdb", {public = true})
+
+includes("test")
