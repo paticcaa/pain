@@ -17,68 +17,64 @@
 
 // A server to receive EchoRequest and send back EchoResponse.
 
-#include <gflags/gflags.h>
-#include <butil/logging.h>
 #include <brpc/server.h>
+#include <butil/logging.h>
+#include <gflags/gflags.h>
 #include <json2pb/pb_to_json.h>
 #include "protocols/master.pb.h"
 
 DEFINE_bool(send_attachment, true, "Carry attachment along with response");
 DEFINE_int32(port, 8003, "TCP Port of this server");
-DEFINE_int32(idle_timeout_s, -1, "Connection will be closed if there is no "
+DEFINE_int32(idle_timeout_s,
+             -1,
+             "Connection will be closed if there is no "
              "read/write operations during the last `idle_timeout_s'");
 
 // Your implementation of pain::proto::master::MasterService
-namespace pain {
-namespace master {
+namespace pain::master {
 class MasterServiceImpl : public pain::proto::master::MasterService {
 public:
     MasterServiceImpl() {}
     virtual ~MasterServiceImpl() {}
-    virtual void CreateFile(google::protobuf::RpcController* cntl_base,
-                      const pain::proto::master::CreateFileRequest* request,
-                      pain::proto::master::CreateFileResponse* response,
-                      google::protobuf::Closure* done) {
+    void CreateFile(google::protobuf::RpcController* cntl_base,
+                    const pain::proto::master::CreateFileRequest* request,
+                    pain::proto::master::CreateFileResponse* response,
+                    google::protobuf::Closure* done) override {
         // This object helps you to call done->Run() in RAII style. If you need
         // to process the request asynchronously, pass done_guard.release().
         brpc::ClosureGuard done_guard(done);
 
-        brpc::Controller* cntl =
-            static_cast<brpc::Controller*>(cntl_base);
+        brpc::Controller* cntl = static_cast<brpc::Controller*>(cntl_base);
 
         // optional: set a callback function which is called after response is sent
         // and before cntl/req/res is destructed.
-        cntl->set_after_rpc_resp_fn(std::bind(&MasterServiceImpl::CallAfterRpc,
-            std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+        cntl->set_after_rpc_resp_fn(std::bind(
+            &MasterServiceImpl::call_after_rpc, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 
         // The purpose of following logs is to help you to understand
-        // how clients interact with servers more intuitively. You should 
+        // how clients interact with servers more intuitively. You should
         // remove these logs in performance-sensitive servers.
-        LOG(INFO) << "Received request[log_id=" << cntl->log_id() 
-                  << "] from " << cntl->remote_side()
-                  << ": " << request->file_name()
-                  << " (attached=" << cntl->request_attachment() << ")";
+        LOG(INFO) << "Received request[log_id=" << cntl->log_id() << "] from " << cntl->remote_side() << ": "
+                  << request->file_name() << " (attached=" << cntl->request_attachment() << ")";
 
         // Fill response.
         response->mutable_file_info()->set_file_id(request->file_name());
     }
 
     // optional
-    static void CallAfterRpc(brpc::Controller* cntl,
-                        const google::protobuf::Message* req,
-                        const google::protobuf::Message* res) {
+    static void call_after_rpc([[maybe_unused]] brpc::Controller* cntl,
+                               const google::protobuf::Message* req,
+                               const google::protobuf::Message* res) {
         // at this time res is already sent to client, but cntl/req/res is not destructed
         std::string req_str;
         std::string res_str;
-        json2pb::ProtoMessageToJson(*req, &req_str, NULL);
-        json2pb::ProtoMessageToJson(*res, &res_str, NULL);
-        LOG(INFO) << "req:" << req_str
-                    << " res:" << res_str;
+        json2pb::ProtoMessageToJson(*req, &req_str, nullptr);
+        json2pb::ProtoMessageToJson(*res, &res_str, nullptr);
+        LOG(INFO) << "req:" << req_str << " res:" << res_str;
     }
 };
 
-} // namespace master
-} // namespace pain
+} // namespace pain::master
 
 int main(int argc, char* argv[]) {
     // Parse gflags. We recommend you to use gflags as well.
@@ -93,8 +89,7 @@ int main(int argc, char* argv[]) {
     // Add the service into server. Notice the second parameter, because the
     // service is put on stack, we don't want server to delete it, otherwise
     // use brpc::SERVER_OWNS_SERVICE.
-    if (server.AddService(&master_service_impl, 
-                          brpc::SERVER_DOESNT_OWN_SERVICE) != 0) {
+    if (server.AddService(&master_service_impl, brpc::SERVER_DOESNT_OWN_SERVICE) != 0) {
         LOG(ERROR) << "Fail to add service";
         return -1;
     }
