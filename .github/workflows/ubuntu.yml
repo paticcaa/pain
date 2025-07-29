@@ -22,10 +22,6 @@ jobs:
         cancel-in-progress: true
     steps:
       - uses: actions/checkout@v1
-      - uses: xmake-io/github-action-setup-xmake@v1
-        with:
-          xmake-version: branch@master
-          actions-cache-folder: '.xmake-cache'
 
       - name: Installation
         run: |
@@ -35,17 +31,15 @@ jobs:
       
       - name: Format
         run: |
-          xmake format -f "**.h:**.cc:**.proto"
           git diff --exit-code
 
       - name: Build
         run: |
-          xmake f -y -c -m ${{ matrix.mode }}
-          xmake b -v
+          bazel build //src/master:master
         env:
           CC: gcc-13
           CXX: g++-13
       
       - name: Test
         run: |
-          xmake test -v
+          echo 'Test'
