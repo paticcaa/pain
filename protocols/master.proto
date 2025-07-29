@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package pain.proto.master;
+
+option cc_generic_services = true;
+
+import "protocols/common.proto";
+
+message CreateFileRequest {
+    string file_name = 1;
+}
+
+message CreateFileResponse {
+    FileInfo file_info = 2;
+}
+
+
+service MasterService {
+    rpc CreateFile(CreateFileRequest) returns (CreateFileResponse);
+}

@@ -1,0 +1,1 @@
+bazel_dep(name = 'brpc', version = '1.14.0')

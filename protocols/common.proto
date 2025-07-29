@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+package pain.proto;
+
+enum ChunkFlags {
+    CHUNK_FLAG_NONE = 0;
+    CHUNK_FLAG_SEALED = 1;
+}
+
+message Location {
+    string host = 1;
+    uint32 port = 2;
+}
+
+message SubChunkInfo {
+    string sub_chunk_id = 1;
+    uint64 sub_chunk_size = 2;
+    uint64 sub_chunk_offset = 3;
+    ChunkFlags flags = 4;
+    Location location = 5;
+}
+
+message ChunkInfo {
+    string chunk_id = 1;
+    uint64 chunk_size = 2;
+    uint64 chunk_offset = 3;
+    ChunkFlags flags = 4;
+    repeated SubChunkInfo sub_chunks = 5;
+}
+
+message FileInfo {
+    string file_id = 1;
+    uint64 file_size = 2;
+    repeated ChunkInfo chunks = 3;
+}

@@ -4,3 +4,13 @@ build
 work
 output
 .gdb_history
+bazel-bin
+bazel-genfiles
+bazel-out
+bazel-testlogs
+bazel-workspace
+bazel-output-base
+bazel-cache
+bazel-cache-base
+bazel-cache-out
+bazel-pain

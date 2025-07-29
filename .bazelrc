@@ -1,0 +1,4 @@
+common --registry=file://%workspace%/registry
+common --registry=https://bcr.bazel.build
+build --compilation_mode=opt
+build --cxxopt=-std=c++20
