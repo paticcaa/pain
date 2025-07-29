@@ -1,0 +1,6 @@
+.xmake
+build
+.vscode
+work
+output
+.gdb_history
