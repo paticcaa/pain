@@ -35,7 +35,7 @@ jobs:
 
       - name: Build
         run: |
-          bazel build -c ${{ matrix.mode }} //src/...
+          bazel build -c ${{ matrix.mode }} //...
         env:
           CC: gcc-13
           CXX: g++-13
