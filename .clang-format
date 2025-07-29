@@ -33,9 +33,9 @@ BitFieldColonSpacing: Before
 # 允许函数声明的所有参数在放在下一行
 AllowAllParametersOfDeclarationOnNextLine:	false
 # 允许短的块放在同一行
-AllowShortBlocksOnASingleLine:	true
+AllowShortBlocksOnASingleLine:	false
 # 允许短的case标签放在同一行
-AllowShortCaseLabelsOnASingleLine:	true
+AllowShortCaseLabelsOnASingleLine:	false
 # 允许短的函数放在同一行: None, InlineOnly(定义在类中), Empty(空函数), Inline(定义在类中，空函数), All
 AllowShortFunctionsOnASingleLine:	Empty
 # 允许短的if语句保持在同一行
@@ -224,7 +224,10 @@ TabWidth:	4
 UseTab:	Never
 # 属性后的换行符
 BreakAfterAttributes: Always
+AllowShortLambdasOnASingleLine: Empty
+AllowShortEnumsOnASingleLine: false
 ---
 # 语言: None, Cpp, Java, JavaScript, ObjC, Proto, TableGen, TextProto
 Language:	Proto
 BasedOnStyle:   Google
+IndentWidth:	4
