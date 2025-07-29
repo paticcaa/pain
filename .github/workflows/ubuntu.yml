@@ -8,6 +8,9 @@ on:
     branches: [main]
     paths-ignore: ['**.md', '**.txt']
 
+env:
+  proc_num: $(nproc)
+
 jobs:
   build:
     strategy:
@@ -35,7 +38,7 @@ jobs:
 
       - name: Build
         run: |
-          bazel build -c ${{ matrix.mode }} //...
+          bazel build -c ${{ matrix.mode }} --jobs=${{env.proc_num}} //...
         env:
           CC: gcc-13
           CXX: g++-13
