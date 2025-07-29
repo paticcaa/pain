@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package pain.proto;
+
+enum ErrorCode {
+    PAIN_ERR_OK = 0;
+    PAIN_ERR_NOT_FOUND = 1001;
+    PAIN_ERR_INVALID_ARGUMENT = 1002;
+    PAIN_ERR_INTERNAL = 1003;
+    PAIN_ERR_UNAVAILABLE = 1004;
+    PAIN_ERR_UNIMPLEMENTED = 1005;
+    PAIN_ERR_UNKNOWN = 1006;
+}

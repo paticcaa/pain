@@ -11,10 +11,55 @@ message CreateFileRequest {
 }
 
 message CreateFileResponse {
+    Header header = 1;
     FileInfo file_info = 2;
 }
 
+message GetFileInfoRequest {
+    string file_id = 1;
+}
+
+message GetFileInfoResponse {
+    Header header = 1;
+    FileInfo file_info = 2;
+}
+
+message NewChunkRequest {
+    string file_id = 1;
+}
+
+message NewChunkResponse {
+    Header header = 1;
+    string chunk_id = 2;
+    repeated Location locations = 3;
+}
+
+message SealAndNewChunkRequest {
+    string file_id = 1;
+    string chunk_id = 2;
+}
+
+message SealAndNewChunkResponse {
+    Header header = 1;
+    string chunk_id = 2;
+    repeated Location locations = 3;
+}
+
+message CheckinChunkRequest {
+    string chunk_id = 1;
+    repeated SubChunkInfo sub_chunks = 2;
+}
+
+message CheckinChunkResponse {
+    Header header = 1;
+    ChunkInfo chunk_info = 2;
+}
 
 service MasterService {
     rpc CreateFile(CreateFileRequest) returns (CreateFileResponse);
+    rpc GetFileInfo(GetFileInfoRequest) returns (GetFileInfoResponse);
+    rpc NewChunk(NewChunkRequest) returns (NewChunkResponse);
+    rpc SealAndNewChunk(SealAndNewChunkRequest)
+        returns (SealAndNewChunkResponse);
+    rpc CheckinChunk(CheckinChunkRequest) returns (CheckinChunkResponse);
 }
