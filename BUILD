@@ -1,15 +1,13 @@
 config_setting(
-    name = "x86_debug_build",
+    name = "debug_build",
     values = {
-        "cpu": "x86",
         "compilation_mode": "dbg",
     },
 )
 
 config_setting(
-    name = "x86_releasedbg_build",
+    name = "releasedbg_build",
     values = {
-        "cpu": "x86",
         "compilation_mode": "opt",
     },
 )

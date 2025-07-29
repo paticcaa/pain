@@ -31,7 +31,7 @@ PAIN_COPTS = select({
     '//:compiler_clang': PAIN_CLANG_COPTS,
     '//conditions:default': PAIN_GCC_COPTS,
 }) + select({
-    '//:x86_debug_build': ['-fsanitize=address'],
+    '//:debug_build': ['-fsanitize=address'],
     '//conditions:default': [],
 })
 
@@ -49,5 +49,10 @@ PAIN_TEST_COPTS = PAIN_COPTS + select({
       # 单测中使用了一些变量简写有意进行了无害隐藏
       '-Wno-shadow',
     ],
+    '//conditions:default': [],
+})
+
+PAIN_LINKOPTS = select({
+    '//:debug_build': ['-fsanitize=address'],
     '//conditions:default': [],
 })
