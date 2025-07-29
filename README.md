@@ -6,5 +6,5 @@ A distributed file system.
 ## compile
 
 ```
-bazel build //:all
+bazel build //...
 ```
