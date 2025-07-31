@@ -9,18 +9,18 @@ filegroup(
   srcs = glob(['**'], exclude = ['bazel-*/**']),
 )
 
-SYMLINK2REAL_SCRIPT = """bash -c '
-set -ex
-shopt -s globstar
-for file in $INSTALLDIR/** ; do
-  if [ -L $file ]; then
-    target=`readlink -f $file`
-    echo $file $target
-    rm $file
-    cp $target $file
-  fi
-done
-'"""
+# SYMLINK2REAL_SCRIPT = """bash -c '
+# set -ex
+# shopt -s globstar
+# for file in ${INSTALLDIR}/** ; do
+#   if [ -L $$file ]; then
+#     target=`readlink -f $$file`
+#     echo $$file $$target
+#     rm $$file
+#     cp $$target $$file
+#   fi
+# done
+# '"""
 
 cmake(
   name = 'leveldb',
@@ -31,7 +31,7 @@ cmake(
     'CMAKE_CXX_FLAGS': '-I$$EXT_BUILD_DEPS$$/include',
     'CMAKE_EXE_LINKER_FLAGS': '-L$$EXT_BUILD_DEPS$$/lib',
   },
-  postfix_script = SYMLINK2REAL_SCRIPT,
+  #postfix_script = SYMLINK2REAL_SCRIPT,
   lib_name = 'libleveldb',
   visibility = ['//visibility:public'],
   deps = [

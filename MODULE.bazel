@@ -1,5 +1,5 @@
 bazel_dep(name = "brpc", version = "1.14.0")
-
+bazel_dep(name = "dpdk", version = "25.07")
 bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
 git_override(
     module_name = "hedron_compile_commands",

@@ -29,7 +29,7 @@ jobs:
       - name: Installation
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgl1-mesa-dev libglu1-mesa-dev p7zip clang-format-16
+          sudo apt-get install -y p7zip clang-format-16 libibverbs-dev ccache python3-pyelftools libnuma-dev
           sudo ln -sf /usr/bin/clang-format-16 /usr/bin/clang-format
       
       - name: Format
@@ -38,7 +38,7 @@ jobs:
 
       - name: Build
         run: |
-          bazel build -c ${{ matrix.mode }} --jobs=${{env.proc_num}} //...
+          bazel build -c ${{ matrix.mode }} --verbose_failures=true --jobs=${{env.proc_num}} //...
         env:
           CC: gcc-13
           CXX: g++-13

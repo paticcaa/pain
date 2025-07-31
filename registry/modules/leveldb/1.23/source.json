@@ -7,6 +7,6 @@
     "modify-cmakelist.patch": "sha256-wRlhYk8ADW3HpTNeOTVnSNC/Puz6P2RYtp+3sLOBhwg="
   },
   "overlay": {
-    "BUILD": "sha256-85nEZ7MgnlJwej0UKssVFGIFVi/PNvWDYrRTQG/A1IQ="
+    "BUILD": "sha256-lURw9Bq53beIpS2/WZ6nCCSQXGkehBu0ckroDQtovkA="
   }
 }
