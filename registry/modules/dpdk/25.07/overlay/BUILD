@@ -226,7 +226,10 @@ meson(
     "librte_kvargs.a",
     "librte_log.a",
   ],
-  out_lib_dir = 'lib/x86_64-linux-gnu',
+  setup_args = [
+    "--libdir=lib"
+  ],
+  out_lib_dir = 'lib',
   alwayslink = True,
   linkopts = [
     "-lmlx5",
@@ -234,6 +237,7 @@ meson(
     "-latomic",
     "-lmlx4",
     "-lmana",
+    "-lnuma",
   ],
   visibility = ['//visibility:public'],
 )

@@ -4,7 +4,7 @@ cc_binary(
     name = "dpdk_hello_world",
     srcs = ["main.cc"],
     copts = PAIN_COPTS,
-    linkopts = PAIN_LINKOPTS + ["-lnuma"],
+    linkopts = PAIN_LINKOPTS,
     deps = [
         "@dpdk//:dpdk",
     ],
