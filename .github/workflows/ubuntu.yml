@@ -36,6 +36,7 @@ jobs:
           sudo apt install -y libibverbs-dev
           sudo apt install -y librdmacm-dev
           sudo apt install -y libelf-dev
+          sudo apt install -y libnuma-dev
           sudo apt install -y patchelf
           sudo apt install -y python3-pyelftools
           sudo apt install -y nasm
