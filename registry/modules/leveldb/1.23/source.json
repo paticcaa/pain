@@ -1,0 +1,12 @@
+{
+  "url": "https://github.com/google/leveldb/archive/refs/tags/1.23.tar.gz",
+  "strip_prefix": "leveldb-1.23",
+  "integrity": "sha256-mjf4phdPCb1iK8cjtViB3FQc1QdHy9CIMcKoLWIPbXY=",
+  "patch_strip": 1,
+  "patches": {
+    "modify-cmakelist.patch": "sha256-wRlhYk8ADW3HpTNeOTVnSNC/Puz6P2RYtp+3sLOBhwg="
+  },
+  "overlay": {
+    "BUILD": "sha256-lURw9Bq53beIpS2/WZ6nCCSQXGkehBu0ckroDQtovkA="
+  }
+}

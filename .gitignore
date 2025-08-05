@@ -4,3 +4,13 @@ build
 work
 output
 .gdb_history
+bazel-bin
+bazel-genfiles
+bazel-out
+bazel-pain
+bazel-testlogs
+bazel-workspace
+bazel-workspace.lock
+bazel-workspace.lock.lock
+bazel-workspace.lock.lock.lock
+bazel-workspace.lock.lock.lock.lock

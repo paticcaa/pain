@@ -21,16 +21,21 @@ sudo apt install ansible
 ansible-galaxy collection install prometheus.prometheus
 
 # install tools and package
-sudo apt install -y  libaio-dev
+sudo apt install -y libaio-dev
 sudo apt install -y uuid-dev
 sudo apt install -y libibverbs-dev
 sudo apt install -y librdmacm-dev
 sudo apt install -y libelf-dev
 sudo apt install -y libssl-dev
+sudo apt install -y libnuma-dev
+sudo apt install -y python3
+sudo apt install -y python3-pip
 sudo apt install -y patchelf
 sudo apt install -y python3-pyelftools
+sudo apt install -y meson
 sudo apt install -y nasm
-sudo apt install -y autoconf automake libtool
+sudo apt install -y ccache
+sudo apt install -y autoconf automake libtool pkg-config
 ```
 
 ## Build
