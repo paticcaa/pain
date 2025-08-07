@@ -19,6 +19,7 @@ package("spdk")
     add_deps("ibverbs", {system = true})
     add_deps("rdmacm", {system = true})
     add_deps("openssl", {system = true})
+    add_deps("lz4", {system = true})
 
     add_syslinks("pthread", "m", "dl", "rt")
 
@@ -42,7 +43,7 @@ package("spdk")
         "spdk_event_accel","spdk_event_vmd","spdk_event_sock","spdk_event_scheduler",
         "spdk_event_vhost_scsi","spdk_event_vhost_blk",
         "spdk_event_scsi","spdk_event_bdev","spdk_keyring", "spdk_event_keyring",
-        "spdk_event","spdk_init", "isal", "isal_crypto", {name = "spdk", whole = true, group = true})
+        "spdk_event","spdk_init", "isal", "isal_crypto", {name = "spdk", whole = true})
 
     on_install(function (package)
         local configs = {}

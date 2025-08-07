@@ -27,7 +27,7 @@ package("dpdk")
         "rte_efd", "rte_dmadev", "rte_distributor", "rte_cryptodev", "rte_compressdev", "rte_cfgfile", "rte_bpf",
         "rte_bitratestats", "rte_bbdev", "rte_acl", "rte_timer", "rte_hash", "rte_metrics", "rte_cmdline", "rte_bus_pci", "rte_pci",
         "rte_ethdev", "rte_meter", "rte_net", "rte_mbuf", "rte_mempool", "rte_mempool_ring", "rte_rcu", "rte_ring", "rte_eal", "rte_telemetry",
-        "rte_kvargs", "rte_log", {name = "dpdk", whole = true, group = true})
+        "rte_kvargs", "rte_log", {name = "dpdk", whole = true})
 
     on_install(function (package)
         local configs = {}
