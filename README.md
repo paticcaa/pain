@@ -21,6 +21,7 @@ sudo apt install ansible
 ansible-galaxy collection install prometheus.prometheus
 
 # install tools and package
+sudo apt install -y clang-format-16
 sudo apt install -y libaio-dev
 sudo apt install -y uuid-dev
 sudo apt install -y libibverbs-dev

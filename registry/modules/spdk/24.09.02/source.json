@@ -1,0 +1,10 @@
+{
+    "url": "https://github.com/ivanallen/spdk/archive/refs/tags/v24.09.02.tar.gz",
+    "strip_prefix": "spdk-24.09.02",
+    "integrity": "sha256-mEiQm3Wcx/FgCt2dfScrfZzN55K89k4Y0pgBP8z5bYo=",
+    "patch_strip": 1,
+    "overlay": {
+      "BUILD": "sha256-81xqFNelVG4nJITO6n8CieIpT8LD1XTv4ZITGjOPESw=",
+      "spdk_libs.bzl": "sha256-L93XOW/L6vAhFyCvIap2fkS4CUexZhIChreC8Uoqk0s="
+    }
+}
