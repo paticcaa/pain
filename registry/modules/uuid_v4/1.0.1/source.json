@@ -1,0 +1,9 @@
+{
+    "url": "https://github.com/ivanallen/uuid_v4/archive/refs/tags/v1.0.1.tar.gz",
+    "strip_prefix": "uuid_v4-1.0.1",
+    "integrity": "sha256-18ndETUhbGeY9xB5zcMwkO8QoPT5/vta1Z82PvkdZ80=",
+    "patch_strip": 1,
+    "overlay": {
+      "BUILD": "sha256-XWhhOzSPtBnz4YRAkKzSCyOXorxu5642kxyAiiGrwAM="
+    }
+}

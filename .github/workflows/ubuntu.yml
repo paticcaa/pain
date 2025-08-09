@@ -7,9 +7,10 @@ on:
   pull_request:
     branches: [main]
     paths-ignore: ['**.md', '**.txt']
-
+env:
+  proc_num: $(nproc)
 jobs:
-  build:
+  build-with-xmake:
     strategy:
       matrix:
         os: [ubuntu-24.04]
@@ -63,3 +64,50 @@ jobs:
       - name: Test
         run: |
           xmake test -v
+  build-with-bazel:
+    strategy:
+      matrix:
+        os: [ubuntu-24.04]
+        mode: [dbg, opt]
+
+    runs-on: ${{ matrix.os }}
+
+    concurrency:
+        group: ${{ github.ref }}-${{ github.base_ref }}-${{ github.head_ref }}-Linux-${{ matrix.mode }}
+        cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Installation
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y p7zip clang-format-16 ccache
+          sudo apt install -y libcunit1-dev libaio-dev libssl-dev libjson-c-dev
+          sudo apt install -y libcmocka-dev uuid-dev libiscsi-dev liblz4-dev
+          sudo apt install -y libkeyutils-dev libncurses5-dev libncursesw5-dev 
+          sudo apt install -y python3 python3-pip python3-dev unzip libfuse3-dev patchelf
+          sudo apt install -y libibverbs-dev
+          sudo apt install -y librdmacm-dev
+          sudo apt install -y libelf-dev
+          sudo apt install -y libnuma-dev
+          sudo apt install -y python3-pyelftools
+          sudo apt install -y meson
+          sudo apt install -y nasm
+          sudo apt install -y autoconf automake libtool pkg-config
+          sudo ln -sf /usr/bin/clang-format-16 /usr/bin/clang-format
+
+      - name: Format
+        run: |
+          git diff --exit-code
+
+      - name: Build
+        run: |
+          bazel build -c ${{ matrix.mode }} --verbose_failures=true --jobs=${{env.proc_num}} //...
+        env:
+          CC: gcc-13
+          CXX: g++-13
+
+      - name: Test
+        run: |
+          bazel test -c ${{ matrix.mode }} --verbose_failures=true --jobs=${{env.proc_num}} //src/...
+          

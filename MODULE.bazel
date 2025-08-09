@@ -1,6 +1,22 @@
 bazel_dep(name = "brpc", version = "1.14.0")
-#bazel_dep(name = "dpdk", version = "24.03")
+bazel_dep(name = "braft", version = "1.1.2")
 bazel_dep(name = "spdk", version = "24.09.02")
+bazel_dep(name = 'protobuf', version = '29.0', repo_name = "com_google_protobuf")
+single_version_override(module_name = 'protobuf', version = '29.0')
+bazel_dep(name = 'uuid_v4', version = '1.0.1')
+bazel_dep(name = "opentelemetry-cpp", version = "1.22.0")
+bazel_dep(name = "spdlog", version = "1.15.3")
+bazel_dep(name = "boost.assert", version = "1.88.0.bcr.1")
+bazel_dep(name = "boost.stacktrace", version = "1.88.0.bcr.1")
+bazel_dep(name = "boost.intrusive", version = "1.88.0.bcr.1")
+bazel_dep(name = "boost.smart_ptr", version = "1.88.0.bcr.1")
+bazel_dep(name = "boost.preprocessor", version = "1.88.0.bcr.1")
+bazel_dep(name = "rocksdb", version = "9.11.2")
+bazel_dep(name = 'googletest', version = '1.14.0.bcr.1')
+bazel_dep(name = "nlohmann_json", version = "3.12.0")
+bazel_dep(name = "argparse", version = "3.2.0")
+bazel_dep(name = "fmt", version = "11.2.0")
+
 bazel_dep(name = "hedron_compile_commands", dev_dependency = True)
 git_override(
     module_name = "hedron_compile_commands",

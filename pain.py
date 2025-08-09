@@ -28,7 +28,7 @@ def format_project(args):
     run_in_shell('xmake format -f "src/**.h:src/**.cc:protocols/**.proto:include/**.h"')
 
 def line_project(args):
-    run_in_shell('find include src -iname "*.h" -o -iname "*.cc" | xargs wc -l')
+    run_in_shell('find include src -iname "*.h" -o -iname "*.cc" -o -iname "*.c" | xargs wc -l')
 
 def install_project(args):
     if not args.rest:

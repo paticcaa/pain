@@ -10,16 +10,8 @@
     span##_options.parent = opentelemetry::trace::GetSpan(span##_new_context)->GetContext();                           \
     auto span = get_tracer(module)->StartSpan(                                                                         \
         __func__,                                                                                                      \
-        {                                                                                                              \
-            {opentelemetry::trace::SemanticConventions::kRpcSystem, "brpc"},                                           \
-            {opentelemetry::trace::SemanticConventions::kRpcService, cntl->method()->service()->name()},               \
-            {opentelemetry::trace::SemanticConventions::kRpcMethod, cntl->method()->name()},                           \
-            {opentelemetry::trace::SemanticConventions::kClientAddress,                                                \
-             butil::endpoint2str(cntl->remote_side()).c_str()},                                                        \
-            {opentelemetry::trace::SemanticConventions::kServerAddress,                                                \
-             butil::endpoint2str(cntl->local_side()).c_str()},                                                         \
-            {"signature", __PRETTY_FUNCTION__},                                                                        \
-        },                                                                                                             \
+        {},                                                                                                            \
+        {},                                                                                                            \
         span##_options);                                                                                               \
     auto span##_scope = Tracer::WithActiveSpan(span);
 

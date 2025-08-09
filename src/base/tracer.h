@@ -17,7 +17,6 @@
 #include <opentelemetry/sdk/trace/tracer_provider_factory.h>
 #include <opentelemetry/trace/propagation/http_trace_context.h>
 #include <opentelemetry/trace/provider.h>
-#include <opentelemetry/trace/semantic_conventions.h>
 
 #include <brpc/controller.h>
 #include <string>

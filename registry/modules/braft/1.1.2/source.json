@@ -1,0 +1,9 @@
+{
+    "url": "https://github.com/baidu/braft/archive/refs/tags/v1.1.2.tar.gz",
+    "strip_prefix": "braft-1.1.2",
+    "integrity": "sha256-uzcF9hh0+EiOYWrjhGTv3sGiBhDd1s2CRorcgUSI8U4=",
+    "patch_strip": 1,
+    "patches": {
+      "protobuf.patch": "sha256-YPjDBVxCAmF7IzcMv6sse7j1JvwaNhBEkJD1yj3u2es="
+    }
+}

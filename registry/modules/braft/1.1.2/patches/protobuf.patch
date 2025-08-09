@@ -1,0 +1,59 @@
+diff --git a/BUILD b/BUILD
+index 34dcf5a..600a591 100644
+--- a/BUILD
++++ b/BUILD
+@@ -33,7 +33,7 @@ cc_library(
+         "-Woverloaded-virtual",
+         "-Wnon-virtual-dtor",
+         "-Wno-missing-field-initializers",
+-        "-std=c++11",
++        "-std=c++20",
+         "-DGFLAGS_NS=google",
+     ],
+     linkopts = [
+diff --git a/bazel/braft.bzl b/bazel/braft.bzl
+index f82e74d..300f108 100644
+--- a/bazel/braft.bzl
++++ b/bazel/braft.bzl
+@@ -1,15 +1,27 @@
+-load("@com_google_protobuf//:protobuf.bzl", "cc_proto_library")
+-
++load("@com_google_protobuf//bazel:proto_library.bzl", "proto_library")
++load("@com_google_protobuf//bazel:cc_proto_library.bzl", "cc_proto_library")
+ def braft_proto_library(name, srcs, deps=[], include=None, visibility=None, testonly=0):
+-    native.filegroup(name=name + "_proto_srcs",
+-                     srcs=srcs,
+-                     visibility=visibility,)
+-    cc_proto_library(name=name,
+-                     srcs=srcs,
+-                     deps=deps,
+-                     cc_libs=["@com_google_protobuf//:protobuf"],
+-                     include=include,
+-                     protoc="@com_google_protobuf//:protoc",
+-                     default_runtime="@com_google_protobuf//:protobuf",
+-                     testonly=testonly,
+-                     visibility=visibility,)
++    proto_library(
++	    name = name + "_proto",
++	    srcs = srcs,
++	    strip_import_prefix = "/src",
++    )
++
++    cc_proto_library(
++	    name = name,
++	    deps = [
++		    ":" + name + "_proto",
++	    ] + deps,
++    )
++    # native.filegroup(name=name + "_proto_srcs",
++    #                 srcs=srcs,
++    #                 visibility=visibility,)
++    #cc_proto_library(name=name,
++    #                 srcs=srcs,
++    #                 deps=deps,
++    #                 cc_libs=["@com_google_protobuf//:protobuf"],
++    #                 include=include,
++    #                 protoc="@com_google_protobuf//:protoc",
++    #                 default_runtime="@com_google_protobuf//:protobuf",
++    #                 testonly=testonly,
++    #                 visibility=visibility,)

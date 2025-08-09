@@ -1,6 +1,7 @@
 #pragma once
 #include <fcntl.h>
 #include <unistd.h>
+#include <map>
 #include <boost/intrusive_ptr.hpp>
 #include "base/future.h"
 #include "base/types.h"

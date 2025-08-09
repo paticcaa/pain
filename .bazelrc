@@ -1,6 +1,6 @@
-common --registry=https://bcr.bazel.build
 common --registry=file://%workspace%/registry
-build --cxxopt=-std=c++20
+common --registry=https://bcr.bazel.build
+build --cxxopt=-std=c++23
 build --compilation_mode=dbg
 build --action_env=CC
 build --action_env=CXX

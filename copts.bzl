@@ -33,10 +33,16 @@ PAIN_COPTS = select({
 }) + select({
     '//:debug_build': ['-fsanitize=address'],
     '//conditions:default': [],
-})
+}) + [
+    '-Isrc',
+    '-march=native',
+]
 
 PAIN_TEST_COPTS = PAIN_COPTS + select({
-    '//:compiler_gcc': [],
+    '//:compiler_gcc': [
+        '-fno-access-control',
+        '-DUNIT_TEST',
+    ],
     '//:compiler_clang': [
       # 静态初始化是注册器模式和Google Test使用的典型方案
       '-Wno-global-constructors',
