@@ -73,11 +73,15 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     concurrency:
-        group: ${{ github.ref }}-${{ github.base_ref }}-${{ github.head_ref }}-Linux-${{ matrix.mode }}
+        group: ${{ github.ref }}-${{github.base_ref}}-${{github.head_ref}}-Linux-${{matrix.mode}}
         cancel-in-progress: true
     steps:
-      - uses: actions/checkout@v1
-
+      - uses: actions/checkout@v4
+      - uses: actions/cache/restore@v4
+        with:
+          path: bazel-disk
+          key: bazel-disk-basic-${{matrix.mode}}-${{github.sha}}
+          restore-keys: bazel-disk-basic-${{matrix.mode}}-${{github.sha}}
       - name: Installation
         run: |
           sudo apt-get update
@@ -101,13 +105,14 @@ jobs:
           git diff --exit-code
 
       - name: Build
-        run: |
-          bazel build -c ${{ matrix.mode }} --verbose_failures=true --jobs=${{env.proc_num}} //...
         env:
           CC: gcc-13
           CXX: g++-13
-
-      - name: Test
         run: |
-          bazel test -c ${{ matrix.mode }} --verbose_failures=true --jobs=${{env.proc_num}} //src/...
-          
+          bazel test --disk_cache=bazel-disk -c ${{matrix.mode}} --verbose_failures=true --jobs=${{env.proc_num}} //src/...
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: bazel-disk
+          key: bazel-disk-basic-${{matrix.mode}}-${{github.sha}}
+          save-keys: bazel-disk-basic-${{matrix.mode}}-${{github.sha}}
