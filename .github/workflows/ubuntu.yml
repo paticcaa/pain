@@ -81,7 +81,7 @@ jobs:
         with:
           path: bazel-disk
           key: bazel-disk-basic-${{matrix.mode}}-${{github.sha}}
-          restore-keys: bazel-disk-basic-${{matrix.mode}}-${{github.sha}}
+          restore-keys: bazel-disk-basic-${{matrix.mode}}-
       - name: Installation
         run: |
           sudo apt-get update
