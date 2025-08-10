@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <fmt/format.h>
 #include <boost/intrusive_ptr.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include "base/types.h"
 
 namespace pain::deva {
@@ -10,12 +11,11 @@ namespace pain::deva {
 enum class OpType {
     kInvalid = 0,
     // DevaOp: 1 ~ 100
-    kOpen = 1,
-    kClose = 2,
-    kRemove = 3,
-    kSeal = 4,
+    kCreateFile = 1,
+    kRemoveFile = 2,
+    kSealFile = 3,
     kCreateChunk = 5,
-    kRemoveChunk = 6,
+    kCheckInChunk = 6,
     kSealChunk = 7,
     kSealAndNewChunk = 8,
 };
@@ -67,18 +67,7 @@ template <>
 struct fmt::formatter<pain::deva::OpType> : public fmt::formatter<std::string_view> {
     template <typename FormatContext>
     auto format(pain::deva::OpType type, FormatContext& ctx) const {
-        std::string_view name;
-        switch (type) {
-        case pain::deva::OpType::kOpen: name = "Open"; break;
-        case pain::deva::OpType::kClose: name = "Close"; break;
-        case pain::deva::OpType::kRemove: name = "Remove"; break;
-        case pain::deva::OpType::kSeal: name = "Seal"; break;
-        case pain::deva::OpType::kCreateChunk: name = "CreateChunk"; break;
-        case pain::deva::OpType::kRemoveChunk: name = "RemoveChunk"; break;
-        case pain::deva::OpType::kSealChunk: name = "SealChunk"; break;
-        case pain::deva::OpType::kSealAndNewChunk: name = "SealAndNewChunk"; break;
-        default: name = "Invalid"; break;
-        }
+        std::string_view name = magic_enum::enum_name(type);
         return fmt::formatter<std::string_view>::format(name, ctx);
     }
 };

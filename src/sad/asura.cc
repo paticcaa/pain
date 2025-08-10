@@ -14,7 +14,7 @@
 #include "sad/common.h"
 #include "sad/macro.h"
 
-#define ASURA_CMD(cmd) REGISTER(cmd, asura_parser)
+#define REGISTER_ASURA_CMD(cmd, ...) REGISTER(cmd, asura_parser, DEFER(__VA_ARGS__))
 
 namespace pain::sad {
 argparse::ArgumentParser& program();
@@ -22,10 +22,10 @@ argparse::ArgumentParser& program();
 namespace pain::sad::asura {
 argparse::ArgumentParser asura_parser("asura", "1.0", argparse::default_arguments::none);
 
-RUN(program().add_subparser(asura_parser));
-RUN(asura_parser.add_description("send cmd to asura server")
-        .add_argument("--host")
-        .default_value(std::string("127.0.0.1:8201")));
+EXECUTE(program().add_subparser(asura_parser));
+EXECUTE(asura_parser.add_description("send cmd to asura server")
+            .add_argument("--host")
+            .default_value(std::string("127.0.0.1:8201")));
 
 static std::map<std::string, std::function<Status(argparse::ArgumentParser&)>> subcommands = {};
 
@@ -51,10 +51,11 @@ Status execute(argparse::ArgumentParser& parser) {
     std::exit(1);
 }
 
-ASURA_CMD(register_deva)
-RUN(ARGS(register_deva).add_description("add deva"))
-RUN(ARGS(register_deva).add_argument("--ip").required())
-RUN(ARGS(register_deva).add_argument("--port").default_value(0u).scan<'i', uint32_t>().required())
+REGISTER_ASURA_CMD(register_deva, [](argparse::ArgumentParser& parser) {
+    parser.add_description("add deva");
+    parser.add_argument("--ip").required();
+    parser.add_argument("--port").default_value(0u).scan<'i', uint32_t>().required();
+});
 COMMAND(register_deva) {
     SPAN(span);
     auto host = args.get<std::string>("--host");
@@ -86,13 +87,11 @@ COMMAND(register_deva) {
     if (cntl.Failed()) {
         return Status(cntl.ErrorCode(), cntl.ErrorText());
     }
-
     print(cntl, &response);
     return Status::OK();
 }
 
-ASURA_CMD(list_deva)
-RUN(ARGS(list_deva).add_description("list deva"))
+REGISTER_ASURA_CMD(list_deva, [](argparse::ArgumentParser& parser) { parser.add_description("list deva"); });
 COMMAND(list_deva) {
     SPAN(span);
     auto host = args.get<std::string>("--host");
@@ -121,11 +120,12 @@ COMMAND(list_deva) {
     return Status::OK();
 }
 
-ASURA_CMD(register_manusya)
-RUN(ARGS(register_manusya).add_description("add manusya"))
-RUN(ARGS(register_manusya).add_argument("--ip").required())
-RUN(ARGS(register_manusya).add_argument("--port").default_value(0u).scan<'i', uint32_t>().required())
-RUN(ARGS(register_manusya).add_argument("--pool").required())
+REGISTER_ASURA_CMD(register_manusya, [](argparse::ArgumentParser& parser) {
+    parser.add_description("add manusya");
+    parser.add_argument("--ip").required();
+    parser.add_argument("--port").default_value(0u).scan<'i', uint32_t>().required();
+    parser.add_argument("--pool").required();
+});
 COMMAND(register_manusya) {
     SPAN(span);
     auto host = args.get<std::string>("--host");
@@ -169,8 +169,7 @@ COMMAND(register_manusya) {
     return Status::OK();
 }
 
-ASURA_CMD(list_manusya)
-RUN(ARGS(list_manusya).add_description("list manusya"))
+REGISTER_ASURA_CMD(list_manusya, [](argparse::ArgumentParser& parser) { parser.add_description("list manusya"); });
 COMMAND(list_manusya) {
     SPAN(span);
     auto host = args.get<std::string>("--host");
@@ -199,9 +198,10 @@ COMMAND(list_manusya) {
     return Status::OK();
 }
 
-ASURA_CMD(create_pool)
-RUN(ARGS(create_pool).add_description("create pool"))
-RUN(ARGS(create_pool).add_argument("--name").required())
+REGISTER_ASURA_CMD(create_pool, [](argparse::ArgumentParser& parser) {
+    parser.add_description("create pool");
+    parser.add_argument("--name").required();
+});
 COMMAND(create_pool) {
     SPAN(span);
     auto host = args.get<std::string>("--host");

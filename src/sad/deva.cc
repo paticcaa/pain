@@ -14,7 +14,7 @@
 #include "sad/common.h"
 #include "sad/macro.h"
 
-#define DEVA_CMD(cmd) REGISTER(cmd, deva_parser)
+#define REGISTER_DEVA_CMD(cmd, callback) REGISTER(cmd, deva_parser, callback)
 
 namespace pain::sad {
 argparse::ArgumentParser& program();
@@ -22,10 +22,10 @@ argparse::ArgumentParser& program();
 namespace pain::sad::deva {
 argparse::ArgumentParser deva_parser("deva", "1.0", argparse::default_arguments::none);
 
-RUN(program().add_subparser(deva_parser));
-RUN(deva_parser.add_description("send cmd to deva server")
-        .add_argument("--host")
-        .default_value(std::string("127.0.0.1:8001")));
+EXECUTE(program().add_subparser(deva_parser));
+EXECUTE(deva_parser.add_description("send cmd to deva server")
+            .add_argument("--host")
+            .default_value(std::string("127.0.0.1:8001")));
 
 static std::map<std::string, std::function<Status(argparse::ArgumentParser&)>> subcommands = {};
 
@@ -51,16 +51,11 @@ Status execute(argparse::ArgumentParser& parser) {
     std::exit(1);
 }
 
-DEVA_CMD(open)
-RUN(ARGS(open).add_description("open file").add_argument("--uuid").required())
+REGISTER_DEVA_CMD(open, [](argparse::ArgumentParser& parser) { parser.add_argument("--path").required(); });
 COMMAND(open) {
     SPAN(span);
     auto host = args.get<std::string>("--host");
-    auto uuid = args.get<std::string>("--uuid");
-
-    if (!UUID::valid(uuid)) {
-        return Status(EINVAL, "Invalid uuid id");
-    }
+    auto path = args.get<std::string>("--path");
 
     brpc::Channel channel;
     brpc::ChannelOptions options;
@@ -72,15 +67,13 @@ COMMAND(open) {
     }
 
     brpc::Controller cntl;
-    pain::proto::deva::OpenRequest request;
-    pain::proto::deva::OpenResponse response;
+    pain::proto::deva::OpenFileRequest request;
+    pain::proto::deva::OpenFileResponse response;
     pain::proto::deva::DevaService::Stub stub(&channel);
     pain::inject_tracer(&cntl);
 
-    auto id = pain::UUID::from_str_or_die(uuid);
-    request.mutable_uuid()->set_low(id.low());
-    request.mutable_uuid()->set_high(id.high());
-    stub.Open(&cntl, &request, &response, nullptr);
+    request.set_path(path);
+    stub.OpenFile(&cntl, &request, &response, nullptr);
     if (cntl.Failed()) {
         return Status(cntl.ErrorCode(), cntl.ErrorText());
     }

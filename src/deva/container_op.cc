@@ -25,12 +25,11 @@ OpPtr create(RsmPtr rsm) {
 OpPtr decode(OpType op_type, IOBuf* buf, RsmPtr rsm) {
     auto op = [](OpType op_type, IOBuf* buf, RsmPtr rsm) -> OpPtr {
         switch (op_type) {
-            BRANCH(Open)
-            BRANCH(Close)
-            BRANCH(Remove)
-            BRANCH(Seal)
+            BRANCH(CreateFile)
+            BRANCH(RemoveFile)
+            BRANCH(SealFile)
             BRANCH(CreateChunk)
-            BRANCH(RemoveChunk)
+            BRANCH(CheckInChunk)
             BRANCH(SealChunk)
             BRANCH(SealAndNewChunk)
         default: BOOST_ASSERT_MSG(false, "unknown op type");

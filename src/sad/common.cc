@@ -6,11 +6,11 @@
 #include "base/plog.h"
 #include "base/tracer.h"
 
-using json = nlohmann::ordered_json;
+using Json = nlohmann::ordered_json;
 
 namespace pain::sad {
 
-json pb_to_json(const google::protobuf::Message& message) {
+Json pb_to_json(const google::protobuf::Message& message) {
     json2pb::Pb2JsonOptions options;
     options.enable_protobuf_map = true;
     options.enum_option = json2pb::OUTPUT_ENUM_BY_NAME;
@@ -19,12 +19,12 @@ json pb_to_json(const google::protobuf::Message& message) {
     options.always_print_primitive_fields = true;
     std::string out;
     json2pb::ProtoMessageToJson(message, &out);
-    auto j = json::parse(out);
+    auto j = Json::parse(out);
     return j;
 }
 
 void print(const Status& status) {
-    json out;
+    Json out;
     out["header"] = {
         {"status", status.error_code()},
         {"message", status.error_str()},
@@ -33,8 +33,8 @@ void print(const Status& status) {
     fmt::print("{}\n", out.dump(2));
 }
 
-void print(const brpc::Controller& cntl, const google::protobuf::Message* message, std::function<void(json&)> f) {
-    json out;
+void print(const brpc::Controller& cntl, const google::protobuf::Message* message, std::function<void(Json&)> f) {
+    Json out;
     out["header"] = {
         {"status", cntl.ErrorCode()},
         {"message", cntl.ErrorText()},

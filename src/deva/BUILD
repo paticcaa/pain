@@ -25,6 +25,7 @@ cc_library(
         "@braft",
         "@rocksdb",
         "@boost.smart_ptr",
+        "@magic_enum",
     ],
 )
 

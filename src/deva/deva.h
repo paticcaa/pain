@@ -6,12 +6,12 @@
 #include "deva/container.h"
 
 #define DEVA_ENTRY(name)                                                                                               \
-    Status name(const pain::proto::deva::store::name##Request* request,                                                \
-                pain::proto::deva::store::name##Response* response,                                                    \
-                int64_t index);                                                                                        \
-    Status process(const pain::proto::deva::store::name##Request* request,                                             \
-                   pain::proto::deva::store::name##Response* response,                                                 \
-                   int64_t index) {                                                                                    \
+    Status name([[maybe_unused]] const pain::proto::deva::store::name##Request* request,                               \
+                [[maybe_unused]] pain::proto::deva::store::name##Response* response,                                   \
+                [[maybe_unused]] int64_t index);                                                                       \
+    Status process([[maybe_unused]] const pain::proto::deva::store::name##Request* request,                            \
+                   [[maybe_unused]] pain::proto::deva::store::name##Response* response,                                \
+                   [[maybe_unused]] int64_t index) {                                                                   \
         return name(request, response, index);                                                                         \
     }
 
@@ -21,12 +21,11 @@ class Deva;
 using DevaPtr = boost::intrusive_ptr<Deva>;
 class Deva : public Container {
 public:
-    DEVA_ENTRY(Open);
-    DEVA_ENTRY(Close);
-    DEVA_ENTRY(Remove);
-    DEVA_ENTRY(Seal);
+    DEVA_ENTRY(CreateFile);
+    DEVA_ENTRY(RemoveFile);
+    DEVA_ENTRY(SealFile);
     DEVA_ENTRY(CreateChunk);
-    DEVA_ENTRY(RemoveChunk);
+    DEVA_ENTRY(CheckInChunk);
     DEVA_ENTRY(SealChunk);
     DEVA_ENTRY(SealAndNewChunk);
 

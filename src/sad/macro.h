@@ -9,7 +9,7 @@
 #define DEFER(...) __VA_ARGS__ EMPTY()
 
 #define __RUN(statement)                                                                                               \
-    struct TOKENPASTE2(__run, __LINE__) {                                                                              \
+    static struct TOKENPASTE2(__run, __LINE__) {                                                                       \
         TOKENPASTE2(__run, __LINE__)                                                                                   \
         () {                                                                                                           \
             statement;                                                                                                 \
@@ -17,16 +17,18 @@
     } TOKENPASTE2(TOKENPASTE2(__run, __LINE__), _instance);
 
 #define RUN(...) __RUN(DEFER(__VA_ARGS__))
+#define EXECUTE(...) __RUN(DEFER(__VA_ARGS__))
 
-#define REGISTER(cmd, parent)                                                                                          \
+#define __REGISTER(cmd, parent, callback)                                                                              \
     static argparse::ArgumentParser cmd##_parser(format_command(#cmd));                                                \
-    RUN(parent.add_subparser(cmd##_parser); cmd##_parser.add_parents(parent))
+    RUN(parent.add_subparser(cmd##_parser); cmd##_parser.add_parents(parent); callback(cmd##_parser);)
+#define REGISTER(cmd, parent, ...) __REGISTER(cmd, parent, DEFER(__VA_ARGS__))
 
 #define ARGS(cmd) cmd##_parser
 
 #define COMMAND(name)                                                                                                  \
     Status name(argparse::ArgumentParser&);                                                                            \
-    struct __add_##name {                                                                                              \
+    static struct __add_##name {                                                                                       \
         __add_##name() {                                                                                               \
             add(#name, name);                                                                                          \
         }                                                                                                              \

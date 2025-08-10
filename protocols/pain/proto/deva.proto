@@ -6,103 +6,90 @@ import "pain/proto/common.proto";
 option cc_generic_services = true;
 
 service DevaService {
-  rpc Create(CreateRequest) returns (CreateResponse);
-  rpc Open(OpenRequest) returns (OpenResponse);
-  rpc Close(CloseRequest) returns (CloseResponse);
-  rpc Remove(RemoveRequest) returns (RemoveResponse);
-  rpc Seal(SealRequest) returns (SealResponse);
+  rpc OpenFile(OpenFileRequest) returns (OpenFileResponse);
+  rpc CloseFile(CloseFileRequest) returns (CloseFileResponse);
+  rpc RemoveFile(RemoveFileRequest) returns (RemoveFileResponse);
+  rpc SealFile(SealFileRequest) returns (SealFileResponse);
 
-  rpc CreateChunk(CreateChunkRequest) returns (CreateChunkResponse);
-  rpc AppendChunk(AppendChunkRequest) returns (AppendChunkResponse);
-  rpc RemoveChunk(RemoveChunkRequest) returns (RemoveChunkResponse);
+  rpc NewChunk(NewChunkRequest) returns (NewChunkResponse);
+  rpc CheckInChunk(CheckInChunkRequest) returns (CheckInChunkResponse);
   rpc SealChunk(SealChunkRequest) returns (SealChunkResponse);
   rpc SealAndNewChunk(SealAndNewChunkRequest) returns (SealAndNewChunkResponse);
 }
 
-message CreatePoolRequest {
-  UUID uuid = 1;
+enum OpenFlag {
+  OPEN_NONE = 0;
+  OPEN_READ = 1;
+  OPEN_APPEND = 2;
+  OPEN_CREATE = 4;
 }
 
-message CreatePoolResponse {}
-
-message CreateRequest {
-  UUID pool = 1;
-  string path = 2;
+message OpenFileRequest {
+  string path = 1;
+  uint32 flags = 2;
 }
 
-message CreateResponse {
-  UUID uuid = 1;
+message OpenFileResponse {
+  Header header = 1;
+  FileInfo file_info = 2;
 }
 
-message OpenRequest {
-  UUID pool = 1;
-  UUID uuid = 2;
+message CloseFileRequest {
+  UUID file_id = 1;
 }
 
-message OpenResponse {
-  FileMeta file_meta = 1;
+message CloseFileResponse {}
+
+message RemoveFileRequest {
+  string path = 1;
 }
 
-message CloseRequest {
-  UUID pool = 1;
-  UUID uuid = 2;
+message RemoveFileResponse {
+  Header header = 1;
 }
 
-message CloseResponse {}
-
-message RemoveRequest {
-  UUID pool = 1;
-  UUID uuid = 2;
+message SealFileRequest {
+  string path = 1;
 }
 
-message RemoveResponse {}
-
-message SealRequest {
-  UUID pool = 1;
-  UUID uuid = 2;
+message SealFileResponse {
+  Header header = 1;
 }
-
-message SealResponse {}
 
 message SealAndNewChunkRequest {
-  UUID pool = 1;
-  UUID uuid = 2;
+  UUID chunk_id = 1;
+  uint64 length = 2;
 }
 
 message SealAndNewChunkResponse {
-  UUID pool = 1;
-  UUID uuid = 2;
+  Header header = 1;
+  string chunk_id = 2;
+  repeated Location locations = 3;
 }
 
-message CreateChunkRequest {}
+message NewChunkRequest {}
 
-message CreateChunkResponse {
-  UUID pool = 1;
-  UUID uuid = 2;
+message NewChunkResponse {
+  Header header = 1;
+  string chunk_id = 2;
+  repeated Location locations = 3;
 }
 
-message AppendChunkRequest {
-  UUID pool = 1;
-  UUID uuid = 2;
-  uint64 offset = 3;
-  uint32 length = 4;
-  uint32 digest = 5;
+message CheckInChunkRequest {
+  string chunk_id = 1;
+  repeated SubChunkInfo sub_chunks = 2;
 }
 
-message AppendChunkResponse {
-  uint64 offset = 1;
+message CheckInChunkResponse {
+  Header header = 1;
+  ChunkInfo chunk_info = 2;
 }
-
-message RemoveChunkRequest {
-  UUID pool = 1;
-  UUID uuid = 2;
-}
-
-message RemoveChunkResponse {}
 
 message SealChunkRequest {
-  UUID pool = 1;
-  UUID uuid = 2;
+  UUID chunk_id = 1;
+  uint64 length = 2;
 }
 
-message SealChunkResponse {}
+message SealChunkResponse {
+  Header header = 1;
+}

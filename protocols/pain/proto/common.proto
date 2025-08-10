@@ -1,6 +1,11 @@
 syntax = "proto3";
 package pain.proto;
 
+message Header {
+  uint32 status = 1;
+  string message = 2;
+}
+
 message UUID {
   uint64 low = 1;
   uint64 high = 2;
@@ -22,23 +27,23 @@ enum ChunkState {
   CHUNK_STATE_SEALED = 3;
 };
 
-message SubChunk {
-  UUID uuid = 1;
+message SubChunkInfo {
+  UUID chunk_id = 1;
   uint64 length = 2;
   Location location = 3;
 }
 
-message Chunk {
+message ChunkInfo {
   UUID uuid = 1;
   uint64 index = 2;   // chunk index
   uint64 offset = 3;  // offset in file
   uint64 length = 4;  // length of chunk
   ChunkState state = 5;
-  repeated SubChunk sub_chunks = 6;
+  repeated SubChunkInfo sub_chunk_infos = 6;
 }
 
-message FileMeta {
-  UUID inode = 1;
+message FileInfo {
+  UUID file_id = 1;
   uint64 size = 2;
   uint64 atime = 3;
   uint64 mtime = 4;
@@ -47,5 +52,5 @@ message FileMeta {
   uint32 uid = 7;
   uint32 gid = 8;
   repeated Pair xattrs = 9;
-  repeated Chunk chunks = 10;
+  repeated ChunkInfo chunk_infos = 10;
 }

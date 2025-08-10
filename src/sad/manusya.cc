@@ -14,7 +14,7 @@
 #include "sad/common.h"
 #include "sad/macro.h"
 
-#define MANUSYA_CMD(cmd) REGISTER(cmd, manusya_parser)
+#define REGISTER_MANUSYA_CMD(cmd, ...) REGISTER(cmd, manusya_parser, DEFER(__VA_ARGS__))
 
 namespace pain::sad {
 argparse::ArgumentParser& program();
@@ -22,10 +22,10 @@ argparse::ArgumentParser& program();
 namespace pain::sad::manusya {
 argparse::ArgumentParser manusya_parser("manusya", "1.0", argparse::default_arguments::none);
 
-RUN(program().add_subparser(manusya_parser));
-RUN(manusya_parser.add_description("send cmd to manusya server")
-        .add_argument("--host")
-        .default_value(std::string("127.0.0.1:8003")));
+EXECUTE(program().add_subparser(manusya_parser));
+EXECUTE(manusya_parser.add_description("send cmd to manusya server")
+            .add_argument("--host")
+            .default_value(std::string("127.0.0.1:8003")));
 
 static std::map<std::string, std::function<Status(argparse::ArgumentParser&)>> subcommands = {};
 
@@ -51,13 +51,10 @@ Status execute(argparse::ArgumentParser& parser) {
     std::exit(1);
 }
 
-MANUSYA_CMD(create_chunk)
-RUN(ARGS(create_chunk)
-        .add_description("create chunk")
-        .add_argument("--enable-append-out-of-order")
-        .default_value(false)
-        .implicit_value(true))
-RUN(ARGS(create_chunk).add_argument("--enable-digest").default_value(false).implicit_value(true))
+REGISTER_MANUSYA_CMD(create_chunk, [](argparse::ArgumentParser& parser) {
+    parser.add_description("create chunk");
+    parser.add_argument("--enable-append-out-of-order").default_value(false).implicit_value(true);
+});
 COMMAND(create_chunk) {
     SPAN(span);
     auto host = args.get<std::string>("--host");
@@ -85,7 +82,7 @@ COMMAND(create_chunk) {
         return Status(cntl.ErrorCode(), cntl.ErrorText());
     }
 
-    print(cntl, &response, [](json& out) {
+    print(cntl, &response, [](Json& out) {
         uint64_t low = out["uuid"]["low"];
         uint64_t high = out["uuid"]["high"];
         pain::UUID uuid(high, low);
@@ -94,18 +91,12 @@ COMMAND(create_chunk) {
     return Status::OK();
 }
 
-MANUSYA_CMD(append_chunk)
-RUN(ARGS(append_chunk)
-        .add_description("append chunk")
-        .add_argument("-c", "--chunk-id")
-        .required()
-        .help("chunk uuid, such as 123e4567-e89b-12d3-a456-426655440000"))
-RUN(ARGS(append_chunk)
-        .add_argument("-o", "--offset")
-        .default_value(0ul)
-        .help("offset to append data")
-        .scan<'i', uint64_t>())
-RUN(ARGS(append_chunk).add_argument("-d", "--data").required().help("data to append"))
+REGISTER_MANUSYA_CMD(append_chunk, [](argparse::ArgumentParser& parser) {
+    parser.add_description("append chunk");
+    parser.add_argument("-c", "--chunk-id").required().help("chunk uuid, such as 123e4567-e89b-12d3-a456-426655440000");
+    parser.add_argument("-o", "--offset").default_value(0ul).help("offset to append data").scan<'i', uint64_t>();
+    parser.add_argument("-d", "--data").required().help("data to append");
+});
 COMMAND(append_chunk) {
     SPAN(span);
     auto chunk_id = args.get<std::string>("--chunk-id");
@@ -146,10 +137,11 @@ COMMAND(append_chunk) {
     return Status::OK();
 }
 
-MANUSYA_CMD(list_chunk)
-RUN(ARGS(list_chunk).add_description("list chunk"))
-RUN(ARGS(list_chunk).add_argument("--start").default_value(std::string("00000000-0000-0000-0000-000000000000")))
-RUN(ARGS(list_chunk).add_argument("--limit").default_value(10u).scan<'i', uint32_t>())
+REGISTER_MANUSYA_CMD(list_chunk, [](argparse::ArgumentParser& parser) {
+    parser.add_description("list chunk");
+    parser.add_argument("--start").default_value(std::string("00000000-0000-0000-0000-000000000000"));
+    parser.add_argument("--limit").default_value(10u).scan<'i', uint32_t>();
+});
 COMMAND(list_chunk) {
     SPAN(span);
     auto host = args.get<std::string>("--host");
@@ -185,7 +177,7 @@ COMMAND(list_chunk) {
         return Status(cntl.ErrorCode(), cntl.ErrorText());
     }
 
-    print(cntl, &response, [](json& out) {
+    print(cntl, &response, [](Json& out) {
         for (auto& uuid : out["uuids"]) {
             uint64_t low = uuid["low"];
             uint64_t high = uuid["high"];
@@ -197,19 +189,15 @@ COMMAND(list_chunk) {
     return Status::OK();
 }
 
-MANUSYA_CMD(read_chunk)
-RUN(ARGS(read_chunk)
-        .add_description("read chunk")
+REGISTER_MANUSYA_CMD(read_chunk, [](argparse::ArgumentParser& parser) {
+    parser.add_description("read chunk")
         .add_argument("-c", "--chunk-id")
         .required()
-        .help("chunk uuid, such as 123e4567-e89b-12d3-a456-426655440000"))
-RUN(ARGS(read_chunk).add_argument("--offset").default_value(0ul).help("offset to read data").scan<'i', uint64_t>())
-RUN(ARGS(read_chunk)
-        .add_argument("-l", "--length")
-        .default_value(1024u)
-        .help("length to read data")
-        .scan<'i', uint32_t>())
-RUN(ARGS(read_chunk).add_argument("-o", "--output").default_value(std::string("-")))
+        .help("chunk uuid, such as 123e4567-e89b-12d3-a456-426655440000");
+    parser.add_argument("--offset").default_value(0ul).help("offset to read data").scan<'i', uint64_t>();
+    parser.add_argument("-l", "--length").default_value(1024u).help("length to read data").scan<'i', uint32_t>();
+    parser.add_argument("-o", "--output").default_value(std::string("-"));
+});
 COMMAND(read_chunk) {
     SPAN(span);
     auto chunk_id = args.get<std::string>("--chunk-id");
@@ -259,12 +247,12 @@ COMMAND(read_chunk) {
     return Status::OK();
 }
 
-MANUSYA_CMD(seal_chunk)
-RUN(ARGS(seal_chunk)
-        .add_description("seal chunk")
+REGISTER_MANUSYA_CMD(seal_chunk, [](argparse::ArgumentParser& parser) {
+    parser.add_description("seal chunk")
         .add_argument("-c", "--chunk-id")
         .required()
-        .help("chunk uuid, such as 123e4567-e89b-12d3-a456-426655440000"))
+        .help("chunk uuid, such as 123e4567-e89b-12d3-a456-426655440000");
+});
 COMMAND(seal_chunk) {
     SPAN(span);
     auto chunk_id = args.get<std::string>("--chunk-id");
@@ -301,12 +289,12 @@ COMMAND(seal_chunk) {
     return Status::OK();
 }
 
-MANUSYA_CMD(remove_chunk)
-RUN(ARGS(remove_chunk)
-        .add_description("remove chunk")
+REGISTER_MANUSYA_CMD(remove_chunk, [](argparse::ArgumentParser& parser) {
+    parser.add_description("remove chunk")
         .add_argument("-c", "--chunk-id")
         .required()
-        .help("chunk uuid, such as 123e4567-e89b-12d3-a456-426655440000"))
+        .help("chunk uuid, such as 123e4567-e89b-12d3-a456-426655440000");
+});
 COMMAND(remove_chunk) {
     SPAN(span);
     auto chunk_id = args.get<std::string>("--chunk-id");
@@ -343,12 +331,12 @@ COMMAND(remove_chunk) {
     return Status::OK();
 }
 
-MANUSYA_CMD(query_chunk)
-RUN(ARGS(query_chunk)
-        .add_description("query chunk")
+REGISTER_MANUSYA_CMD(query_chunk, [](argparse::ArgumentParser& parser) {
+    parser.add_description("query chunk")
         .add_argument("-c", "--chunk-id")
         .required()
-        .help("chunk uuid, such as 123e4567-e89b-12d3-a456-426655440000"))
+        .help("chunk uuid, such as 123e4567-e89b-12d3-a456-426655440000");
+});
 COMMAND(query_chunk) {
     SPAN(span);
     auto chunk_id = args.get<std::string>("--chunk-id");

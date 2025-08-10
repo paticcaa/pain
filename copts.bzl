@@ -36,6 +36,7 @@ PAIN_COPTS = select({
 }) + [
     '-Isrc',
     '-march=native',
+    '-DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE',
 ]
 
 PAIN_TEST_COPTS = PAIN_COPTS + select({

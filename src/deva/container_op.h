@@ -95,11 +95,11 @@ public:
 
 protected:
     OpType _type;
-    OnFinish _finish;
     RsmPtr _rsm;
     Request _request;
     Response* _response;
     Response _internal_response;
+    OnFinish _finish;
 };
 
 } // namespace pain::deva

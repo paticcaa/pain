@@ -3,76 +3,30 @@ package pain.proto.deva.store;
 
 import "pain/proto/common.proto";
 
-message OpenRequest {
-  UUID pool = 1;
-  UUID uuid = 2;
-}
+message CreateFileRequest {}
 
-message OpenResponse {
-  FileMeta file_meta = 1;
-}
+message CreateFileResponse {}
 
-message CloseRequest {
-  UUID pool = 1;
-  UUID uuid = 2;
-}
+message RemoveFileRequest {}
 
-message CloseResponse {}
+message RemoveFileResponse {}
 
-message RemoveRequest {
-  UUID pool = 1;
-  UUID uuid = 2;
-}
+message SealFileRequest {}
 
-message RemoveResponse {}
+message SealFileResponse {}
 
-message SealRequest {
-  UUID pool = 1;
-  UUID uuid = 2;
-}
+message CheckInChunkRequest {}
 
-message SealResponse {}
-
-message SealAndNewChunkRequest {
-  UUID pool = 1;
-  UUID uuid = 2;
-}
-
-message SealAndNewChunkResponse {
-  UUID pool = 1;
-  UUID uuid = 2;
-}
+message CheckInChunkResponse {}
 
 message CreateChunkRequest {}
 
-message CreateChunkResponse {
-  UUID pool = 1;
-  UUID uuid = 2;
-}
+message CreateChunkResponse {}
 
-message AppendChunkRequest {
-  UUID pool = 1;
-  UUID uuid = 2;
-  uint64 offset = 3;
-  uint32 length = 4;
-  uint32 digest = 5;
-}
-
-message AppendChunkResponse {
-  UUID pool = 1;
-  UUID uuid = 2;
-}
-
-message RemoveChunkRequest {
-  UUID pool = 1;
-  UUID uuid = 2;
-}
-
-message RemoveChunkResponse {}
-
-message SealChunkRequest {
-  UUID pool = 1;
-  UUID uuid = 2;
-}
+message SealChunkRequest {}
 
 message SealChunkResponse {}
+
+message SealAndNewChunkRequest {}
+
+message SealAndNewChunkResponse {}
