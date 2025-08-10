@@ -12,6 +12,7 @@ cc_binary(
         "//protocols/pain/proto:cc_pain_deva_proto",
         "//protocols/pain/proto:cc_pain_manusya_proto",
         "//protocols/pain/proto:cc_pain_asura_proto",
+        "//protocols/pain/proto:cc_pain_errno_proto",
         "@nlohmann_json//:json",
         "@argparse",
         "@brpc",

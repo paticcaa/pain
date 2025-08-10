@@ -8,7 +8,9 @@ template <typename T>
 class BthreadLocal {
 public:
     BthreadLocal() {
-        bthread_key_create(&_tls_key, [](void* p) { delete (T*)p; });
+        bthread_key_create(&_tls_key, [](void* p) {
+            delete (T*)p;
+        });
     }
 
     T* get() const {

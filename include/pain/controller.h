@@ -17,6 +17,7 @@ public:
     void SetFailed(const std::string& reason) override;
     bool IsCanceled() const override;
     void NotifyOnCancel(google::protobuf::Closure* callback) override;
+    uint32_t error_code() const;
     void set_timeout_us(int timeout_us);
     int timeout_us() const;
     void set_direct_io(bool direct_io);

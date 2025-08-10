@@ -178,7 +178,9 @@ void LocalStore::for_each(std::function<void(const char* path)> cb) {
         if (entry->d_type == DT_REG) {
             try {
                 cb(entry->d_name);
-            } catch (...) { continue; }
+            } catch (...) {
+                continue;
+            }
         }
     }
     closedir(dir);

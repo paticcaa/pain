@@ -32,7 +32,8 @@ OpPtr decode(OpType op_type, IOBuf* buf, RsmPtr rsm) {
             BRANCH(CheckInChunk)
             BRANCH(SealChunk)
             BRANCH(SealAndNewChunk)
-        default: BOOST_ASSERT_MSG(false, "unknown op type");
+        default:
+            BOOST_ASSERT_MSG(false, "unknown op type");
         }
         return nullptr;
     }(op_type, buf, rsm);

@@ -91,7 +91,9 @@ COMMAND(register_deva) {
     return Status::OK();
 }
 
-REGISTER_ASURA_CMD(list_deva, [](argparse::ArgumentParser& parser) { parser.add_description("list deva"); });
+REGISTER_ASURA_CMD(list_deva, [](argparse::ArgumentParser& parser) {
+    parser.add_description("list deva");
+});
 COMMAND(list_deva) {
     SPAN(span);
     auto host = args.get<std::string>("--host");
@@ -169,7 +171,9 @@ COMMAND(register_manusya) {
     return Status::OK();
 }
 
-REGISTER_ASURA_CMD(list_manusya, [](argparse::ArgumentParser& parser) { parser.add_description("list manusya"); });
+REGISTER_ASURA_CMD(list_manusya, [](argparse::ArgumentParser& parser) {
+    parser.add_description("list manusya");
+});
 COMMAND(list_manusya) {
     SPAN(span);
     auto host = args.get<std::string>("--host");

@@ -51,7 +51,9 @@ void print(const brpc::Controller& cntl, const google::protobuf::Message* messag
         if (f) {
             f(out);
         }
-    } catch (const std::exception& e) { PLOG_ERROR(("desc", "failed to call user function")("error", e.what())); }
+    } catch (const std::exception& e) {
+        PLOG_ERROR(("desc", "failed to call user function")("error", e.what()));
+    }
 
     fmt::print("{}\n", out.dump(2));
 }

@@ -6,23 +6,23 @@ import "pain/proto/common.proto";
 option cc_generic_services = true;
 
 service ReplicationGroupService {
-  rpc create_replication_group(CreateReplicationGroupRequest)
-      returns (CreateReplicationGroupResponse);
+    rpc create_replication_group(CreateReplicationGroupRequest)
+        returns (CreateReplicationGroupResponse);
 }
 
 message Peer {
-  optional uint64 id = 1;
-  optional string address = 2;
+    optional uint64 id = 1;
+    optional string address = 2;
 }
 
 message ReplicationGroup {
-  UUID pool_id = 1;
-  uint32 group_id = 2;
-  repeated Peer peers = 3;
+    UUID pool_id = 1;
+    uint32 group_id = 2;
+    repeated Peer peers = 3;
 }
 
 message CreateReplicationGroupRequest {
-  repeated ReplicationGroup groups = 1;
+    repeated ReplicationGroup groups = 1;
 }
 
 message CreateReplicationGroupResponse {}

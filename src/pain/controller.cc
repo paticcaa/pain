@@ -1,35 +1,8 @@
 #include "pain/controller.h"
+#include "pain/controller_impl.h"
 #include "butil/iobuf.h"
 
 namespace pain {
-
-class ControllerImpl {
-public:
-    void set_timeout_us(int timeout_us) {
-        _timeout_us = timeout_us;
-    }
-    int timeout_us() const {
-        return _timeout_us;
-    }
-    void set_direct_io(bool direct_io) {
-        _direct_io = direct_io;
-    }
-    bool direct_io() const {
-        return _direct_io;
-    }
-    butil::IOBuf& request_attachment() {
-        return _request_attachment;
-    }
-    butil::IOBuf& response_attachment() {
-        return _response_attachment;
-    }
-
-private:
-    int _timeout_us = 0;
-    bool _direct_io = true;
-    butil::IOBuf _request_attachment;
-    butil::IOBuf _response_attachment;
-};
 
 Controller::Controller() : _impl(new ControllerImpl) {}
 
@@ -52,6 +25,10 @@ bool Controller::IsCanceled() const {
     return false;
 }
 void Controller::NotifyOnCancel(google::protobuf::Closure* callback) {}
+
+uint32_t Controller::error_code() const {
+    return _impl->error_code();
+}
 
 void Controller::set_timeout_us(int timeout_us) {
     _impl->set_timeout_us(timeout_us);

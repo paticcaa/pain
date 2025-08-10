@@ -32,6 +32,12 @@ proto_library(
     strip_import_prefix = "/protocols",
 )
 
+proto_library(
+    name = "pain_errno_proto",
+    srcs = ["errno.proto"],
+    strip_import_prefix = "/protocols",
+)
+
 cc_proto_library(
     name = "cc_pain_common_proto",
     deps = [
@@ -61,5 +67,11 @@ cc_proto_library(
 cc_proto_library(
     name = "cc_pain_proto",
     deps = [":pain_proto"],
+    visibility = ["//visibility:public"],
+)
+
+cc_proto_library(
+    name = "cc_pain_errno_proto",
+    deps = [":pain_errno_proto"],
     visibility = ["//visibility:public"],
 )

@@ -10,7 +10,7 @@ A distributed storage system.
 - python3
 - ansible
 
-```
+```bash
 # install xmake
 curl -fsSL https://xmake.io/shget.text | bash
 
@@ -41,39 +41,29 @@ sudo apt install -y autoconf automake libtool pkg-config
 
 ## Build
 
-- Config your project with debug mode.
-
-```py
-./pain.py config -m debug
-```
-
 - Build
 
-```py
-# build and install to ${PROJECT_DIR}/output
-./pain.py build -i/--install
+```bash
+./z.py build # or ./z.py b
 ```
 
 - More commands
 
-```
-# build without install
-./pain.py build
-
+```bash
 # only build sad target
-./pain.py build sad
+./z.py b sad
 
 # format your project and it's useful before pulling a request
-./pain.py format
+./z.py format # or ./z.py f
 ```
 
-Using `./pain.py -h` for more information.
+Using `./z.py -h` for more information.
 
 ## Deploy
 
 Pain provide a easy ansible script to deploy minimal cluster
 
-```
+```bash
 # deploy deva/manusya
 ansible-playbook -i ./deploy/hosts ./deploy/deploy.yml -t start
 
@@ -88,7 +78,7 @@ ansible-playbook -i ./deploy/hosts ./deploy/deploy.yml -t start-prometheus
 
 Pain supports opentelemetry. You can install jaeger using follow command.
 
-```
+```bash
 docker run --rm \
   -e COLLECTOR_ZIPKIN_HOST_PORT=:9411 \
   -p 16686:16686 \

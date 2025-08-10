@@ -64,7 +64,9 @@ void Bank::list_chunk(UUID start, uint32_t limit, std::function<void(UUID uuid)>
     for (uint32_t i = 0; i < limit && it != _chunks.end(); i++, it++) {
         try {
             cb(it->first);
-        } catch (const std::exception& e) { PLOG_ERROR(("desc", "failed to list chunk")("error", e.what())); }
+        } catch (const std::exception& e) {
+            PLOG_ERROR(("desc", "failed to list chunk")("error", e.what()));
+        }
     }
 }
 

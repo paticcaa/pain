@@ -8,6 +8,7 @@ cc_library(
     deps = [
         "//src/base:pain_base",
         "//protocols/pain/proto:cc_pain_proto",
+        "//protocols/pain/proto:cc_pain_errno_proto",
         "//include/pain:pain_headers",
     ],
     visibility = ["//visibility:public"],

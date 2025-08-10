@@ -5,34 +5,44 @@ import "pain/proto/common.proto";
 
 option cc_generic_services = true;
 
+message OpenRequest {
+    string path = 1;
+    uint32 flags = 2;
+}
+
+message OpenResponse {
+    FileInfo file_info = 1;
+}
+
 message AppendRequest {}
 
 message AppendResponse {
-  uint64 offset = 1;
+    uint64 offset = 1;
 }
 
 message ReadRequest {
-  uint64 offset = 1;
-  uint32 length = 2;
+    uint64 offset = 1;
+    uint32 length = 2;
 }
 
 message ReadResponse {}
 
 message SealRequest {
-  UUID uuid = 1;
+    UUID uuid = 1;
 }
 
 message SealResponse {}
 
 message CloseRequest {
-  UUID uuid = 1;
+    UUID uuid = 1;
 }
 
 message CloseResponse {}
 
 service FileService {
-  rpc append(AppendRequest) returns (AppendResponse);
-  rpc read(ReadRequest) returns (ReadResponse);
-  rpc seal(SealRequest) returns (SealResponse);
-  rpc close(CloseRequest) returns (CloseResponse);
+    rpc Open(OpenRequest) returns (OpenResponse);
+    rpc Append(AppendRequest) returns (AppendResponse);
+    rpc Read(ReadRequest) returns (ReadResponse);
+    rpc Seal(SealRequest) returns (SealResponse);
+    rpc Close(CloseRequest) returns (CloseResponse);
 }

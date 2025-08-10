@@ -1,15 +1,18 @@
 #include "pain/file_stream_impl.h"
+#include <brpc/closure_guard.h>
 #include <brpc/controller.h>
 #include "pain/controller.h"
 #include "base/plog.h"
-#include "brpc/closure_guard.h"
+
+#define FILE_STREAM_METHOD(name)                                                                                       \
+    void FileStreamImpl::name(::google::protobuf::RpcController* controller,                                           \
+                              [[maybe_unused]] const ::pain::proto::name##Request* request,                            \
+                              [[maybe_unused]] ::pain::proto::name##Response* response,                                \
+                              ::google::protobuf::Closure* done)
 
 namespace pain {
 
-void FileStreamImpl::append(::google::protobuf::RpcController* controller,
-                            const ::pain::proto::AppendRequest* request,
-                            ::pain::proto::AppendResponse* response,
-                            ::google::protobuf::Closure* done) {
+FILE_STREAM_METHOD(Append) {
     pain::Controller* cntl = static_cast<pain::Controller*>(controller);
     PLOG_DEBUG(("desc", __func__)               //
                ("uuid", _uuid.str())            //
@@ -27,28 +30,19 @@ void FileStreamImpl::append(::google::protobuf::RpcController* controller,
     brpc::ClosureGuard done_guard(done);
 }
 
-void FileStreamImpl::read(::google::protobuf::RpcController* controller,
-                          const ::pain::proto::ReadRequest* request,
-                          ::pain::proto::ReadResponse* response,
-                          ::google::protobuf::Closure* done) {
+FILE_STREAM_METHOD(Read) {
     pain::Controller* cntl = static_cast<pain::Controller*>(controller);
     PLOG_DEBUG(("desc", __func__));
     brpc::ClosureGuard done_guard(done);
 }
 
-void FileStreamImpl::seal(::google::protobuf::RpcController* controller,
-                          const ::pain::proto::SealRequest* request,
-                          ::pain::proto::SealResponse* response,
-                          ::google::protobuf::Closure* done) {
+FILE_STREAM_METHOD(Seal) {
     pain::Controller* cntl = static_cast<pain::Controller*>(controller);
     PLOG_DEBUG(("desc", __func__));
     brpc::ClosureGuard done_guard(done);
 }
 
-void FileStreamImpl::close(::google::protobuf::RpcController* controller,
-                           const ::pain::proto::CloseRequest* request,
-                           ::pain::proto::CloseResponse* response,
-                           ::google::protobuf::Closure* done) {
+FILE_STREAM_METHOD(Close) {
     pain::Controller* cntl = static_cast<pain::Controller*>(controller);
     PLOG_DEBUG(("desc", __func__));
     brpc::ClosureGuard done_guard(done);

@@ -37,7 +37,9 @@ int main(int argc, char* argv[]) {
 
     pain::manusya::ManusyaServiceImpl manusya_service_impl;
     pain::init_tracer("manusya");
-    auto stop_tracer = pain::make_scope_exit([]() { pain::cleanup_tracer(); });
+    auto stop_tracer = pain::make_scope_exit([]() {
+        pain::cleanup_tracer();
+    });
 
     if (server.AddService(&manusya_service_impl, brpc::SERVER_DOESNT_OWN_SERVICE) != 0) {
         LOG(ERROR) << "Fail to add service";

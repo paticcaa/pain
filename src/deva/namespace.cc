@@ -36,7 +36,9 @@ Status Namespace::remove(const UUID& parent, const std::string& name) {
         return Status(ENOENT, "No such file or directory");
     }
     auto& entries = it->second;
-    entries.remove_if([&name](const DirEntry& entry) { return entry.name == name; });
+    entries.remove_if([&name](const DirEntry& entry) {
+        return entry.name == name;
+    });
     return Status::OK();
 }
 
@@ -88,8 +90,9 @@ Status Namespace::lookup(const char* path, UUID* inode, FileType* file_type) con
         }
 
         const auto& entries = it->second;
-        auto entry = std::find_if(
-            entries.begin(), entries.end(), [&component](const DirEntry& entry) { return entry.name == component; });
+        auto entry = std::find_if(entries.begin(), entries.end(), [&component](const DirEntry& entry) {
+            return entry.name == component;
+        });
         if (entry == entries.end()) {
             return Status(ENOENT, "No such file or directory");
         }

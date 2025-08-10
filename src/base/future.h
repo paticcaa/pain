@@ -43,10 +43,16 @@ struct FutureState {
     ~FutureState() {
         std::lock_guard guard(_mutex);
         switch (state) {
-        case State::Future: break;
-        case State::Result: u.value.~T(); break;
-        case State::Exception: u.ex.~exception_ptr(); break;
-        default: abort();
+        case State::Future:
+            break;
+        case State::Result:
+            u.value.~T();
+            break;
+        case State::Exception:
+            u.ex.~exception_ptr();
+            break;
+        default:
+            abort();
         }
     }
 
@@ -111,10 +117,15 @@ struct FutureState<void> {
     ~FutureState() {
         std::lock_guard guard(_mutex);
         switch (state) {
-        case State::Future: break;
-        case State::Result: break;
-        case State::Exception: u.ex.~exception_ptr(); break;
-        default: abort();
+        case State::Future:
+            break;
+        case State::Result:
+            break;
+        case State::Exception:
+            u.ex.~exception_ptr();
+            break;
+        default:
+            abort();
         }
     }
 

@@ -23,7 +23,9 @@ TEST(Result, err) {
 
 TEST(Result, map_ok) {
     Result<int, std::error_code> r = 42;
-    auto r2 = std::move(r).map<std::string>([](int v) { return std::to_string(v); });
+    auto r2 = std::move(r).map<std::string>([](int v) {
+        return std::to_string(v);
+    });
     ASSERT_EQ(r2.is_ok(), true);
     ASSERT_EQ(r2.is_err(), false);
     EXPECT_EQ(r2.value(), "42");
@@ -32,7 +34,9 @@ TEST(Result, map_ok) {
 TEST(Result, map_err) {
     auto expect = std::make_error_code(std::errc::invalid_argument);
     Result<int, std::error_code> r = expect;
-    auto r2 = std::move(r).map<std::string>([](int v) { return std::to_string(v); });
+    auto r2 = std::move(r).map<std::string>([](int v) {
+        return std::to_string(v);
+    });
     ASSERT_EQ(r2.is_ok(), false);
     ASSERT_EQ(r2.is_err(), true);
     EXPECT_EQ(r2.err(), expect);
@@ -41,7 +45,9 @@ TEST(Result, map_err) {
 
 TEST(Result, map_or_ok) {
     Result<int, std::error_code> r = 42;
-    auto r2 = std::move(r).map_or<std::string>("This is a default value", [](int v) { return std::to_string(v); });
+    auto r2 = std::move(r).map_or<std::string>("This is a default value", [](int v) {
+        return std::to_string(v);
+    });
     ASSERT_EQ(r2.is_ok(), true);
     ASSERT_EQ(r2.is_err(), false);
     EXPECT_EQ(r2.value(), "42");
@@ -50,7 +56,9 @@ TEST(Result, map_or_ok) {
 TEST(Result, map_or_err) {
     auto expect = std::make_error_code(std::errc::invalid_argument);
     Result<int, std::error_code> r = expect;
-    auto r2 = std::move(r).map_or<std::string>("This is a default value", [](int v) { return std::to_string(v); });
+    auto r2 = std::move(r).map_or<std::string>("This is a default value", [](int v) {
+        return std::to_string(v);
+    });
     ASSERT_EQ(r2.is_ok(), true);
     ASSERT_EQ(r2.is_err(), false);
     EXPECT_EQ(r2.value(), "This is a default value");
@@ -64,14 +72,18 @@ Result<int, std::error_code> divide(int a, int b) {
 }
 
 TEST(Result, divide_ok) {
-    auto r = divide(99, 3).map<std::string>([](int v) { return std::to_string(v); });
+    auto r = divide(99, 3).map<std::string>([](int v) {
+        return std::to_string(v);
+    });
     ASSERT_EQ(r.is_ok(), true);
     ASSERT_EQ(r.is_err(), false);
     EXPECT_EQ(r.value(), "33");
 }
 
 TEST(Result, divide_err) {
-    auto r = divide(99, 0).map<std::string>([](int v) { return std::to_string(v); });
+    auto r = divide(99, 0).map<std::string>([](int v) {
+        return std::to_string(v);
+    });
     ASSERT_EQ(r.is_ok(), false);
     ASSERT_EQ(r.is_err(), true);
     EXPECT_EQ(r.err(), std::make_error_code(std::errc::invalid_argument));

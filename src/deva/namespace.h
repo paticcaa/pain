@@ -49,8 +49,12 @@ struct fmt::formatter<pain::deva::FileType> : fmt::formatter<std::string_view> {
     auto format(pain::deva::FileType t, FormatContext& ctx) const {
         std::string_view name;
         switch (t) {
-        case pain::deva::FileType::FILE: name = "FILE"; break;
-        case pain::deva::FileType::DIRECTORY: name = "DIRECTORY"; break;
+        case pain::deva::FileType::FILE:
+            name = "FILE";
+            break;
+        case pain::deva::FileType::DIRECTORY:
+            name = "DIRECTORY";
+            break;
         }
         return fmt::formatter<std::string_view>::format(name, ctx);
     }

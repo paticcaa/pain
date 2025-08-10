@@ -148,7 +148,9 @@ Status RocksdbStore::recover(const char* from) {
         return status;
     }
 
-    auto rollback_open = make_scope_exit([&] { open_or_die(); });
+    auto rollback_open = make_scope_exit([&] {
+        open_or_die();
+    });
 
     auto fs = braft::default_file_system();
     auto bak_path = _data_path + ".bak";

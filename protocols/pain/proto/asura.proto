@@ -6,86 +6,87 @@ import "pain/proto/common.proto";
 option cc_generic_services = true;
 
 service TopologyService {
-  rpc CreatePool(CreatePoolRequest) returns (CreatePoolResponse);
-  rpc ListPool(ListPoolRequest) returns (ListPoolResponse);
-  rpc RegisterDeva(RegisterDevaRequest) returns (RegisterDevaResponse);
-  rpc ListDeva(ListDevaRequest) returns (ListDevaResponse);
-  rpc RegisterManusya(RegisterManusyaRequest) returns (RegisterManusyaResponse);
-  rpc ListManusya(ListManusyaRequest) returns (ListManusyaResponse);
+    rpc CreatePool(CreatePoolRequest) returns (CreatePoolResponse);
+    rpc ListPool(ListPoolRequest) returns (ListPoolResponse);
+    rpc RegisterDeva(RegisterDevaRequest) returns (RegisterDevaResponse);
+    rpc ListDeva(ListDevaRequest) returns (ListDevaResponse);
+    rpc RegisterManusya(RegisterManusyaRequest)
+        returns (RegisterManusyaResponse);
+    rpc ListManusya(ListManusyaRequest) returns (ListManusyaResponse);
 }
 
 message PlacementPolicy {}
 
 message Pool {
-  string name = 1;
-  UUID uuid = 2;
-  PlacementPolicy placement_policy = 3;
+    string name = 1;
+    UUID uuid = 2;
+    PlacementPolicy placement_policy = 3;
 }
 
 message DevaServer {
-  UUID id = 1;
-  string ip = 2;
-  uint32 port = 3;
+    UUID id = 1;
+    string ip = 2;
+    uint32 port = 3;
 }
 
 message CreatePoolRequest {
-  string pool_name = 1;
-  PlacementPolicy placement_policy = 2;
+    string pool_name = 1;
+    PlacementPolicy placement_policy = 2;
 }
 
 message CreatePoolResponse {
-  Pool pool = 1;
+    Pool pool = 1;
 }
 
 message ListPoolRequest {}
 
 message ListPoolResponse {
-  repeated Pool pools = 1;
+    repeated Pool pools = 1;
 }
 
 message RegisterDevaRequest {
-  repeated DevaServer deva_servers = 1;
+    repeated DevaServer deva_servers = 1;
 }
 
 message RegisterDevaResponse {
-  message Result {
-    UUID id = 1;
-    int32 code = 2;
-    string message = 3;
-  }
+    message Result {
+        UUID id = 1;
+        int32 code = 2;
+        string message = 3;
+    }
 
-  repeated Result results = 1;
+    repeated Result results = 1;
 }
 
 message ListDevaRequest {}
 
 message ListDevaResponse {
-  repeated DevaServer deva_servers = 1;
+    repeated DevaServer deva_servers = 1;
 }
 
 message ManusyaServer {
-  UUID id = 1;
-  string ip = 2;
-  uint32 port = 3;
-  UUID pool_id = 4;
+    UUID id = 1;
+    string ip = 2;
+    uint32 port = 3;
+    UUID pool_id = 4;
 }
 
 message RegisterManusyaRequest {
-  repeated ManusyaServer manusya_servers = 1;
+    repeated ManusyaServer manusya_servers = 1;
 }
 
 message RegisterManusyaResponse {
-  message Result {
-    UUID id = 1;
-    int32 code = 2;
-    string message = 3;
-  }
+    message Result {
+        UUID id = 1;
+        int32 code = 2;
+        string message = 3;
+    }
 
-  repeated Result results = 1;
+    repeated Result results = 1;
 }
 
 message ListManusyaRequest {}
 
 message ListManusyaResponse {
-  repeated ManusyaServer manusya_servers = 1;
+    repeated ManusyaServer manusya_servers = 1;
 }

@@ -14,8 +14,13 @@ template <typename ContainerType, OpType OpType, typename Request, typename Resp
 void bridge(const Request& request, Response* response, std::move_only_function<void(Status)> cb) {
     // TODO: get rsm by pool id and partition id
     auto rsm = default_rsm();
-    (new ContainerOp<ContainerType, Request, Response>(
-         OpType, rsm, request, response, [cb = std::move(cb)](Status status) mutable { cb(std::move(status)); }))
+    (new ContainerOp<ContainerType, Request, Response>(OpType,
+                                                       rsm,
+                                                       request,
+                                                       response,
+                                                       [cb = std::move(cb)](Status status) mutable {
+                                                           cb(std::move(status));
+                                                       }))
         ->apply();
 }
 

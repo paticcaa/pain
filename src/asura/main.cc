@@ -39,7 +39,9 @@ int main(int argc, char* argv[]) {
 
     pain::asura::TopologyServiceImpl topology_service_impl(store);
     pain::init_tracer("asura");
-    auto stop_tracer = pain::make_scope_exit([]() { pain::cleanup_tracer(); });
+    auto stop_tracer = pain::make_scope_exit([]() {
+        pain::cleanup_tracer();
+    });
 
     if (server.AddService(&topology_service_impl, brpc::SERVER_DOESNT_OWN_SERVICE) != 0) {
         LOG(ERROR) << "Fail to add service";

@@ -51,7 +51,9 @@ Status execute(argparse::ArgumentParser& parser) {
     std::exit(1);
 }
 
-REGISTER_DEVA_CMD(open, [](argparse::ArgumentParser& parser) { parser.add_argument("--path").required(); });
+REGISTER_DEVA_CMD(open, [](argparse::ArgumentParser& parser) {
+    parser.add_argument("--path").required();
+});
 COMMAND(open) {
     SPAN(span);
     auto host = args.get<std::string>("--host");

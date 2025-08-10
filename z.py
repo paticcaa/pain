@@ -4,25 +4,39 @@ import subprocess
 
 def run_in_shell(cmd):
     results = subprocess.run(cmd, shell=True, universal_newlines=True, check=True)
+    if results.returncode != 0:
+        raise Exception("Failed to run command: {}".format(cmd))
     if results.stdout:
         print(results.stdout)
     if results.stderr:
         print(results.stderr)
-    if results.returncode != 0:
-        raise Exception("Failed to run command: {}".format(cmd))
 
 def config_project(args):
-    if args.clean:
-        run_in_shell('xmake f -c')
-        return
-    run_in_shell('xmake f -cv --mode={}'.format(args.mode))
+    print('Unimplemented')
 
 def build_project(args):
-    cmd = ['xmake', 'b', '-v'] + args.rest
+    targets = []
+    if not args.rest:
+        targets = ['//src/...']
+    else:
+        modules = {
+            'deva': '//src/deva:deva',
+            'asura': '//src/asura:asura',
+            'manusya': '//src/manusya:manusya',
+            'pain': '//src/pain:pain',
+            'sad': '//src/sad:sad',
+        }
+        for target in args.rest:
+            if target in modules:
+                targets.append(modules[target])
+            else:
+                print('Unknown target: {}'.format(target))
+
+    cmd = ['bazel', 'build', '-s', '--verbose_failures', '--disk_cache={}'.format(args.cache_dir)] + targets
+    print('> ' + ' '.join(cmd))
     run_in_shell(' '.join(cmd))
     if args.install:
-        run_in_shell('xmake install -o output')
-    pass
+        print('Unimplemented')
 
 def clang_format(path):
     run_in_shell(r"find {} -regex '.*\.\(cc\|h\|proto\)' | xargs -n1 -P $(nproc) clang-format -i --style=file --fallback-style=none".format(path))
@@ -41,10 +55,10 @@ def line_project(args):
 
 def install_project(args):
     if not args.rest:
-        run_in_shell('xmake install -o output')
+        print('Unimplemented')
         return
     for target in args.rest:
-        run_in_shell('xmake install -o output {}'.format(target))
+        print('Unimplemented')
 
 
 if __name__ == "__main__":
@@ -62,6 +76,7 @@ if __name__ == "__main__":
     build_parser = subparsers.add_parser('build', aliases=['b'])
     build_parser.set_defaults(func=build_project)
     build_parser.add_argument('-i', '--install', action='store_true')
+    build_parser.add_argument('--cache-dir', default='/mnt/bazel_cache')
     build_parser.add_argument('rest', nargs=argparse.REMAINDER)
 
     line_parser = subparsers.add_parser('line')
