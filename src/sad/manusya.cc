@@ -80,7 +80,7 @@ COMMAND(create_chunk) {
 
     request.mutable_chunk_options()->set_append_out_of_order(append_out_of_order);
     request.mutable_chunk_options()->set_digest(digest);
-    stub.create_chunk(&cntl, &request, &response, nullptr);
+    stub.CreateChunk(&cntl, &request, &response, nullptr);
     if (cntl.Failed()) {
         return Status(cntl.ErrorCode(), cntl.ErrorText());
     }
@@ -137,7 +137,7 @@ COMMAND(append_chunk) {
     request.mutable_uuid()->set_low(uuid.low());
     request.mutable_uuid()->set_high(uuid.high());
     cntl.request_attachment().append(data);
-    stub.append_chunk(&cntl, &request, &response, nullptr);
+    stub.AppendChunk(&cntl, &request, &response, nullptr);
     if (cntl.Failed()) {
         return Status(cntl.ErrorCode(), cntl.ErrorText());
     }
@@ -180,7 +180,7 @@ COMMAND(list_chunk) {
     request.mutable_start()->set_high(uuid.high());
     request.set_limit(limit);
 
-    stub.list_chunk(&cntl, &request, &response, nullptr);
+    stub.ListChunk(&cntl, &request, &response, nullptr);
     if (cntl.Failed()) {
         return Status(cntl.ErrorCode(), cntl.ErrorText());
     }
@@ -243,7 +243,7 @@ COMMAND(read_chunk) {
     request.set_length(length);
     request.mutable_uuid()->set_low(uuid.low());
     request.mutable_uuid()->set_high(uuid.high());
-    stub.read_chunk(&cntl, &request, &response, nullptr);
+    stub.ReadChunk(&cntl, &request, &response, nullptr);
     if (cntl.Failed()) {
         return Status(cntl.ErrorCode(), cntl.ErrorText());
     }
@@ -292,7 +292,7 @@ COMMAND(seal_chunk) {
     auto uuid = pain::UUID::from_str_or_die(chunk_id);
     request.mutable_uuid()->set_low(uuid.low());
     request.mutable_uuid()->set_high(uuid.high());
-    stub.seal_chunk(&cntl, &request, &response, nullptr);
+    stub.SealChunk(&cntl, &request, &response, nullptr);
     if (cntl.Failed()) {
         return Status(cntl.ErrorCode(), cntl.ErrorText());
     }
@@ -334,7 +334,7 @@ COMMAND(remove_chunk) {
     auto uuid = pain::UUID::from_str_or_die(chunk_id);
     request.mutable_uuid()->set_low(uuid.low());
     request.mutable_uuid()->set_high(uuid.high());
-    stub.remove_chunk(&cntl, &request, &response, nullptr);
+    stub.RemoveChunk(&cntl, &request, &response, nullptr);
     if (cntl.Failed()) {
         return Status(cntl.ErrorCode(), cntl.ErrorText());
     }
@@ -376,7 +376,7 @@ COMMAND(query_chunk) {
     auto uuid = pain::UUID::from_str_or_die(chunk_id);
     request.mutable_uuid()->set_low(uuid.low());
     request.mutable_uuid()->set_high(uuid.high());
-    stub.query_chunk(&cntl, &request, &response, nullptr);
+    stub.QueryChunk(&cntl, &request, &response, nullptr);
     if (cntl.Failed()) {
         return Status(cntl.ErrorCode(), cntl.ErrorText());
     }

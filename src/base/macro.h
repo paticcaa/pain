@@ -8,11 +8,7 @@
     span##_options.kind = opentelemetry::trace::SpanKind::kServer;                                                     \
     auto span##_new_context = extract_context(cntl);                                                                   \
     span##_options.parent = opentelemetry::trace::GetSpan(span##_new_context)->GetContext();                           \
-    auto span = get_tracer(module)->StartSpan(                                                                         \
-        __func__,                                                                                                      \
-        {},                                                                                                            \
-        {},                                                                                                            \
-        span##_options);                                                                                               \
+    auto span = get_tracer(module)->StartSpan(__func__, {}, {}, span##_options);                                       \
     auto span##_scope = Tracer::WithActiveSpan(span);
 
 #define SPAN_1_ARGS(span)                                                                                              \

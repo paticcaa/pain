@@ -74,11 +74,11 @@ message QueryChunkResponse {
 };
 
 service ManusyaService {
-  rpc create_chunk(CreateChunkRequest) returns (CreateChunkResponse);
-  rpc append_chunk(AppendChunkRequest) returns (AppendChunkResponse);
-  rpc seal_chunk(SealChunkRequest) returns (SealChunkResponse);
-  rpc remove_chunk(RemoveChunkRequest) returns (RemoveChunkResponse);
-  rpc list_chunk(ListChunkRequest) returns (ListChunkResponse);
-  rpc read_chunk(ReadChunkRequest) returns (ReadChunkResponse);
-  rpc query_chunk(QueryChunkRequest) returns (QueryChunkResponse);
+  rpc CreateChunk(CreateChunkRequest) returns (CreateChunkResponse);
+  rpc AppendChunk(AppendChunkRequest) returns (AppendChunkResponse);
+  rpc SealChunk(SealChunkRequest) returns (SealChunkResponse);
+  rpc RemoveChunk(RemoveChunkRequest) returns (RemoveChunkResponse);
+  rpc ListChunk(ListChunkRequest) returns (ListChunkResponse);
+  rpc ReadChunk(ReadChunkRequest) returns (ReadChunkResponse);
+  rpc QueryChunk(QueryChunkRequest) returns (QueryChunkResponse);
 };

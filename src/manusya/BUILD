@@ -1,4 +1,4 @@
-load('//:copts.bzl', 'PAIN_COPTS', 'PAIN_LINKOPTS', 'PAIN_TEST_COPTS')
+load('//:copts.bzl', 'PAIN_COPTS', 'PAIN_LINKOPTS')
 
 cc_binary(
     name = "manusya",

@@ -24,8 +24,17 @@ def build_project(args):
         run_in_shell('xmake install -o output')
     pass
 
+def clang_format(path):
+    run_in_shell(r"find {} -regex '.*\.\(cc\|h\|proto\)' | xargs -n1 -P $(nproc) clang-format -i --style=file --fallback-style=none".format(path))
+
 def format_project(args):
-    run_in_shell('xmake format -f "src/**.h:src/**.cc:protocols/**.proto:include/**.h"')
+    paths = [
+        'include',
+        'src',
+        'protocols',
+    ]
+    for path in paths:
+        clang_format(path)
 
 def line_project(args):
     run_in_shell('find include src -iname "*.h" -o -iname "*.cc" -o -iname "*.c" | xargs wc -l')

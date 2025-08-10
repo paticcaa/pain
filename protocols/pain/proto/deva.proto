@@ -6,18 +6,17 @@ import "pain/proto/common.proto";
 option cc_generic_services = true;
 
 service DevaService {
-  rpc create(CreateRequest) returns (CreateResponse);
-  rpc open(OpenRequest) returns (OpenResponse);
-  rpc close(CloseRequest) returns (CloseResponse);
-  rpc remove(RemoveRequest) returns (RemoveResponse);
-  rpc seal(SealRequest) returns (SealResponse);
+  rpc Create(CreateRequest) returns (CreateResponse);
+  rpc Open(OpenRequest) returns (OpenResponse);
+  rpc Close(CloseRequest) returns (CloseResponse);
+  rpc Remove(RemoveRequest) returns (RemoveResponse);
+  rpc Seal(SealRequest) returns (SealResponse);
 
-  rpc create_chunk(CreateChunkRequest) returns (CreateChunkResponse);
-  rpc append_chunk(AppendChunkRequest) returns (AppendChunkResponse);
-  rpc remove_chunk(RemoveChunkRequest) returns (RemoveChunkResponse);
-  rpc seal_chunk(SealChunkRequest) returns (SealChunkResponse);
-  rpc seal_and_new_chunk(SealAndNewChunkRequest)
-      returns (SealAndNewChunkResponse);
+  rpc CreateChunk(CreateChunkRequest) returns (CreateChunkResponse);
+  rpc AppendChunk(AppendChunkRequest) returns (AppendChunkResponse);
+  rpc RemoveChunk(RemoveChunkRequest) returns (RemoveChunkResponse);
+  rpc SealChunk(SealChunkRequest) returns (SealChunkResponse);
+  rpc SealAndNewChunk(SealAndNewChunkRequest) returns (SealAndNewChunkResponse);
 }
 
 message CreatePoolRequest {

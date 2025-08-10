@@ -80,7 +80,7 @@ COMMAND(open) {
     auto id = pain::UUID::from_str_or_die(uuid);
     request.mutable_uuid()->set_low(id.low());
     request.mutable_uuid()->set_high(id.high());
-    stub.open(&cntl, &request, &response, nullptr);
+    stub.Open(&cntl, &request, &response, nullptr);
     if (cntl.Failed()) {
         return Status(cntl.ErrorCode(), cntl.ErrorText());
     }

@@ -10,7 +10,7 @@ namespace pain::deva {
 
 DevaServiceImpl::DevaServiceImpl() {}
 
-void DevaServiceImpl::open(::google::protobuf::RpcController* controller,
+void DevaServiceImpl::Open(::google::protobuf::RpcController* controller,
                            const pain::proto::deva::OpenRequest* request,
                            pain::proto::deva::OpenResponse* response,
                            ::google::protobuf::Closure* done) {
@@ -29,39 +29,39 @@ void DevaServiceImpl::open(::google::protobuf::RpcController* controller,
     response->mutable_file_meta()->Swap(resp.mutable_file_meta());
 }
 
-void DevaServiceImpl::close(::google::protobuf::RpcController* controller,
+void DevaServiceImpl::Close(::google::protobuf::RpcController* controller,
                             const pain::proto::deva::CloseRequest* request,
                             pain::proto::deva::CloseResponse* response,
                             ::google::protobuf::Closure* done) {}
 
-void DevaServiceImpl::remove(::google::protobuf::RpcController* controller,
+void DevaServiceImpl::Remove(::google::protobuf::RpcController* controller,
                              const pain::proto::deva::RemoveRequest* request,
                              pain::proto::deva::RemoveResponse* response,
                              ::google::protobuf::Closure* done) {}
 
-void DevaServiceImpl::seal(::google::protobuf::RpcController* controller,
+void DevaServiceImpl::Seal(::google::protobuf::RpcController* controller,
                            const pain::proto::deva::SealRequest* request,
                            pain::proto::deva::SealResponse* response,
                            ::google::protobuf::Closure* done) {}
 
-void DevaServiceImpl::create_chunk(::google::protobuf::RpcController* controller,
-                                   const pain::proto::deva::CreateChunkRequest* request,
-                                   pain::proto::deva::CreateChunkResponse* response,
-                                   ::google::protobuf::Closure* done) {}
+void DevaServiceImpl::CreateChunk(::google::protobuf::RpcController* controller,
+                                  const pain::proto::deva::CreateChunkRequest* request,
+                                  pain::proto::deva::CreateChunkResponse* response,
+                                  ::google::protobuf::Closure* done) {}
 
-void DevaServiceImpl::remove_chunk(::google::protobuf::RpcController* controller,
-                                   const pain::proto::deva::RemoveChunkRequest* request,
-                                   pain::proto::deva::RemoveChunkResponse* response,
-                                   ::google::protobuf::Closure* done) {}
+void DevaServiceImpl::RemoveChunk(::google::protobuf::RpcController* controller,
+                                  const pain::proto::deva::RemoveChunkRequest* request,
+                                  pain::proto::deva::RemoveChunkResponse* response,
+                                  ::google::protobuf::Closure* done) {}
 
-void DevaServiceImpl::seal_chunk(::google::protobuf::RpcController* controller,
-                                 const pain::proto::deva::SealChunkRequest* request,
-                                 pain::proto::deva::SealChunkResponse* response,
-                                 ::google::protobuf::Closure* done) {}
+void DevaServiceImpl::SealChunk(::google::protobuf::RpcController* controller,
+                                const pain::proto::deva::SealChunkRequest* request,
+                                pain::proto::deva::SealChunkResponse* response,
+                                ::google::protobuf::Closure* done) {}
 
-void DevaServiceImpl::seal_and_new_chunk(::google::protobuf::RpcController* controller,
-                                         const pain::proto::deva::SealAndNewChunkRequest* request,
-                                         pain::proto::deva::SealAndNewChunkResponse* response,
-                                         ::google::protobuf::Closure* done) {}
+void DevaServiceImpl::SealAndNewChunk(::google::protobuf::RpcController* controller,
+                                      const pain::proto::deva::SealAndNewChunkRequest* request,
+                                      pain::proto::deva::SealAndNewChunkResponse* response,
+                                      ::google::protobuf::Closure* done) {}
 
 } // namespace pain::deva

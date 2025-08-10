@@ -13,10 +13,10 @@ namespace pain::manusya {
 
 ManusyaServiceImpl::ManusyaServiceImpl() {}
 
-void ManusyaServiceImpl::create_chunk(google::protobuf::RpcController* controller,
-                                      const pain::proto::manusya::CreateChunkRequest* request,
-                                      pain::proto::manusya::CreateChunkResponse* response,
-                                      google::protobuf::Closure* done) {
+void ManusyaServiceImpl::CreateChunk(google::protobuf::RpcController* controller,
+                                     const pain::proto::manusya::CreateChunkRequest* request,
+                                     pain::proto::manusya::CreateChunkResponse* response,
+                                     google::protobuf::Closure* done) {
     DEFINE_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
 
@@ -40,10 +40,10 @@ void ManusyaServiceImpl::create_chunk(google::protobuf::RpcController* controlle
     response->mutable_uuid()->set_high(chunk->uuid().high());
 }
 
-void ManusyaServiceImpl::append_chunk(google::protobuf::RpcController* controller,
-                                      const pain::proto::manusya::AppendChunkRequest* request,
-                                      pain::proto::manusya::AppendChunkResponse* response,
-                                      google::protobuf::Closure* done) {
+void ManusyaServiceImpl::AppendChunk(google::protobuf::RpcController* controller,
+                                     const pain::proto::manusya::AppendChunkRequest* request,
+                                     pain::proto::manusya::AppendChunkResponse* response,
+                                     google::protobuf::Closure* done) {
     DEFINE_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
     UUID uuid(request->uuid().high(), request->uuid().low());
@@ -78,10 +78,10 @@ void ManusyaServiceImpl::append_chunk(google::protobuf::RpcController* controlle
     response->set_offset(chunk->size());
 }
 
-void ManusyaServiceImpl::list_chunk(google::protobuf::RpcController* controller,
-                                    const pain::proto::manusya::ListChunkRequest* request,
-                                    pain::proto::manusya::ListChunkResponse* response,
-                                    google::protobuf::Closure* done) {
+void ManusyaServiceImpl::ListChunk(google::protobuf::RpcController* controller,
+                                   const pain::proto::manusya::ListChunkRequest* request,
+                                   pain::proto::manusya::ListChunkResponse* response,
+                                   google::protobuf::Closure* done) {
     DEFINE_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
 
@@ -99,10 +99,10 @@ void ManusyaServiceImpl::list_chunk(google::protobuf::RpcController* controller,
     });
 }
 
-void ManusyaServiceImpl::read_chunk(google::protobuf::RpcController* controller,
-                                    const pain::proto::manusya::ReadChunkRequest* request,
-                                    pain::proto::manusya::ReadChunkResponse* response,
-                                    google::protobuf::Closure* done) {
+void ManusyaServiceImpl::ReadChunk(google::protobuf::RpcController* controller,
+                                   const pain::proto::manusya::ReadChunkRequest* request,
+                                   pain::proto::manusya::ReadChunkResponse* response,
+                                   google::protobuf::Closure* done) {
     DEFINE_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
     UUID uuid(request->uuid().high(), request->uuid().low());
@@ -130,10 +130,10 @@ void ManusyaServiceImpl::read_chunk(google::protobuf::RpcController* controller,
     }
 }
 
-void ManusyaServiceImpl::seal_chunk(google::protobuf::RpcController* controller,
-                                    const pain::proto::manusya::SealChunkRequest* request,
-                                    pain::proto::manusya::SealChunkResponse* response,
-                                    google::protobuf::Closure* done) {
+void ManusyaServiceImpl::SealChunk(google::protobuf::RpcController* controller,
+                                   const pain::proto::manusya::SealChunkRequest* request,
+                                   pain::proto::manusya::SealChunkResponse* response,
+                                   google::protobuf::Closure* done) {
     DEFINE_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
     UUID uuid(request->uuid().high(), request->uuid().low());
@@ -159,10 +159,10 @@ void ManusyaServiceImpl::seal_chunk(google::protobuf::RpcController* controller,
     }
 }
 
-void ManusyaServiceImpl::remove_chunk(google::protobuf::RpcController* controller,
-                                      const pain::proto::manusya::RemoveChunkRequest* request,
-                                      pain::proto::manusya::RemoveChunkResponse* response,
-                                      google::protobuf::Closure* done) {
+void ManusyaServiceImpl::RemoveChunk(google::protobuf::RpcController* controller,
+                                     const pain::proto::manusya::RemoveChunkRequest* request,
+                                     pain::proto::manusya::RemoveChunkResponse* response,
+                                     google::protobuf::Closure* done) {
     DEFINE_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
     UUID uuid(request->uuid().high(), request->uuid().low());
@@ -180,10 +180,10 @@ void ManusyaServiceImpl::remove_chunk(google::protobuf::RpcController* controlle
     }
 }
 
-void ManusyaServiceImpl::query_chunk(google::protobuf::RpcController* controller,
-                                     const pain::proto::manusya::QueryChunkRequest* request,
-                                     pain::proto::manusya::QueryChunkResponse* response,
-                                     google::protobuf::Closure* done) {
+void ManusyaServiceImpl::QueryChunk(google::protobuf::RpcController* controller,
+                                    const pain::proto::manusya::QueryChunkRequest* request,
+                                    pain::proto::manusya::QueryChunkResponse* response,
+                                    google::protobuf::Closure* done) {
     DEFINE_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
     UUID uuid(request->uuid().high(), request->uuid().low());
