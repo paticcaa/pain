@@ -54,12 +54,16 @@ def line_project(args):
     run_in_shell('find include src -iname "*.h" -o -iname "*.cc" -o -iname "*.c" | xargs wc -l')
 
 def install_project(args):
-    if not args.rest:
-        print('Unimplemented')
-        return
-    for target in args.rest:
-        print('Unimplemented')
+    run_in_shell('bazel run //:install')
 
+
+def deploy_project(args):
+    if args.action == 'start':
+        run_in_shell('ansible-playbook -i ./deploy/hosts ./deploy/deploy.yml -t start')
+    elif args.action == 'stop':
+        run_in_shell('ansible-playbook -i ./deploy/hosts ./deploy/deploy.yml -t stop')
+    else:
+        print('Unimplemented')
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Description of your program')
@@ -85,6 +89,11 @@ if __name__ == "__main__":
     install_parser = subparsers.add_parser('install')
     install_parser.set_defaults(func=install_project)
     install_parser.add_argument('rest', nargs=argparse.REMAINDER)
+
+    deploy_parser = subparsers.add_parser('deploy')
+    deploy_parser.set_defaults(func=deploy_project)
+    deploy_parser.add_argument('-a', '--action', choices=['start', 'stop'], required=True)
+    deploy_parser.add_argument('rest', nargs=argparse.REMAINDER)
 
     args = parser.parse_args()
     args.func(args)

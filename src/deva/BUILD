@@ -11,6 +11,7 @@ cc_binary(
         "@brpc",
         "@braft",
     ],
+    visibility = ["//visibility:public"],
 )
 
 cc_library(

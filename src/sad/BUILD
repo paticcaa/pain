@@ -18,4 +18,5 @@ cc_binary(
         "@brpc",
         "@braft",
     ],
+    visibility = ["//visibility:public"],
 )

@@ -10,6 +10,7 @@ cc_binary(
         "//src/manusya:manusya_core",
         "@brpc",
     ],
+    visibility = ["//visibility:public"],
 )
 
 cc_library(

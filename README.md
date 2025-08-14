@@ -64,6 +64,12 @@ Using `./z.py -h` for more information.
 Pain provide a easy ansible script to deploy minimal cluster
 
 ```bash
+# prerequisites
+cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+ansible-galaxy collection install prometheus.prometheus
+```
+
+```bash
 # deploy deva/manusya
 ansible-playbook -i ./deploy/hosts ./deploy/deploy.yml -t start
 
@@ -103,7 +109,7 @@ int main() {
     
     request.set_direct_io(true);
     cntl.request_attachment().append("hello world");
-    stub.append(&cntl, &request, &response, nullptr);
+    stub.Append(&cntl, &request, &response, nullptr);
     if (cntl.Failed()) {
         std::cerr << "append failed: " << cntl.ErrorText() << std::endl;
         return 1;

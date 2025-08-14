@@ -12,3 +12,4 @@ bazel-testlogs
 *.lock
 test_rocksdb
 test_rocksdb_cpt
+*.log

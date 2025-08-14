@@ -3,9 +3,15 @@ package pain.proto.deva.store;
 
 import "pain/proto/common.proto";
 
-message CreateFileRequest {}
+message CreateFileRequest {
+    string path = 1;
+    UUID file_id = 2;
+}
 
-message CreateFileResponse {}
+message CreateFileResponse {
+    Header header = 1;
+    FileInfo file_info = 2;
+}
 
 message RemoveFileRequest {}
 

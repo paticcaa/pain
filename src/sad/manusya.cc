@@ -54,6 +54,7 @@ Status execute(argparse::ArgumentParser& parser) {
 REGISTER_MANUSYA_CMD(create_chunk, [](argparse::ArgumentParser& parser) {
     parser.add_description("create chunk");
     parser.add_argument("--enable-append-out-of-order").default_value(false).implicit_value(true);
+    parser.add_argument("--enable-digest").default_value(false).implicit_value(true);
 });
 COMMAND(create_chunk) {
     SPAN(span);
@@ -94,7 +95,7 @@ COMMAND(create_chunk) {
 REGISTER_MANUSYA_CMD(append_chunk, [](argparse::ArgumentParser& parser) {
     parser.add_description("append chunk");
     parser.add_argument("-c", "--chunk-id").required().help("chunk uuid, such as 123e4567-e89b-12d3-a456-426655440000");
-    parser.add_argument("-o", "--offset").default_value(0ul).help("offset to append data").scan<'i', uint64_t>();
+    parser.add_argument("-o", "--offset").default_value(0UL).help("offset to append data").scan<'i', uint64_t>();
     parser.add_argument("-d", "--data").required().help("data to append");
 });
 COMMAND(append_chunk) {

@@ -121,9 +121,8 @@ Status Chunk::read(uint64_t offset, uint64_t size, IOBuf* buf) const {
 
 Status Chunk::create(const ChunkOptions& options, StorePtr store, ChunkPtr* chunk) {
     SPAN(span);
-    static thread_local UUIDv4::UUIDGenerator<std::mt19937_64> uuid_gen;
     auto c = ChunkPtr(new Chunk());
-    c->_uuid = uuid_gen.getUUID();
+    c->_uuid = UUID::generate();
     c->_options = options;
     c->_store = store;
     c->_size = 0;

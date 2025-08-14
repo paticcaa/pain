@@ -2,6 +2,7 @@
 #include <brpc/closure_guard.h>
 
 #include "pain/proto/deva_store.pb.h"
+#include "base/uuid.h"
 #include "deva/bridge.h"
 #include "deva/deva.h"
 #include "deva/macro.h"
@@ -19,6 +20,29 @@ DevaServiceImpl::DevaServiceImpl() {}
 DEVA_SERVICE_METHOD(OpenFile) {
     brpc::ClosureGuard done_guard(done);
     DEFINE_SPAN(span, controller);
+    auto& path = request->path();
+    auto flags = request->flags();
+
+    if ((flags & pain::proto::deva::OpenFlag::OPEN_CREATE) != 0) {
+        pain::proto::deva::store::CreateFileRequest create_request;
+        pain::proto::deva::store::CreateFileResponse create_response;
+        auto file_id = UUID::generate();
+        create_request.set_path(path);
+        auto status = bridge<Deva, OpType::kCreateFile>(create_request, &create_response).get();
+        if (!status.ok()) {
+            PLOG_ERROR(("desc", "failed to create file")("error", status.error_str()));
+            response->mutable_header()->set_status(status.error_code());
+            response->mutable_header()->set_message(status.error_str());
+            return;
+        }
+        response->mutable_header()->set_status(0);
+        response->mutable_header()->set_message("ok");
+    } else {
+        // TODO: open file
+    }
+
+    response->mutable_header()->set_status(0);
+    response->mutable_header()->set_message("ok");
 }
 
 DEVA_SERVICE_METHOD(CloseFile) {

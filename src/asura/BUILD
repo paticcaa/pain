@@ -11,4 +11,5 @@ cc_binary(
         "//src/common:pain_common",
         "@uuid_v4",
     ],
+    visibility = ["//visibility:public"],
 )

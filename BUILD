@@ -1,4 +1,6 @@
 load("@hedron_compile_commands//:refresh_compile_commands.bzl", "refresh_compile_commands")
+load("@rules_pkg//pkg:install.bzl", "pkg_install")
+load("@rules_pkg//pkg:mappings.bzl", "pkg_attributes", "pkg_files")
 
 config_setting(
     name = "debug_build",
@@ -37,4 +39,22 @@ refresh_compile_commands(
       "//protocals/...": "",
       "//examples/...": "",
     },
+)
+
+pkg_files(
+    name = "pain_binaries",
+    srcs = [
+      "//src/asura:asura",
+      "//src/sad:sad",
+      "//src/manusya:manusya",
+      "//src/deva:deva",
+    ],
+    attributes = pkg_attributes(mode = "0755"),
+    prefix = "bin",
+)
+
+pkg_install(
+  name = "install",
+  srcs = [":pain_binaries"],
+  destdir = "output",
 )

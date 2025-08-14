@@ -53,12 +53,13 @@ Status execute(argparse::ArgumentParser& parser) {
 
 REGISTER_DEVA_CMD(open, [](argparse::ArgumentParser& parser) {
     parser.add_argument("--path").required();
+    parser.add_argument("c", "--create").default_value(false);
 });
 COMMAND(open) {
     SPAN(span);
     auto host = args.get<std::string>("--host");
     auto path = args.get<std::string>("--path");
-
+    auto create = args.get<bool>("--create");
     brpc::Channel channel;
     brpc::ChannelOptions options;
     options.connect_timeout_ms = 2000;
@@ -74,7 +75,12 @@ COMMAND(open) {
     pain::proto::deva::DevaService::Stub stub(&channel);
     pain::inject_tracer(&cntl);
 
+    using pain::proto::deva::OpenFlag;
     request.set_path(path);
+    if (create) {
+        request.set_flags(OpenFlag::OPEN_CREATE | OpenFlag::OPEN_APPEND);
+    }
+
     stub.OpenFile(&cntl, &request, &response, nullptr);
     if (cntl.Failed()) {
         return Status(cntl.ErrorCode(), cntl.ErrorText());

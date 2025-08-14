@@ -31,7 +31,6 @@
 # Deploy jaeger
 - name: deploy jaeger
   hosts: jaeger
-  remote_user: root
   tags:
     - start
     - jaeger
@@ -65,7 +64,6 @@
 # Deploy prometheus
 - name: deploy prometheus
   hosts: prometheus
-  remote_user: root
   ignore_errors: yes
   roles:
     - { role: prometheus.prometheus.prometheus, when: '"start-prometheus" in ansible_run_tags'}
