@@ -21,7 +21,9 @@ Status Bank::load() {
             PLOG_ERROR(("desc", "failed to create chunk")("error", status.error_str()));
             return;
         }
-        chunk->seal();
+        uint64_t size = 0;
+        // chunk should be sealed when loaded
+        chunk->query_and_seal(&size);
         _chunks[uuid] = chunk;
     });
     return Status::OK();

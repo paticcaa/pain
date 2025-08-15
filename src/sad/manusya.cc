@@ -20,6 +20,7 @@ namespace pain::sad {
 argparse::ArgumentParser& program();
 }
 namespace pain::sad::manusya {
+// NOLINTNEXTLINE(readability-identifier-naming)
 argparse::ArgumentParser manusya_parser("manusya", "1.0", argparse::default_arguments::none);
 
 EXECUTE(program().add_subparser(manusya_parser));
@@ -27,17 +28,18 @@ EXECUTE(manusya_parser.add_description("send cmd to manusya server")
             .add_argument("--host")
             .default_value(std::string("127.0.0.1:8003")));
 
+// NOLINTNEXTLINE(readability-identifier-naming)
 static std::map<std::string, std::function<Status(argparse::ArgumentParser&)>> subcommands = {};
 
 void add(const std::string& name, std::function<Status(argparse::ArgumentParser& parser)> func) {
-    std::string name_;
+    std::string normalized_name;
     for (auto c : name) {
         if (c == '_') {
             c = '-';
         }
-        name_ += c;
+        normalized_name += c;
     }
-    subcommands[name_] = func;
+    subcommands[normalized_name] = func;
 }
 
 Status execute(argparse::ArgumentParser& parser) {
@@ -53,18 +55,14 @@ Status execute(argparse::ArgumentParser& parser) {
 
 REGISTER_MANUSYA_CMD(create_chunk, [](argparse::ArgumentParser& parser) {
     parser.add_description("create chunk");
-    parser.add_argument("--enable-append-out-of-order").default_value(false).implicit_value(true);
-    parser.add_argument("--enable-digest").default_value(false).implicit_value(true);
 });
 COMMAND(create_chunk) {
     SPAN(span);
     auto host = args.get<std::string>("--host");
-    auto append_out_of_order = args.get<bool>("--enable-append-out-of-order");
-    auto digest = args.get<bool>("--enable-digest");
     brpc::Channel channel;
     brpc::ChannelOptions options;
-    options.connect_timeout_ms = 2000;
-    options.timeout_ms = 10000;
+    options.connect_timeout_ms = 2000; // NOLINT(readability-magic-numbers)
+    options.timeout_ms = 10000;        // NOLINT(readability-magic-numbers)
     options.max_retry = 0;
     if (channel.Init(host.c_str(), &options) != 0) {
         return Status(EAGAIN, "Fail to initialize channel");
@@ -76,18 +74,16 @@ COMMAND(create_chunk) {
     pain::proto::manusya::ManusyaService_Stub stub(&channel);
     pain::inject_tracer(&cntl);
 
-    request.mutable_chunk_options()->set_append_out_of_order(append_out_of_order);
-    request.mutable_chunk_options()->set_digest(digest);
     stub.CreateChunk(&cntl, &request, &response, nullptr);
     if (cntl.Failed()) {
         return Status(cntl.ErrorCode(), cntl.ErrorText());
     }
 
     print(cntl, &response, [](Json& out) {
-        uint64_t low = out["uuid"]["low"];
-        uint64_t high = out["uuid"]["high"];
+        uint64_t low = out["chunk_id"]["low"];
+        uint64_t high = out["chunk_id"]["high"];
         pain::UUID uuid(high, low);
-        out["uuid"] = uuid.str();
+        out["chunk_id"] = uuid.str();
     });
     return Status::OK();
 }
@@ -111,8 +107,8 @@ COMMAND(append_chunk) {
 
     brpc::Channel channel;
     brpc::ChannelOptions options;
-    options.connect_timeout_ms = 2000;
-    options.timeout_ms = 10000;
+    options.connect_timeout_ms = 2000; // NOLINT(readability-magic-numbers)
+    options.timeout_ms = 10000;        // NOLINT(readability-magic-numbers)
     options.max_retry = 0;
     if (channel.Init(host.c_str(), &options) != 0) {
         return Status(EAGAIN, "Fail to initialize channel");
@@ -126,8 +122,8 @@ COMMAND(append_chunk) {
 
     auto uuid = pain::UUID::from_str_or_die(chunk_id);
     request.set_offset(offset);
-    request.mutable_uuid()->set_low(uuid.low());
-    request.mutable_uuid()->set_high(uuid.high());
+    request.mutable_chunk_id()->set_low(uuid.low());
+    request.mutable_chunk_id()->set_high(uuid.high());
     cntl.request_attachment().append(data);
     stub.AppendChunk(&cntl, &request, &response, nullptr);
     if (cntl.Failed()) {
@@ -155,8 +151,8 @@ COMMAND(list_chunk) {
 
     brpc::Channel channel;
     brpc::ChannelOptions options;
-    options.connect_timeout_ms = 2000;
-    options.timeout_ms = 10000;
+    options.connect_timeout_ms = 2000; // NOLINT(readability-magic-numbers)
+    options.timeout_ms = 10000;        // NOLINT(readability-magic-numbers)
     options.max_retry = 0;
     if (channel.Init(host.c_str(), &options) != 0) {
         return Status(EAGAIN, "Fail to initialize channel");
@@ -179,11 +175,11 @@ COMMAND(list_chunk) {
     }
 
     print(cntl, &response, [](Json& out) {
-        for (auto& uuid : out["uuids"]) {
-            uint64_t low = uuid["low"];
-            uint64_t high = uuid["high"];
-            UUIDv4::UUID uuid_(high, low);
-            uuid = uuid_.str();
+        for (auto& chunk_id : out["chunk_ids"]) {
+            uint64_t low = chunk_id["low"];
+            uint64_t high = chunk_id["high"];
+            UUID uuid(high, low);
+            chunk_id = uuid.str();
         }
     });
 
@@ -195,8 +191,8 @@ REGISTER_MANUSYA_CMD(read_chunk, [](argparse::ArgumentParser& parser) {
         .add_argument("-c", "--chunk-id")
         .required()
         .help("chunk uuid, such as 123e4567-e89b-12d3-a456-426655440000");
-    parser.add_argument("--offset").default_value(0ul).help("offset to read data").scan<'i', uint64_t>();
-    parser.add_argument("-l", "--length").default_value(1024u).help("length to read data").scan<'i', uint32_t>();
+    parser.add_argument("--offset").default_value(0UL).help("offset to read data").scan<'i', uint64_t>();
+    parser.add_argument("-l", "--length").default_value(1024U).help("length to read data").scan<'i', uint32_t>();
     parser.add_argument("-o", "--output").default_value(std::string("-"));
 });
 COMMAND(read_chunk) {
@@ -213,8 +209,8 @@ COMMAND(read_chunk) {
 
     brpc::Channel channel;
     brpc::ChannelOptions options;
-    options.connect_timeout_ms = 2000;
-    options.timeout_ms = 10000;
+    options.connect_timeout_ms = 2000; // NOLINT(readability-magic-numbers)
+    options.timeout_ms = 10000;        // NOLINT(readability-magic-numbers)
     options.max_retry = 0;
     if (channel.Init(host.c_str(), &options) != 0) {
         return Status(EAGAIN, "Fail to initialize channel");
@@ -230,8 +226,8 @@ COMMAND(read_chunk) {
 
     request.set_offset(offset);
     request.set_length(length);
-    request.mutable_uuid()->set_low(uuid.low());
-    request.mutable_uuid()->set_high(uuid.high());
+    request.mutable_chunk_id()->set_low(uuid.low());
+    request.mutable_chunk_id()->set_high(uuid.high());
     stub.ReadChunk(&cntl, &request, &response, nullptr);
     if (cntl.Failed()) {
         return Status(cntl.ErrorCode(), cntl.ErrorText());
@@ -265,23 +261,23 @@ COMMAND(seal_chunk) {
 
     brpc::Channel channel;
     brpc::ChannelOptions options;
-    options.connect_timeout_ms = 2000;
-    options.timeout_ms = 10000;
+    options.connect_timeout_ms = 2000; // NOLINT(readability-magic-numbers)
+    options.timeout_ms = 10000;        // NOLINT(readability-magic-numbers)
     options.max_retry = 0;
     if (channel.Init(host.c_str(), &options) != 0) {
         return Status(EAGAIN, "Fail to initialize channel");
     }
 
     brpc::Controller cntl;
-    pain::proto::manusya::SealChunkRequest request;
-    pain::proto::manusya::SealChunkResponse response;
+    pain::proto::manusya::QueryAndSealChunkRequest request;
+    pain::proto::manusya::QueryAndSealChunkResponse response;
     pain::proto::manusya::ManusyaService::Stub stub(&channel);
     inject_tracer(&cntl);
 
     auto uuid = pain::UUID::from_str_or_die(chunk_id);
-    request.mutable_uuid()->set_low(uuid.low());
-    request.mutable_uuid()->set_high(uuid.high());
-    stub.SealChunk(&cntl, &request, &response, nullptr);
+    request.mutable_chunk_id()->set_low(uuid.low());
+    request.mutable_chunk_id()->set_high(uuid.high());
+    stub.QueryAndSealChunk(&cntl, &request, &response, nullptr);
     if (cntl.Failed()) {
         return Status(cntl.ErrorCode(), cntl.ErrorText());
     }
@@ -307,8 +303,8 @@ COMMAND(remove_chunk) {
 
     brpc::Channel channel;
     brpc::ChannelOptions options;
-    options.connect_timeout_ms = 2000;
-    options.timeout_ms = 10000;
+    options.connect_timeout_ms = 2000; // NOLINT(readability-magic-numbers)
+    options.timeout_ms = 10000;        // NOLINT(readability-magic-numbers)
     options.max_retry = 0;
     if (channel.Init(host.c_str(), &options) != 0) {
         return Status(EAGAIN, "Fail to initialize channel");
@@ -321,8 +317,8 @@ COMMAND(remove_chunk) {
     inject_tracer(&cntl);
 
     auto uuid = pain::UUID::from_str_or_die(chunk_id);
-    request.mutable_uuid()->set_low(uuid.low());
-    request.mutable_uuid()->set_high(uuid.high());
+    request.mutable_chunk_id()->set_low(uuid.low());
+    request.mutable_chunk_id()->set_high(uuid.high());
     stub.RemoveChunk(&cntl, &request, &response, nullptr);
     if (cntl.Failed()) {
         return Status(cntl.ErrorCode(), cntl.ErrorText());
@@ -349,8 +345,8 @@ COMMAND(query_chunk) {
 
     brpc::Channel channel;
     brpc::ChannelOptions options;
-    options.connect_timeout_ms = 2000;
-    options.timeout_ms = 10000;
+    options.connect_timeout_ms = 2000; // NOLINT(readability-magic-numbers)
+    options.timeout_ms = 10000;        // NOLINT(readability-magic-numbers)
     options.max_retry = 0;
     if (channel.Init(host.c_str(), &options) != 0) {
         return Status(EAGAIN, "Fail to initialize channel");
@@ -363,8 +359,8 @@ COMMAND(query_chunk) {
     inject_tracer(&cntl);
 
     auto uuid = pain::UUID::from_str_or_die(chunk_id);
-    request.mutable_uuid()->set_low(uuid.low());
-    request.mutable_uuid()->set_high(uuid.high());
+    request.mutable_chunk_id()->set_low(uuid.low());
+    request.mutable_chunk_id()->set_high(uuid.high());
     stub.QueryChunk(&cntl, &request, &response, nullptr);
     if (cntl.Failed()) {
         return Status(cntl.ErrorCode(), cntl.ErrorText());

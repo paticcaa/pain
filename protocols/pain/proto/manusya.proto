@@ -5,41 +5,45 @@ import "pain/proto/common.proto";
 
 option cc_generic_services = true;
 
-message ChunkOptions {
-    bool append_out_of_order = 1;
-    bool digest = 2;
-};
+message ChunkOptions {};
 
 message CreateChunkRequest {
     ChunkOptions chunk_options = 1;
 };
 
 message CreateChunkResponse {
-    UUID uuid = 1;
+    Header header = 1;
+    UUID chunk_id = 2;
 };
 
 message AppendChunkRequest {
-    UUID uuid = 1;
+    UUID chunk_id = 1;
     uint64 offset = 2;
     uint32 length = 3;
-    uint32 digest = 4;
+    uint32 crc32 = 4;
 };
 
 message AppendChunkResponse {
-    uint64 offset = 1;
+    Header header = 1;
+    uint64 offset = 2;
 };
 
-message SealChunkRequest {
-    UUID uuid = 1;
+message QueryAndSealChunkRequest {
+    UUID chunk_id = 1;
 };
 
-message SealChunkResponse {};
+message QueryAndSealChunkResponse {
+    Header header = 1;
+    uint64 size = 2;
+};
 
 message RemoveChunkRequest {
-    UUID uuid = 1;
+    UUID chunk_id = 1;
 };
 
-message RemoveChunkResponse {};
+message RemoveChunkResponse {
+    Header header = 1;
+};
 
 message ListChunkRequest {
     UUID start = 1;
@@ -47,36 +51,40 @@ message ListChunkRequest {
 };
 
 message ListChunkResponse {
-    repeated UUID uuids = 1;
+    Header header = 1;
+    bool has_more = 2;
+    repeated UUID chunk_ids = 3;
 };
 
 message ReadChunkRequest {
-    UUID uuid = 1;
+    UUID chunk_id = 1;
     uint64 offset = 2;
     uint32 length = 3;
 };
 
 message ReadChunkResponse {
-    uint64 offset = 1;
-    uint32 length = 2;
-    uint32 digest = 3;
+    Header header = 1;
+    uint64 offset = 2;
+    uint32 length = 3;
+    uint32 crc32 = 4;
 };
 
 message QueryChunkRequest {
-    UUID uuid = 1;
+    UUID chunk_id = 1;
 };
 
 message QueryChunkResponse {
-    ChunkOptions chunk_options = 1;
-    uint64 size = 2;
-    ChunkState chunk_state = 3;
-    repeated Pair attrs = 4;
+    Header header = 1;
+    ChunkOptions chunk_options = 2;
+    uint64 size = 3;
+    bool sealed = 4;
 };
 
 service ManusyaService {
     rpc CreateChunk(CreateChunkRequest) returns (CreateChunkResponse);
     rpc AppendChunk(AppendChunkRequest) returns (AppendChunkResponse);
-    rpc SealChunk(SealChunkRequest) returns (SealChunkResponse);
+    rpc QueryAndSealChunk(QueryAndSealChunkRequest)
+        returns (QueryAndSealChunkResponse);
     rpc RemoveChunk(RemoveChunkRequest) returns (RemoveChunkResponse);
     rpc ListChunk(ListChunkRequest) returns (ListChunkResponse);
     rpc ReadChunk(ReadChunkRequest) returns (ReadChunkResponse);

@@ -12,23 +12,25 @@ namespace pain::manusya {
 Status Chunk::append(const IOBuf& buf, uint64_t offset) {
     SPAN(span);
     std::unique_lock lock(_mutex);
+    if (_state == ChunkState::kSealed) {
+        return Status(EPERM, "chunk is sealed");
+    }
+
     if (offset < _size) {
         return Status(EINVAL, std::format("invalid offset at {}@{}, current size:{}", offset, buf.size(), _size));
     }
 
     if (offset != _size) {
-        if (!_options.append_out_of_order) {
-            return Status(EINVAL,
-                          std::format("append out of order at {}@{}, current size:{}", offset, buf.size(), _size));
-        }
         AppendRequestPtr rq(new AppendRequest());
         rq->offset = offset;
         rq->buf = buf;
         rq->chunk = this;
         rq->start = butil::cpuwide_time_ns();
         rq->span = span;
-        auto abstime = butil::microseconds_from_now(5 * 1000 * 1000);
+        constexpr uint64_t timeout_us = 5 * 1000 * 1000; // 5s
+        auto abstime = butil::microseconds_from_now(timeout_us);
 
+        // add ref to prevent rq from being destroyed before the timer callback is called
         intrusive_ptr_add_ref(rq.get());
         bthread_timer_add(
             &rq->timer,
@@ -55,12 +57,7 @@ Status Chunk::append(const IOBuf& buf, uint64_t offset) {
 
         return status;
     }
-    if (_state == ChunkState::SEALED) {
-        return Status(EINVAL, "chunk is sealed");
-    }
-    if (_state == ChunkState::INIT) {
-        _state = ChunkState::OPEN;
-    }
+
     auto status = _fh->append(offset, buf).get();
 
     if (!status.ok()) {
@@ -95,11 +92,18 @@ Status Chunk::append(const IOBuf& buf, uint64_t offset) {
     return Status::OK();
 }
 
-Status Chunk::seal() {
+Status Chunk::query_and_seal(uint64_t* length) {
     SPAN(span);
     std::lock_guard lock(_mutex);
-    _state = ChunkState::SEALED;
     auto status = _fh->seal().get();
+    if (!status.ok()) {
+        return status;
+    }
+    status = _fh->size(length).get();
+    if (!status.ok()) {
+        return status;
+    }
+    _state = ChunkState::kSealed;
     return status;
 }
 
@@ -131,16 +135,7 @@ Status Chunk::create(const ChunkOptions& options, StorePtr store, ChunkPtr* chun
     if (!status.ok()) {
         return status;
     }
-
-    status = c->_fh->set_attr("user.append-out-of-order", options.append_out_of_order ? "1" : "0").get();
-    if (!status.ok()) {
-        return status;
-    }
-    status = c->_fh->set_attr("user.digest", options.digest ? "1" : "0").get();
-    if (!status.ok()) {
-        return status;
-    }
-
+    c->_state = ChunkState::kOpen;
     *chunk = c;
     return Status::OK();
 }
@@ -156,25 +151,11 @@ Status Chunk::create(const ChunkOptions& options, StorePtr store, const UUID& uu
     if (!status.ok()) {
         return status;
     }
-
+    c->_state = ChunkState::kOpen;
     status = c->_fh->size(&c->_size).get();
 
     if (!status.ok()) {
         return status;
-    }
-
-    std::string value;
-    status = c->_fh->get_attr("user.append-out-of-order", &value).get();
-    if (status.ok()) {
-        c->_options.append_out_of_order = value == "1";
-    } else {
-        PLOG_ERROR(("desc", "failed to get append-out-of-order attribute")("error", status.error_str()));
-    }
-    status = c->_fh->get_attr("user.digest", &value).get();
-    if (status.ok()) {
-        c->_options.digest = value == "1";
-    } else {
-        PLOG_ERROR(("desc", "failed to get digest attribute")("error", status.error_str()));
     }
 
     *chunk = c;

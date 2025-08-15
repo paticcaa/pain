@@ -59,14 +59,14 @@ void print(const brpc::Controller& cntl, const google::protobuf::Message* messag
 }
 
 std::string format_command(const std::string& name) {
-    std::string name_;
+    std::string normalized_name;
     for (auto c : name) {
         if (c == '_') {
             c = '-';
         }
-        name_ += c;
+        normalized_name += c;
     }
-    return name_;
+    return normalized_name;
 }
 
 } // namespace pain::sad

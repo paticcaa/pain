@@ -86,11 +86,11 @@ if __name__ == "__main__":
     line_parser = subparsers.add_parser('line')
     line_parser.set_defaults(func=line_project)
 
-    install_parser = subparsers.add_parser('install')
+    install_parser = subparsers.add_parser('install', aliases=['i'])
     install_parser.set_defaults(func=install_project)
     install_parser.add_argument('rest', nargs=argparse.REMAINDER)
 
-    deploy_parser = subparsers.add_parser('deploy')
+    deploy_parser = subparsers.add_parser('deploy', aliases=['d'])
     deploy_parser.set_defaults(func=deploy_project)
     deploy_parser.add_argument('-a', '--action', choices=['start', 'stop'], required=True)
     deploy_parser.add_argument('rest', nargs=argparse.REMAINDER)

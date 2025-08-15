@@ -30,7 +30,7 @@
 
 #define __PLOG(LEVEL, seq)                                                                                             \
     do {                                                                                                               \
-        constexpr const char* fmt =                                                                                    \
+        [[maybe_unused]] constexpr const char* fmt =                                                                   \
             BOOST_PP_SEQ_FOR_EACH_I(__PLOG_PROCESS_KEY_ELEMENT, % %, __PLOG_PREPROCESS_PAIRS(seq));                    \
         SPDLOG_##LEVEL(fmt, BOOST_PP_SEQ_FOR_EACH_I(__PLOG_PROCESS_VALUE_ELEMENT, % %, __PLOG_PREPROCESS_PAIRS(seq))); \
     } while (0)
@@ -72,7 +72,7 @@
 
 namespace pain {
 // log_level: trace, debug, info, warn, err, critical
-typedef spdlog::level::level_enum log_level;
+using log_level = spdlog::level::level_enum; // NOLINT(readability-identifier-naming)
 
 struct LoggerOptions {
     std::string file_name;

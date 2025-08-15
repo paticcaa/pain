@@ -2,40 +2,26 @@
 
 #include "pain/proto/manusya.pb.h"
 
+#define MANUSYA_SERVICE_METHOD(name)                                                                                   \
+    void name(::google::protobuf::RpcController* controller,                                                           \
+              const pain::proto::manusya::name##Request* request,                                                      \
+              pain::proto::manusya::name##Response* response,                                                          \
+              ::google::protobuf::Closure* done) override
+
 namespace pain::manusya {
 class ManusyaServiceImpl : public pain::proto::manusya::ManusyaService {
 public:
     ManusyaServiceImpl();
     virtual ~ManusyaServiceImpl() {}
-    void CreateChunk(google::protobuf::RpcController* controller,
-                     const pain::proto::manusya::CreateChunkRequest* request,
-                     pain::proto::manusya::CreateChunkResponse* response,
-                     google::protobuf::Closure* done) override;
-    void AppendChunk(google::protobuf::RpcController* controller,
-                     const pain::proto::manusya::AppendChunkRequest* request,
-                     pain::proto::manusya::AppendChunkResponse* response,
-                     google::protobuf::Closure* done) override;
-    void ListChunk(google::protobuf::RpcController* controller,
-                   const pain::proto::manusya::ListChunkRequest* request,
-                   pain::proto::manusya::ListChunkResponse* response,
-                   google::protobuf::Closure* done) override;
-
-    void ReadChunk(google::protobuf::RpcController* controller,
-                   const pain::proto::manusya::ReadChunkRequest* request,
-                   pain::proto::manusya::ReadChunkResponse* response,
-                   google::protobuf::Closure* done) override;
-    void SealChunk(google::protobuf::RpcController* controller,
-                   const pain::proto::manusya::SealChunkRequest* request,
-                   pain::proto::manusya::SealChunkResponse* response,
-                   google::protobuf::Closure* done) override;
-    void RemoveChunk(google::protobuf::RpcController* controller,
-                     const pain::proto::manusya::RemoveChunkRequest* request,
-                     pain::proto::manusya::RemoveChunkResponse* response,
-                     google::protobuf::Closure* done) override;
-    void QueryChunk(google::protobuf::RpcController* controller,
-                    const pain::proto::manusya::QueryChunkRequest* request,
-                    pain::proto::manusya::QueryChunkResponse* response,
-                    google::protobuf::Closure* done) override;
+    MANUSYA_SERVICE_METHOD(CreateChunk);
+    MANUSYA_SERVICE_METHOD(AppendChunk);
+    MANUSYA_SERVICE_METHOD(ListChunk);
+    MANUSYA_SERVICE_METHOD(ReadChunk);
+    MANUSYA_SERVICE_METHOD(QueryChunk);
+    MANUSYA_SERVICE_METHOD(QueryAndSealChunk);
+    MANUSYA_SERVICE_METHOD(RemoveChunk);
 };
 
 } // namespace pain::manusya
+
+#undef MANUSYA_SERVICE_METHOD

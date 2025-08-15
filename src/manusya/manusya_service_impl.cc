@@ -9,14 +9,17 @@
 #include "manusya/chunk.h"
 #include "manusya/macro.h"
 
+#define MANUSYA_SERVICE_METHOD(name)                                                                                   \
+    void ManusyaServiceImpl::name(::google::protobuf::RpcController* controller,                                       \
+                                  [[maybe_unused]] const pain::proto::manusya::name##Request* request,                 \
+                                  [[maybe_unused]] pain::proto::manusya::name##Response* response,                     \
+                                  ::google::protobuf::Closure* done)
+
 namespace pain::manusya {
 
 ManusyaServiceImpl::ManusyaServiceImpl() {}
 
-void ManusyaServiceImpl::CreateChunk(google::protobuf::RpcController* controller,
-                                     const pain::proto::manusya::CreateChunkRequest* request,
-                                     pain::proto::manusya::CreateChunkResponse* response,
-                                     google::protobuf::Closure* done) {
+MANUSYA_SERVICE_METHOD(CreateChunk) {
     DEFINE_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
 
@@ -25,28 +28,24 @@ void ManusyaServiceImpl::CreateChunk(google::protobuf::RpcController* controller
                ("attached", cntl->request_attachment().size()));
 
     ChunkOptions options;
-    options.append_out_of_order = request->chunk_options().append_out_of_order();
-    options.digest = request->chunk_options().digest();
 
     ChunkPtr chunk;
     auto status = Bank::instance().create_chunk(options, &chunk);
     if (!status.ok()) {
         PLOG_ERROR(("desc", "failed to create chunk")("error", status.error_str()));
-        cntl->SetFailed(status.error_code(), "%s", status.error_cstr());
+        response->mutable_header()->set_status(status.error_code());
+        response->mutable_header()->set_message(status.error_str());
         return;
     }
 
-    response->mutable_uuid()->set_low(chunk->uuid().low());
-    response->mutable_uuid()->set_high(chunk->uuid().high());
+    response->mutable_chunk_id()->set_low(chunk->uuid().low());
+    response->mutable_chunk_id()->set_high(chunk->uuid().high());
 }
 
-void ManusyaServiceImpl::AppendChunk(google::protobuf::RpcController* controller,
-                                     const pain::proto::manusya::AppendChunkRequest* request,
-                                     pain::proto::manusya::AppendChunkResponse* response,
-                                     google::protobuf::Closure* done) {
+MANUSYA_SERVICE_METHOD(AppendChunk) {
     DEFINE_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
-    UUID uuid(request->uuid().high(), request->uuid().low());
+    UUID uuid(request->chunk_id().high(), request->chunk_id().low());
     span->SetAttribute("chunk", uuid.str());
     PLOG_DEBUG(("desc", __func__)                                                //
                ("remote_side", butil::endpoint2str(cntl->remote_side()).c_str()) //
@@ -58,19 +57,19 @@ void ManusyaServiceImpl::AppendChunk(google::protobuf::RpcController* controller
     auto status = Bank::instance().get_chunk(uuid, &chunk);
     if (!status.ok()) {
         PLOG_ERROR(("desc", "chunk not found")("uuid", uuid.str()));
-        cntl->SetFailed(ENOENT, "Chunk not found");
+        response->mutable_header()->set_status(ENOENT);
+        response->mutable_header()->set_message("Chunk not found");
         return;
     }
 
-    auto offset = request->offset();
-    auto length = cntl->request_attachment().size();
     status = chunk->append(cntl->request_attachment(), request->offset());
     if (!status.ok()) {
         PLOG_ERROR(("desc", "failed to append chunk") //
                    ("uuid", uuid.str())               //
                    ("errno", status.error_code())     //
                    ("error", status.error_str()));
-        cntl->SetFailed(status.error_code(), "%s", status.error_cstr());
+        response->mutable_header()->set_status(status.error_code());
+        response->mutable_header()->set_message(status.error_str());
         return;
     }
 
@@ -78,10 +77,7 @@ void ManusyaServiceImpl::AppendChunk(google::protobuf::RpcController* controller
     response->set_offset(chunk->size());
 }
 
-void ManusyaServiceImpl::ListChunk(google::protobuf::RpcController* controller,
-                                   const pain::proto::manusya::ListChunkRequest* request,
-                                   pain::proto::manusya::ListChunkResponse* response,
-                                   google::protobuf::Closure* done) {
+MANUSYA_SERVICE_METHOD(ListChunk) {
     DEFINE_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
 
@@ -93,19 +89,16 @@ void ManusyaServiceImpl::ListChunk(google::protobuf::RpcController* controller,
                ("limit", request->limit()));
 
     Bank::instance().list_chunk(uuid, request->limit(), [&](UUID uuid) {
-        auto* u = response->add_uuids();
+        auto* u = response->add_chunk_ids();
         u->set_low(uuid.low());
         u->set_high(uuid.high());
     });
 }
 
-void ManusyaServiceImpl::ReadChunk(google::protobuf::RpcController* controller,
-                                   const pain::proto::manusya::ReadChunkRequest* request,
-                                   pain::proto::manusya::ReadChunkResponse* response,
-                                   google::protobuf::Closure* done) {
+MANUSYA_SERVICE_METHOD(ReadChunk) {
     DEFINE_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
-    UUID uuid(request->uuid().high(), request->uuid().low());
+    UUID uuid(request->chunk_id().high(), request->chunk_id().low());
     span->SetAttribute("chunk", uuid.str());
 
     PLOG_DEBUG(("desc", __func__)                                                //
@@ -118,7 +111,8 @@ void ManusyaServiceImpl::ReadChunk(google::protobuf::RpcController* controller,
     auto status = Bank::instance().get_chunk(uuid, &chunk);
     if (!status.ok()) {
         PLOG_ERROR(("desc", "chunk not found")("uuid", uuid.str()));
-        cntl->SetFailed(ENOENT, "Chunk not found");
+        response->mutable_header()->set_status(ENOENT);
+        response->mutable_header()->set_message("Chunk not found");
         return;
     }
 
@@ -130,13 +124,10 @@ void ManusyaServiceImpl::ReadChunk(google::protobuf::RpcController* controller,
     }
 }
 
-void ManusyaServiceImpl::SealChunk(google::protobuf::RpcController* controller,
-                                   const pain::proto::manusya::SealChunkRequest* request,
-                                   pain::proto::manusya::SealChunkResponse* response,
-                                   google::protobuf::Closure* done) {
+MANUSYA_SERVICE_METHOD(QueryAndSealChunk) {
     DEFINE_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
-    UUID uuid(request->uuid().high(), request->uuid().low());
+    UUID uuid(request->chunk_id().high(), request->chunk_id().low());
     span->SetAttribute("chunk", uuid.str());
 
     PLOG_DEBUG(("desc", __func__)                                                //
@@ -151,21 +142,22 @@ void ManusyaServiceImpl::SealChunk(google::protobuf::RpcController* controller,
         return;
     }
 
-    status = chunk->seal();
+    uint64_t size = 0;
+    status = chunk->query_and_seal(&size);
     if (!status.ok()) {
         PLOG_ERROR(("desc", "failed to seal chunk")("uuid", uuid.str())("error", status.error_str()));
-        cntl->SetFailed(status.error_code(), "%s", status.error_cstr());
+        response->mutable_header()->set_status(status.error_code());
+        response->mutable_header()->set_message(status.error_str());
         return;
     }
+
+    response->set_size(size);
 }
 
-void ManusyaServiceImpl::RemoveChunk(google::protobuf::RpcController* controller,
-                                     const pain::proto::manusya::RemoveChunkRequest* request,
-                                     pain::proto::manusya::RemoveChunkResponse* response,
-                                     google::protobuf::Closure* done) {
+MANUSYA_SERVICE_METHOD(RemoveChunk) {
     DEFINE_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
-    UUID uuid(request->uuid().high(), request->uuid().low());
+    UUID uuid(request->chunk_id().high(), request->chunk_id().low());
     span->SetAttribute("chunk", uuid.str());
 
     PLOG_DEBUG(("desc", __func__)                                                //
@@ -175,18 +167,16 @@ void ManusyaServiceImpl::RemoveChunk(google::protobuf::RpcController* controller
     auto status = Bank::instance().remove_chunk(uuid);
     if (!status.ok()) {
         PLOG_ERROR(("desc", "failed to remove chunk")("uuid", uuid.str())("error", status.error_str()));
-        cntl->SetFailed(status.error_code(), "%s", status.error_cstr());
+        response->mutable_header()->set_status(status.error_code());
+        response->mutable_header()->set_message(status.error_str());
         return;
     }
 }
 
-void ManusyaServiceImpl::QueryChunk(google::protobuf::RpcController* controller,
-                                    const pain::proto::manusya::QueryChunkRequest* request,
-                                    pain::proto::manusya::QueryChunkResponse* response,
-                                    google::protobuf::Closure* done) {
+MANUSYA_SERVICE_METHOD(QueryChunk) {
     DEFINE_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
-    UUID uuid(request->uuid().high(), request->uuid().low());
+    UUID uuid(request->chunk_id().high(), request->chunk_id().low());
     span->SetAttribute("chunk", uuid.str());
 
     PLOG_DEBUG(("desc", __func__)                                                //
@@ -197,14 +187,13 @@ void ManusyaServiceImpl::QueryChunk(google::protobuf::RpcController* controller,
     auto status = Bank::instance().get_chunk(uuid, &chunk);
     if (!status.ok()) {
         PLOG_ERROR(("desc", "chunk not found")("uuid", uuid.str()));
-        cntl->SetFailed(ENOENT, "Chunk not found");
+        response->mutable_header()->set_status(ENOENT);
+        response->mutable_header()->set_message("Chunk not found");
         return;
     }
 
     response->set_size(chunk->size());
-    response->mutable_chunk_options()->set_append_out_of_order(chunk->options().append_out_of_order);
-    response->mutable_chunk_options()->set_digest(chunk->options().digest);
-    response->set_chunk_state(static_cast<pain::proto::ChunkState>(chunk->state()));
+    response->set_sealed(chunk->state() == ChunkState::kSealed);
 }
 
 } // namespace pain::manusya

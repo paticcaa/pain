@@ -50,7 +50,6 @@
 
 - name: stop jaeger
   hosts: jaeger
-  remote_user: root
   tags:
     - stop
     - jaeger

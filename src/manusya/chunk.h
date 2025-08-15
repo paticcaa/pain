@@ -16,15 +16,12 @@ namespace pain::manusya {
 class Chunk;
 using ChunkPtr = boost::intrusive_ptr<Chunk>;
 
-struct ChunkOptions {
-    bool append_out_of_order = false;
-    bool digest = false;
-};
+struct ChunkOptions {};
 
 enum class ChunkState {
-    INIT = 0,
-    OPEN = 1,
-    SEALED = 2,
+    kInit = 0,
+    kOpen = 1,
+    kSealed = 2,
 };
 
 struct AppendRequest
@@ -73,7 +70,7 @@ public:
         return _uuid;
     }
     Status append(const IOBuf& buf, uint64_t offset);
-    Status seal();
+    Status query_and_seal(uint64_t* length);
     Status read(uint64_t offset, uint64_t size, IOBuf* buf) const;
     uint64_t size() const {
         return _size;
@@ -100,7 +97,7 @@ private:
 
     UUID _uuid;
     uint64_t _size = 0;
-    ChunkState _state = ChunkState::INIT;
+    ChunkState _state = ChunkState::kInit;
     std::atomic<int> _use_count = 0;
     ChunkOptions _options;
 
