@@ -25,7 +25,7 @@ DECLARE_string(deva_listen_address);
 namespace pain::deva {
 
 Rsm::Rsm(const std::string& group, ContainerPtr container) :
-    _node(NULL),
+    _node(nullptr),
     _leader_term(-1),
     _group(group),
     _container(container) {}
@@ -36,6 +36,7 @@ Rsm::~Rsm() {
 int Rsm::start() {
     std::string data_path = FLAGS_data_path + "/data";
     butil::EndPoint addr;
+    // NOLINTNEXTLINE
     int r = butil::str2endpoint(FLAGS_deva_listen_address.c_str(), &addr);
     if (r != 0) {
         PLOG_ERROR(("desc", "invalid xbs-meta address")("address", FLAGS_deva_listen_address));
@@ -66,26 +67,26 @@ int Rsm::start() {
 }
 
 bool Rsm::is_leader() const {
-    if (!_node) {
+    if (_node == nullptr) {
         return false;
     }
     return _node->is_leader();
 }
 
 void Rsm::shutdown() {
-    if (_node) {
-        _node->shutdown(NULL);
+    if (_node != nullptr) {
+        _node->shutdown(nullptr);
     }
 }
 
 void Rsm::join() {
-    if (_node) {
+    if (_node != nullptr) {
         _node->join();
     }
 }
 
 void Rsm::apply(const braft::Task& task) {
-    if (_node) {
+    if (_node != nullptr) {
         _node->apply(task);
     }
 }
@@ -95,7 +96,7 @@ void Rsm::on_apply(braft::Iterator& iter) {
         braft::AsyncClosureGuard closure_guard(iter.done());
         butil::IOBuf data;
         off_t offset = 0;
-        if (iter.done()) {
+        if (iter.done() != nullptr) {
             // Run at closure_guard destructed
             auto c = static_cast<OpClosure*>(iter.done());
             c->set_index(iter.index());
@@ -124,18 +125,20 @@ void* Rsm::save_snapshot(void* arg) {
     std::unique_ptr<SnapshotArg> arg_guard(sa);
     brpc::ClosureGuard done_guard(sa->done);
     std::string snapshot_path = sa->writer->get_path() + "/data";
-    return NULL;
+    return nullptr;
 }
 
 void Rsm::on_snapshot_save(braft::SnapshotWriter* writer, braft::Closure* done) {
     SnapshotArg* arg = new SnapshotArg;
     arg->writer = writer;
     arg->done = done;
-    bthread_t tid;
-    bthread_start_urgent(&tid, NULL, save_snapshot, arg);
+    bthread_t tid = 0;
+    bthread_start_urgent(&tid, nullptr, save_snapshot, arg);
 }
 
+// NOLINTNEXTLINE
 int Rsm::on_snapshot_load(braft::SnapshotReader* reader) {
+    std::ignore = reader;
     CHECK(!is_leader()) << "Leader is not supposed to load snapshot";
     return 0;
 }
@@ -166,8 +169,8 @@ void Rsm::on_start_following(const ::braft::LeaderChangeContext& ctx) {
 }
 
 RsmPtr default_rsm() {
-    static RsmPtr rsm = new Rsm("default", nullptr);
-    return rsm;
+    static RsmPtr s_rsm = new Rsm("default", nullptr);
+    return s_rsm;
 }
 
 } // namespace pain::deva

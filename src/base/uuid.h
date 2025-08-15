@@ -12,29 +12,32 @@ public:
     UUID(const UUIDv4::UUID& uuid) : UUIDv4::UUID(uuid) {}
 
     uint64_t low() const {
-        const char* _data = reinterpret_cast<const char*>(this);
-        return *reinterpret_cast<const uint64_t*>(_data);
+        const char* data = reinterpret_cast<const char*>(this);
+        return *reinterpret_cast<const uint64_t*>(data);
     }
 
     uint64_t high() const {
-        const char* _data = reinterpret_cast<const char*>(this);
-        return *reinterpret_cast<const uint64_t*>(_data + 8);
+        const char* data = reinterpret_cast<const char*>(this);
+        return *reinterpret_cast<const uint64_t*>(data + 8); // NOLINT
     }
 
     static bool valid(const std::string& uuid) {
-        const size_t kGUIDLength = 36U;
-        if (uuid.length() != kGUIDLength)
+        constexpr size_t guid_length = 36U;
+        if (uuid.length() != guid_length) {
             return false;
+        }
 
         const std::string hexchars = "0123456789abcdef";
         for (uint32_t i = 0; i < uuid.length(); ++i) {
             char current = uuid[i];
-            if (i == 8 || i == 13 || i == 18 || i == 23) {
-                if (current != '-')
+            if (i == 8 || i == 13 || i == 18 || i == 23) { // NOLINT(readability-magic-numbers)
+                if (current != '-') {
                     return false;
+                }
             } else {
-                if (hexchars.find(current) == std::string::npos)
+                if (hexchars.find(current) == std::string::npos) {
                     return false;
+                }
             }
         }
 

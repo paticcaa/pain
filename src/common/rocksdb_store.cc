@@ -41,7 +41,7 @@ Status RocksdbStore::open(const char* data_path, RocksdbStorePtr* store) {
     PLOG_INFO(("desc", "open rocksdb") //
               ("path", data_path));
 
-    rocksdb::DB* db;
+    rocksdb::DB* db = nullptr;
     rocksdb::Status status = rocksdb::DB::Open(options, data_path, &db);
     if (!status.ok()) {
         PLOG_ERROR(("desc", "open rocksdb failed") //
@@ -49,10 +49,10 @@ Status RocksdbStore::open(const char* data_path, RocksdbStorePtr* store) {
         return Status(EIO, status.ToString());
     }
 
-    RocksdbStorePtr store_ = new RocksdbStore();
-    store_->_data_path = data_path;
-    store_->_db = db;
-    *store = store_;
+    RocksdbStorePtr rocksdb_store = new RocksdbStore();
+    rocksdb_store->_data_path = data_path;
+    rocksdb_store->_db = db;
+    *store = rocksdb_store;
     return Status::OK();
 }
 
@@ -103,7 +103,7 @@ Status RocksdbStore::check_point(const char* to, std::vector<std::string>* files
                    ("error", status.ToString()));
         return Status(EIO, status.ToString());
     }
-    std::unique_ptr<rocksdb::Checkpoint> cpt_(cpt);
+    std::unique_ptr<rocksdb::Checkpoint> cpt_guard(cpt);
 
     status = cpt->CreateCheckpoint(to);
     if (!status.ok()) {
@@ -127,15 +127,15 @@ Status RocksdbStore::check_point(const char* to, std::vector<std::string>* files
         BOOST_ASSERT_MSG(false, "cpt dir is invalid");
     }
 
-    std::vector<std::string> files_;
+    std::vector<std::string> snapshot_files;
     while (dir_reader->next()) {
         auto file_name = fmt::format("cpt/{}", dir_reader->name());
         PLOG_INFO(("desc", "snapshot add file") //
                   ("file", file_name));
-        files_.push_back(file_name);
+        snapshot_files.push_back(file_name);
     }
 
-    files->swap(files_);
+    files->swap(snapshot_files);
     return Status::OK();
 }
 
@@ -178,7 +178,7 @@ Status RocksdbStore::recover(const char* from) {
     rocksdb::Options options;
     rocksdb::DB* db = nullptr;
     rocksdb::Status st = rocksdb::DB::OpenForReadOnly(options, from, &db);
-    std::unique_ptr<rocksdb::DB> db_(db);
+    std::unique_ptr<rocksdb::DB> db_guard(db);
 
     if (!st.ok()) {
         PLOG_ERROR(("desc", "recover rocksdb failed") //
@@ -193,7 +193,7 @@ Status RocksdbStore::recover(const char* from) {
                    ("error", st.ToString()));
         return Status(EIO, st.ToString());
     }
-    std::unique_ptr<rocksdb::Checkpoint> cpt_(cpt);
+    std::unique_ptr<rocksdb::Checkpoint> cpt_guard(cpt);
 
     st = cpt->CreateCheckpoint(_data_path);
     if (!st.ok()) {

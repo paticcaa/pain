@@ -33,8 +33,7 @@ public:
                                                             spdlog::level::err,
                                                             spdlog::level::critical};
 
-    virtual bool
-    OnLogMessage(int severity, const char* file, int line, const butil::StringPiece& log_content) override {
+    bool OnLogMessage(int severity, const char* file, int line, const butil::StringPiece& log_content) override {
         if (severity < 0) [[unlikely]] {
             severity = 0;
         }

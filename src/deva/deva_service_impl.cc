@@ -28,6 +28,8 @@ DEVA_SERVICE_METHOD(OpenFile) {
         pain::proto::deva::store::CreateFileResponse create_response;
         auto file_id = UUID::generate();
         create_request.set_path(path);
+        create_request.mutable_file_id()->set_high(file_id.high());
+        create_request.mutable_file_id()->set_low(file_id.low());
         auto status = bridge<Deva, OpType::kCreateFile>(create_request, &create_response).get();
         if (!status.ok()) {
             PLOG_ERROR(("desc", "failed to create file")("error", status.error_str()));

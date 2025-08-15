@@ -20,6 +20,7 @@ namespace pain::sad {
 argparse::ArgumentParser& program();
 }
 namespace pain::sad::asura {
+// NOLINTNEXTLINE
 argparse::ArgumentParser asura_parser("asura", "1.0", argparse::default_arguments::none);
 
 EXECUTE(program().add_subparser(asura_parser));
@@ -27,17 +28,18 @@ EXECUTE(asura_parser.add_description("send cmd to asura server")
             .add_argument("--host")
             .default_value(std::string("127.0.0.1:8201")));
 
+// NOLINTNEXTLINE
 static std::map<std::string, std::function<Status(argparse::ArgumentParser&)>> subcommands = {};
 
 void add(const std::string& name, std::function<Status(argparse::ArgumentParser& parser)> func) {
-    std::string name_;
+    std::string normalized_name;
     for (auto c : name) {
         if (c == '_') {
             c = '-';
         }
-        name_ += c;
+        normalized_name += c;
     }
-    subcommands[name_] = func;
+    subcommands[normalized_name] = func;
 }
 
 Status execute(argparse::ArgumentParser& parser) {
@@ -54,7 +56,8 @@ Status execute(argparse::ArgumentParser& parser) {
 REGISTER_ASURA_CMD(register_deva, [](argparse::ArgumentParser& parser) {
     parser.add_description("add deva");
     parser.add_argument("--ip").required();
-    parser.add_argument("--port").default_value(0u).scan<'i', uint32_t>().required();
+    // NOLINTNEXTLINE
+    parser.add_argument("--port").default_value(0U).scan<'i', uint32_t>().required();
 });
 COMMAND(register_deva) {
     SPAN(span);
@@ -64,9 +67,9 @@ COMMAND(register_deva) {
 
     brpc::Channel channel;
     brpc::ChannelOptions options;
-    options.connect_timeout_ms = 2000;
-    options.timeout_ms = 10000;
-    options.max_retry = 0;
+    options.connect_timeout_ms = 2000; // NOLINT(readability-magic-numbers)
+    options.timeout_ms = 10000;        // NOLINT(readability-magic-numbers)
+    options.max_retry = 0;             // NOLINT(readability-magic-numbers)
     if (channel.Init(host.c_str(), &options) != 0) {
         return Status(EAGAIN, "Fail to initialize channel");
     }
@@ -100,9 +103,9 @@ COMMAND(list_deva) {
 
     brpc::Channel channel;
     brpc::ChannelOptions options;
-    options.connect_timeout_ms = 2000;
-    options.timeout_ms = 10000;
-    options.max_retry = 0;
+    options.connect_timeout_ms = 2000; // NOLINT(readability-magic-numbers)
+    options.timeout_ms = 10000;        // NOLINT(readability-magic-numbers)
+    options.max_retry = 0;             // NOLINT(readability-magic-numbers)
     if (channel.Init(host.c_str(), &options) != 0) {
         return Status(EAGAIN, "Fail to initialize channel");
     }
@@ -125,7 +128,8 @@ COMMAND(list_deva) {
 REGISTER_ASURA_CMD(register_manusya, [](argparse::ArgumentParser& parser) {
     parser.add_description("add manusya");
     parser.add_argument("--ip").required();
-    parser.add_argument("--port").default_value(0u).scan<'i', uint32_t>().required();
+    // NOLINTNEXTLINE
+    parser.add_argument("--port").default_value(0U).scan<'i', uint32_t>().required();
     parser.add_argument("--pool").required();
 });
 COMMAND(register_manusya) {
@@ -141,9 +145,9 @@ COMMAND(register_manusya) {
 
     brpc::Channel channel;
     brpc::ChannelOptions options;
-    options.connect_timeout_ms = 2000;
-    options.timeout_ms = 10000;
-    options.max_retry = 0;
+    options.connect_timeout_ms = 2000; // NOLINT(readability-magic-numbers)
+    options.timeout_ms = 10000;        // NOLINT(readability-magic-numbers)
+    options.max_retry = 0;             // NOLINT(readability-magic-numbers)
     if (channel.Init(host.c_str(), &options) != 0) {
         return Status(EAGAIN, "Fail to initialize channel");
     }
@@ -180,9 +184,9 @@ COMMAND(list_manusya) {
 
     brpc::Channel channel;
     brpc::ChannelOptions options;
-    options.connect_timeout_ms = 2000;
-    options.timeout_ms = 10000;
-    options.max_retry = 0;
+    options.connect_timeout_ms = 2000; // NOLINT(readability-magic-numbers)
+    options.timeout_ms = 10000;        // NOLINT(readability-magic-numbers)
+    options.max_retry = 0;             // NOLINT(readability-magic-numbers)
     if (channel.Init(host.c_str(), &options) != 0) {
         return Status(EAGAIN, "Fail to initialize channel");
     }
@@ -213,9 +217,9 @@ COMMAND(create_pool) {
 
     brpc::Channel channel;
     brpc::ChannelOptions options;
-    options.connect_timeout_ms = 2000;
-    options.timeout_ms = 10000;
-    options.max_retry = 0;
+    options.connect_timeout_ms = 2000; // NOLINT(readability-magic-numbers)
+    options.timeout_ms = 10000;        // NOLINT(readability-magic-numbers)
+    options.max_retry = 0;             // NOLINT(readability-magic-numbers)
     if (channel.Init(host.c_str(), &options) != 0) {
         return Status(EAGAIN, "Fail to initialize channel");
     }

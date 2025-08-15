@@ -8,12 +8,12 @@
     void FileStreamImpl::name(::google::protobuf::RpcController* controller,                                           \
                               [[maybe_unused]] const ::pain::proto::name##Request* request,                            \
                               [[maybe_unused]] ::pain::proto::name##Response* response,                                \
-                              ::google::protobuf::Closure* done)
+                              ::google::protobuf::Closure* done) // NOLINT(readability-non-const-parameter)
 
 namespace pain {
 
 FILE_STREAM_METHOD(Append) {
-    pain::Controller* cntl = static_cast<pain::Controller*>(controller);
+    [[maybe_unused]] pain::Controller* cntl = static_cast<pain::Controller*>(controller);
     PLOG_DEBUG(("desc", __func__)               //
                ("uuid", _uuid.str())            //
                ("direct_io", cntl->direct_io()) //
@@ -31,19 +31,19 @@ FILE_STREAM_METHOD(Append) {
 }
 
 FILE_STREAM_METHOD(Read) {
-    pain::Controller* cntl = static_cast<pain::Controller*>(controller);
+    [[maybe_unused]] pain::Controller* cntl = static_cast<pain::Controller*>(controller);
     PLOG_DEBUG(("desc", __func__));
     brpc::ClosureGuard done_guard(done);
 }
 
 FILE_STREAM_METHOD(Seal) {
-    pain::Controller* cntl = static_cast<pain::Controller*>(controller);
+    [[maybe_unused]] pain::Controller* cntl = static_cast<pain::Controller*>(controller);
     PLOG_DEBUG(("desc", __func__));
     brpc::ClosureGuard done_guard(done);
 }
 
 FILE_STREAM_METHOD(Close) {
-    pain::Controller* cntl = static_cast<pain::Controller*>(controller);
+    [[maybe_unused]] pain::Controller* cntl = static_cast<pain::Controller*>(controller);
     PLOG_DEBUG(("desc", __func__));
     brpc::ClosureGuard done_guard(done);
 }

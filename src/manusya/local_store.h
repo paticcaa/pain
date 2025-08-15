@@ -8,7 +8,7 @@ namespace pain::manusya {
 class LocalStore : public Store {
 public:
     LocalStore(const char* data_path);
-    virtual ~LocalStore() = default;
+    ~LocalStore() override = default;
 
     Future<Status> open(const char* path, int flags, FileHandlePtr* fh) override;
     Future<Status> append(FileHandlePtr fh, uint64_t offset, IOBuf buf) override;

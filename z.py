@@ -1,9 +1,16 @@
 #!/bin/python3
 import argparse
 import subprocess
+import logging
+import os
 
-def run_in_shell(cmd):
-    results = subprocess.run(cmd, shell=True, universal_newlines=True, check=True)
+# 配置日志
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger("pain") 
+
+
+def run_in_shell(cmd, stdout=None, stderr=None):
+    results = subprocess.run(cmd, shell=True, universal_newlines=True, check=True, stdout=stdout, stderr=stderr)
     if results.returncode != 0:
         raise Exception("Failed to run command: {}".format(cmd))
     if results.stdout:
@@ -38,8 +45,69 @@ def build_project(args):
     if args.install:
         print('Unimplemented')
 
+def test_project(args):
+    cmd = ['bazel', 'test', '-s', '--verbose_failures', '--disk_cache={}'.format(args.cache_dir), '//src/...']
+    print('> ' + ' '.join(cmd))
+    run_in_shell(' '.join(cmd))
+
 def clang_format(path):
     run_in_shell(r"find {} -regex '.*\.\(cc\|h\|proto\)' | xargs -n1 -P $(nproc) clang-format -i --style=file --fallback-style=none".format(path))
+
+
+def lint(dir, include_files, exclude_files):
+        filename = os.path.basename(dir)
+        nproc = os.cpu_count()
+        logger.info(f"check {filename} with include_files: {include_files} and exclude_files: {exclude_files}")
+        # find src -type f \( -name "*.cc" -o -name "*.h" \) ! \( -name "demo.cc" -o -name "hello.cc" \)
+        include_files_str = ' -o '.join(['-name "{}"'.format(file) for file in include_files])
+        exclude_files_str = ' -o '.join(['-path "{}"'.format(file) for file in exclude_files])
+        find_cmd = r'find {} -type f \( {} \) ! \( {} \)'.format(dir, include_files_str, exclude_files_str)
+        cmd = '{} | xargs -n1 -P {} clang-tidy --use-color 2>/dev/null | tee clang-tidy-{}.log'.format(find_cmd, nproc, filename)
+        run_in_shell(cmd, None, None)
+        # grep -cP "readability|modernize" clang-tidy.log
+        error_lines = []
+        error_count = 0
+        check_items = ["readability", "modernize", "cppcoreguidelines"]
+        with open("clang-tidy-{}.log".format(filename), "r") as f:
+            for line in f:
+                for item in check_items:
+                    if item in line:
+                        error_count += 1
+                        error_lines.append(line.strip())
+                        break
+        return {"error_count": error_count, "error_lines": error_lines}
+
+def lint_project(args):
+    include_files = [
+        '*.cc',
+        '*.h',
+    ]
+    exclude_files = [
+        '*examples*',
+    ]
+    check_dirs = [
+        'src',
+        'include',
+    ]
+    errors = {}
+    for dir in check_dirs:
+        errors[dir] = lint(dir, include_files, exclude_files)
+    
+    error_count = 0
+    for filename, error_info in errors.items():
+        if error_info["error_count"] > 0:
+            error_count += error_info["error_count"]
+            logger.info(f"Found {error_info['error_count']} lint errors in {filename}")
+            for line in error_info["error_lines"]:
+                logger.info(line)
+        else:
+            logger.info(f"No lint error found in {filename}")
+    if error_count > 0:
+        raise Exception("\033[31mFound {} lint errors\033[0m".format(error_count))
+    else:
+        logger.info("\033[32mCheck lint error success\033[0m")
+
+
 
 def format_project(args):
     paths = [
@@ -94,6 +162,15 @@ if __name__ == "__main__":
     deploy_parser.set_defaults(func=deploy_project)
     deploy_parser.add_argument('-a', '--action', choices=['start', 'stop'], required=True)
     deploy_parser.add_argument('rest', nargs=argparse.REMAINDER)
+
+    lint_parser = subparsers.add_parser('lint', aliases=['l'])
+    lint_parser.set_defaults(func=lint_project)
+    lint_parser.add_argument('rest', nargs=argparse.REMAINDER)
+
+    test_parser = subparsers.add_parser('test', aliases = ['t'])
+    test_parser.add_argument('--cache-dir', default='/mnt/bazel_cache')
+    test_parser.set_defaults(func=test_project)
+    test_parser.add_argument('rest', nargs=argparse.REMAINDER)
 
     args = parser.parse_args()
     args.func(args)

@@ -11,7 +11,7 @@ OpPtr create(RsmPtr rsm) {
     Request request;
     OpPtr op = nullptr;
 
-    if constexpr (static_cast<int>(OpType) < 100) {
+    if constexpr (static_cast<int>(OpType) < 100) { // NOLINT(readability-magic-numbers)
         op = new ContainerOp<Deva, Request, Response>(OpType, rsm, request, nullptr);
     }
     return op;

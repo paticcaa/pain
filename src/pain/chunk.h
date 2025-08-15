@@ -4,14 +4,14 @@
 
 namespace pain {
 enum class ChunkState {
-    INIT = 0,
-    OPEN = 1,
-    SEALED = 2,
+    kInit = 0,
+    kOpen = 1,
+    kSealed = 2,
 };
 
 enum class ChunkType {
-    REPLICATION = 0,
-    EC = 1, // not supported
+    kReplication = 0,
+    kEc = 1, // not supported
 };
 
 struct Location {

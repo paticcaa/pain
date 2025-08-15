@@ -44,8 +44,8 @@ void init_tracer(const std::string& service_name) {
 
     if (FLAGS_base_tracer_otlp_file_exporter_enable) {
         std::string filename = FLAGS_base_tracer_otlp_file_exporter_path + "." + service_name + ".otlp";
-        static std::ofstream out(filename, std::ios::binary | std::ios::app);
-        auto exporter = opentelemetry::exporter::trace::OStreamSpanExporterFactory::Create(out);
+        static std::ofstream s_out(filename, std::ios::binary | std::ios::app);
+        auto exporter = opentelemetry::exporter::trace::OStreamSpanExporterFactory::Create(s_out);
         auto processor = opentelemetry::sdk::trace::SimpleSpanProcessorFactory::Create(std::move(exporter));
         processors.push_back(std::move(processor));
     }

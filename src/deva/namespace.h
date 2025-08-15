@@ -11,8 +11,8 @@
 namespace pain::deva {
 
 enum class FileType {
-    FILE = 0,
-    DIRECTORY,
+    kFile = 0,
+    kDirectory,
 };
 
 struct DirEntry {
@@ -49,10 +49,10 @@ struct fmt::formatter<pain::deva::FileType> : fmt::formatter<std::string_view> {
     auto format(pain::deva::FileType t, FormatContext& ctx) const {
         std::string_view name;
         switch (t) {
-        case pain::deva::FileType::FILE:
+        case pain::deva::FileType::kFile:
             name = "FILE";
             break;
-        case pain::deva::FileType::DIRECTORY:
+        case pain::deva::FileType::kDirectory:
             name = "DIRECTORY";
             break;
         }

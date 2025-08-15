@@ -10,7 +10,6 @@
 #include <boost/assert.hpp>
 #include "base/future.h"
 #include "base/plog.h"
-#include "base/tracer.h"
 #include "butil/iobuf.h"
 #include "manusya/file_handle.h"
 #include "manusya/store.h"
@@ -21,12 +20,12 @@ class LocalFileHandle : public FileHandle {
 public:
     LocalFileHandle(int fd, StorePtr store) : FileHandle(store), _fd(fd) {}
 
-    virtual ~LocalFileHandle() {
+    ~LocalFileHandle() override {
         BOOST_ASSERT(_fd > 0);
         close(_fd);
     };
 
-    int64_t handle() {
+    int64_t handle() const {
         return _fd;
     }
 
@@ -35,7 +34,8 @@ private:
 };
 
 LocalStore::LocalStore(const char* data_path) : _data_path(data_path) {
-    int r = ::mkdir(data_path, 0774);
+    constexpr mode_t mode = 0774;
+    int r = ::mkdir(data_path, mode);
     if (r < 0 && errno != EEXIST) {
         PLOG_ERROR(("desc", "failed to create data path")("path", data_path));
     }
@@ -43,7 +43,8 @@ LocalStore::LocalStore(const char* data_path) : _data_path(data_path) {
 
 Future<Status> LocalStore::open(const char* path, int flags, FileHandlePtr* fh) {
     auto data_path = std::format("{}/{}", _data_path, path);
-    int fd = ::open(data_path.c_str(), flags, 0666);
+    constexpr mode_t mode = 0666;
+    int fd = ::open(data_path.c_str(), flags, mode);
     PLOG_DEBUG(("desc", "open file")("path", data_path)("fd", fd));
     if (fd < 0) {
         return make_ready_future(Status(errno, "failed to open file"));
@@ -53,6 +54,7 @@ Future<Status> LocalStore::open(const char* path, int flags, FileHandlePtr* fh) 
 }
 
 Future<Status> LocalStore::append(FileHandlePtr fh, uint64_t offset, IOBuf buf) {
+    std::ignore = offset;
     int fd = fh->as<LocalFileHandle>()->handle();
 
     auto buf_size = buf.size();
@@ -94,7 +96,8 @@ Future<Status> LocalStore::read(FileHandlePtr fh, uint64_t offset, uint64_t size
 
 Future<Status> LocalStore::seal(FileHandlePtr fh) {
     int fd = fh->as<LocalFileHandle>()->handle();
-    int r = ::fchmod(fd, 0444);
+    constexpr mode_t mode = 0444;
+    int r = ::fchmod(fd, mode);
     if (r < 0) {
         return make_ready_future(Status(errno, "failed to fchmod"));
     }
@@ -132,7 +135,8 @@ Future<Status> LocalStore::set_attr(FileHandlePtr fh, const char* key, const cha
 
 Future<Status> LocalStore::get_attr(FileHandlePtr fh, const char* key, std::string* value) {
     int fd = fh->as<LocalFileHandle>()->handle();
-    char buf[1024];
+    constexpr size_t buf_size = 1024;
+    char buf[buf_size];
     int r = fgetxattr(fd, key, buf, sizeof(buf));
     if (r < 0) {
         return make_ready_future(Status(errno, "failed to fgetxattr"));
@@ -143,14 +147,16 @@ Future<Status> LocalStore::get_attr(FileHandlePtr fh, const char* key, std::stri
 
 Future<Status> LocalStore::list_attrs(FileHandlePtr fh, std::map<std::string, std::string>* attrs) {
     int fd = fh->as<LocalFileHandle>()->handle();
-    char buf[1024];
+    constexpr size_t buf_size = 1024;
+    char buf[buf_size];
     int r = flistxattr(fd, buf, sizeof(buf));
     if (r < 0) {
         return make_ready_future(Status(errno, "failed to flistxattr"));
     }
 
     for (int i = 0; i < r; i++) {
-        char key[1024];
+        constexpr size_t key_size = 1024;
+        char key[key_size];
         int n = fgetxattr(fd, buf + i, key, sizeof(key));
         if (n < 0) {
             return make_ready_future(Status(errno, "failed to fgetxattr"));
@@ -173,7 +179,7 @@ void LocalStore::for_each(std::function<void(const char* path)> cb) {
         return;
     }
 
-    struct dirent* entry;
+    struct dirent* entry = nullptr;
     while ((entry = readdir(dir)) != nullptr) {
         if (entry->d_type == DT_REG) {
             try {

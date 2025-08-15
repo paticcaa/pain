@@ -3,7 +3,7 @@
 #include <bthread/bthread.h>
 #include <bthread/condition_variable.h>
 #include <bthread/mutex.h>
-#include <stdlib.h>
+#include <cstdlib>
 
 #include <exception>
 #include <memory>
@@ -28,14 +28,14 @@ class Future<void>;
 template <typename T>
 struct FutureState {
     enum class State {
-        Future,
-        Result,
-        Exception,
+        kFuture,
+        kResult,
+        kException,
     };
 
-    union any {
-        any() {}
-        ~any() {}
+    union Any {
+        Any() {}
+        ~Any() {}
         T value;
         std::exception_ptr ex;
     } u;
@@ -43,12 +43,12 @@ struct FutureState {
     ~FutureState() {
         std::lock_guard guard(_mutex);
         switch (state) {
-        case State::Future:
+        case State::kFuture:
             break;
-        case State::Result:
+        case State::kResult:
             u.value.~T();
             break;
-        case State::Exception:
+        case State::kException:
             u.ex.~exception_ptr();
             break;
         default:
@@ -58,31 +58,31 @@ struct FutureState {
 
     bool failed() const {
         std::lock_guard guard(_mutex);
-        return state == State::Exception;
+        return state == State::kException;
     }
 
     template <typename A>
     void set_value(A&& value) {
         std::lock_guard guard(_mutex);
-        BOOST_ASSERT(state == State::Future);
-        state = State::Result;
+        BOOST_ASSERT(state == State::kFuture);
+        state = State::kResult;
         new (&u.value) T(std::forward<A>(value));
         _cond.notify_one();
     }
 
     void set_exception(std::exception_ptr ex) {
         std::lock_guard guard(_mutex);
-        state = State::Exception;
+        state = State::kException;
         u.ex = std::move(ex);
         _cond.notify_one();
     }
 
     T get() {
         std::unique_lock guard(_mutex);
-        while (state == State::Future) {
+        while (state == State::kFuture) {
             _cond.wait(guard);
         }
-        if (state == State::Exception) {
+        if (state == State::kException) {
             std::rethrow_exception(u.ex);
         }
         return std::move(u.value);
@@ -90,38 +90,40 @@ struct FutureState {
 
     bool available() const {
         std::lock_guard guard(_mutex);
-        return state == State::Result || state == State::Exception;
+        return state == State::kResult || state == State::kException;
     }
 
-    State state = State::Future;
+    State state = State::kFuture;
     Promise<T>* promise = nullptr;
 
+private:
     mutable bthread::Mutex _mutex;
     mutable bthread::ConditionVariable _cond;
 };
 
 template <>
-struct FutureState<void> {
+class FutureState<void> {
+public:
     enum class State {
-        Future,
-        Result,
-        Exception,
+        kFuture,
+        kResult,
+        kException,
     };
 
-    union any {
-        any() {}
-        ~any() {}
+    union Any {
+        Any() {}
+        ~Any() {}
         std::exception_ptr ex;
     } u;
 
     ~FutureState() {
         std::lock_guard guard(_mutex);
         switch (state) {
-        case State::Future:
+        case State::kFuture:
             break;
-        case State::Result:
+        case State::kResult:
             break;
-        case State::Exception:
+        case State::kException:
             u.ex.~exception_ptr();
             break;
         default:
@@ -131,42 +133,42 @@ struct FutureState<void> {
 
     bool failed() const {
         std::lock_guard guard(_mutex);
-        return state == State::Exception;
+        return state == State::kException;
     }
 
     void set_value() {
         std::lock_guard guard(_mutex);
-        BOOST_ASSERT(state == State::Future);
-        state = State::Result;
+        BOOST_ASSERT(state == State::kFuture);
+        state = State::kResult;
         _cond.notify_one();
     }
 
     void set_exception(std::exception_ptr ex) {
         std::lock_guard guard(_mutex);
-        state = State::Exception;
+        state = State::kException;
         u.ex = std::move(ex);
         _cond.notify_one();
     }
 
     void get() {
         std::unique_lock guard(_mutex);
-        while (state == State::Future) {
+        while (state == State::kFuture) {
             _cond.wait(guard);
         }
-        if (state == State::Exception) {
+        if (state == State::kException) {
             std::rethrow_exception(u.ex);
         }
-        return;
     }
 
     bool available() const {
         std::lock_guard guard(_mutex);
-        return state == State::Result || state == State::Exception;
+        return state == State::kResult || state == State::kException;
     }
 
-    State state = State::Future;
+    State state = State::kFuture;
     Promise<void>* promise = nullptr;
 
+private:
     mutable bthread::Mutex _mutex;
     mutable bthread::ConditionVariable _cond;
 };
@@ -220,7 +222,7 @@ public:
     }
 
     void get() {
-        return _state->get();
+        _state->get();
     }
 
 private:

@@ -14,17 +14,20 @@
 #include "sad/common.h"
 #include "sad/macro.h"
 
-#define REGISTER_MANUSYA_CMD(cmd, ...) REGISTER(cmd, manusya_parser, DEFER(__VA_ARGS__))
+#define REGISTER_MANUSYA_CMD(cmd, ...) REGISTER(cmd, manusya_parser(), DEFER(__VA_ARGS__))
 
 namespace pain::sad {
 argparse::ArgumentParser& program();
 }
 namespace pain::sad::manusya {
-// NOLINTNEXTLINE(readability-identifier-naming)
-argparse::ArgumentParser manusya_parser("manusya", "1.0", argparse::default_arguments::none);
+argparse::ArgumentParser& manusya_parser() {
+    static argparse::ArgumentParser s_manusya_parser("manusya", "1.0", argparse::default_arguments::none);
+    return s_manusya_parser;
+}
 
-EXECUTE(program().add_subparser(manusya_parser));
-EXECUTE(manusya_parser.add_description("send cmd to manusya server")
+EXECUTE(program().add_subparser(manusya_parser()));
+EXECUTE(manusya_parser()
+            .add_description("send cmd to manusya server")
             .add_argument("--host")
             .default_value(std::string("127.0.0.1:8003")));
 
@@ -91,6 +94,7 @@ COMMAND(create_chunk) {
 REGISTER_MANUSYA_CMD(append_chunk, [](argparse::ArgumentParser& parser) {
     parser.add_description("append chunk");
     parser.add_argument("-c", "--chunk-id").required().help("chunk uuid, such as 123e4567-e89b-12d3-a456-426655440000");
+    // NOLINTNEXTLINE(modernize-use-nullptr)
     parser.add_argument("-o", "--offset").default_value(0UL).help("offset to append data").scan<'i', uint64_t>();
     parser.add_argument("-d", "--data").required().help("data to append");
 });
@@ -137,7 +141,7 @@ COMMAND(append_chunk) {
 REGISTER_MANUSYA_CMD(list_chunk, [](argparse::ArgumentParser& parser) {
     parser.add_description("list chunk");
     parser.add_argument("--start").default_value(std::string("00000000-0000-0000-0000-000000000000"));
-    parser.add_argument("--limit").default_value(10u).scan<'i', uint32_t>();
+    parser.add_argument("--limit").default_value(10U).scan<'i', uint32_t>();
 });
 COMMAND(list_chunk) {
     SPAN(span);
@@ -191,6 +195,7 @@ REGISTER_MANUSYA_CMD(read_chunk, [](argparse::ArgumentParser& parser) {
         .add_argument("-c", "--chunk-id")
         .required()
         .help("chunk uuid, such as 123e4567-e89b-12d3-a456-426655440000");
+    // NOLINTNEXTLINE(modernize-use-nullptr)
     parser.add_argument("--offset").default_value(0UL).help("offset to read data").scan<'i', uint64_t>();
     parser.add_argument("-l", "--length").default_value(1024U).help("length to read data").scan<'i', uint32_t>();
     parser.add_argument("-o", "--output").default_value(std::string("-"));

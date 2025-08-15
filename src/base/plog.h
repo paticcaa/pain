@@ -9,6 +9,7 @@
 #include "base/scope_exit.h"
 #include "base/tracer.h"
 
+// NOLINTBEGIN
 // __PLOG_PREPROCESS_PAIRS
 // __PLOG_PREPROCESS_PAIRS((a, 1)(b, 2)(c, 3)) -> ((a, 1))((b, 2))((c, 3))
 #define __PLOG_ADD_PAREN_1(x, y) ((x, y)) __PLOG_ADD_PAREN_2
@@ -69,6 +70,7 @@
 // snake style
 #define pfmt(seq) PFMT(seq)
 // clang-format on
+// NOLINTEND
 
 namespace pain {
 // log_level: trace, debug, info, warn, err, critical
@@ -77,15 +79,15 @@ using log_level = spdlog::level::level_enum; // NOLINT(readability-identifier-na
 struct LoggerOptions {
     std::string file_name;
     std::string name;
-    std::size_t file_size = 100 << 20;
+    std::size_t file_size = 100 << 20; // NOLINT(readability-magic-numbers)
     std::chrono::seconds flush_period{2};
     log_level level_log = log_level::warn;
 
     // maximum number of log files
-    size_t rotate = 10;
+    size_t rotate = 10; // NOLINT(readability-magic-numbers)
 
     // the size of thread queue
-    size_t queue_size = 32 << 10;
+    size_t queue_size = 32 << 10; // NOLINT(readability-magic-numbers)
 
     // number of log processing threads
     // the variable defaults to 1 to ensure chronological order

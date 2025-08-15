@@ -23,7 +23,7 @@ public:
     void join();
 
     void apply(const braft::Task& task);
-    void on_apply(braft::Iterator& iter);
+    void on_apply(braft::Iterator& iter) override;
 
     struct SnapshotArg {
         braft::SnapshotWriter* writer;
@@ -32,18 +32,18 @@ public:
 
     static void* save_snapshot(void* arg);
 
-    void on_snapshot_save(braft::SnapshotWriter* writer, braft::Closure* done);
+    void on_snapshot_save(braft::SnapshotWriter* writer, braft::Closure* done) override;
 
-    int on_snapshot_load(braft::SnapshotReader* reader);
+    int on_snapshot_load(braft::SnapshotReader* reader) override;
 
-    void on_leader_start(int64_t term);
-    void on_leader_stop(const butil::Status& status);
+    void on_leader_start(int64_t term) override;
+    void on_leader_stop(const butil::Status& status) override;
 
-    void on_shutdown();
-    void on_error(const ::braft::Error& e);
-    void on_configuration_committed(const ::braft::Configuration& conf);
-    void on_stop_following(const ::braft::LeaderChangeContext& ctx);
-    void on_start_following(const ::braft::LeaderChangeContext& ctx);
+    void on_shutdown() override;
+    void on_error(const ::braft::Error& e) override;
+    void on_configuration_committed(const ::braft::Configuration& conf) override;
+    void on_stop_following(const ::braft::LeaderChangeContext& ctx) override;
+    void on_start_following(const ::braft::LeaderChangeContext& ctx) override;
 
     ContainerPtr container() {
         return _container;

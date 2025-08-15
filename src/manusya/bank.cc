@@ -6,8 +6,8 @@ DEFINE_string(manusya_store, "memory://", "The path to store the data of manusya
 namespace pain::manusya {
 
 Bank& Bank::instance() {
-    static Bank bank(Store::create(FLAGS_manusya_store.c_str()));
-    return bank;
+    static Bank s_bank(Store::create(FLAGS_manusya_store.c_str()));
+    return s_bank;
 }
 
 Status Bank::load() {

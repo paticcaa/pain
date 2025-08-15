@@ -1,5 +1,6 @@
 #pragma once
 
+// NOLINTBEGIN
 #define TOKENPASTE(x, y) x##y
 #define TOKENPASTE2(x, y) TOKENPASTE(x, y)
 
@@ -51,3 +52,5 @@
 #define SPAN_MACRO_CHOOSER(...) GET_3TH_ARG(__VA_ARGS__, SPAN_2_ARGS, SPAN_1_ARGS, )
 
 #define SPAN(...) SPAN_MACRO_CHOOSER(__VA_ARGS__)(__VA_ARGS__)
+
+// NOLINTEND

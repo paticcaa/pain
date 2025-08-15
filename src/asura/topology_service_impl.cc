@@ -7,24 +7,23 @@
 
 namespace pain::asura {
 
-static const std::string_view kAsuraPool = "asura_pool";
-static const std::string_view kAsuraDeva = "asura_deva";
-static const std::string_view kAsuraManusya = "asura_manusya";
+static const std::string_view ASURA_POOL = "asura_pool";
+static const std::string_view ASURA_DEVA = "asura_deva";
+static const std::string_view ASURA_MANUSYA = "asura_manusya";
 
 void TopologyServiceImpl::CreatePool(::google::protobuf::RpcController* controller,
-                                     const pain::proto::asura::CreatePoolRequest* request,
-                                     pain::proto::asura::CreatePoolResponse* response,
-                                     ::google::protobuf::Closure* done) {
+                                     [[maybe_unused]] const pain::proto::asura::CreatePoolRequest* request,
+                                     [[maybe_unused]] pain::proto::asura::CreatePoolResponse* response,
+                                     ::google::protobuf::Closure* done) { // NOLINT(readability-non-const-parameter)
     ASURA_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
     pain::proto::asura::Pool pool;
-    if (_store->hexists(kAsuraPool, request->pool_name())) {
+    if (_store->hexists(ASURA_POOL, request->pool_name())) {
         cntl->SetFailed(EEXIST, "pool %s already exists", request->pool_name().c_str());
         return;
     }
 
-    static thread_local UUIDv4::UUIDGenerator<std::mt19937_64> uuid_gen;
-    auto uuid = UUID(uuid_gen.getUUID());
+    auto uuid = UUID::generate();
     pool.set_name(request->pool_name());
     pool.mutable_uuid()->set_high(uuid.high());
     pool.mutable_uuid()->set_low(uuid.low());
@@ -33,12 +32,12 @@ void TopologyServiceImpl::CreatePool(::google::protobuf::RpcController* controll
 }
 
 void TopologyServiceImpl::ListPool(::google::protobuf::RpcController* controller,
-                                   const pain::proto::asura::ListPoolRequest* request,
-                                   pain::proto::asura::ListPoolResponse* response,
-                                   ::google::protobuf::Closure* done) {
+                                   [[maybe_unused]] const pain::proto::asura::ListPoolRequest* request,
+                                   [[maybe_unused]] pain::proto::asura::ListPoolResponse* response,
+                                   ::google::protobuf::Closure* done) { // NOLINT(readability-non-const-parameter)
     ASURA_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
-    auto it = _store->hgetall(kAsuraPool);
+    auto it = _store->hgetall(ASURA_POOL);
     while (it->valid()) {
         auto pool = response->add_pools();
         auto value = it->value();
@@ -48,9 +47,9 @@ void TopologyServiceImpl::ListPool(::google::protobuf::RpcController* controller
 }
 
 void TopologyServiceImpl::RegisterDeva(::google::protobuf::RpcController* controller,
-                                       const pain::proto::asura::RegisterDevaRequest* request,
-                                       pain::proto::asura::RegisterDevaResponse* response,
-                                       ::google::protobuf::Closure* done) {
+                                       [[maybe_unused]] const pain::proto::asura::RegisterDevaRequest* request,
+                                       [[maybe_unused]] pain::proto::asura::RegisterDevaResponse* response,
+                                       ::google::protobuf::Closure* done) { // NOLINT(readability-non-const-parameter)
     ASURA_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
 
@@ -61,14 +60,14 @@ void TopologyServiceImpl::RegisterDeva(::google::protobuf::RpcController* contro
         result->set_code(0);
         result->set_message("ok");
 
-        if (_store->hexists(kAsuraDeva, uuid.str())) {
+        if (_store->hexists(ASURA_DEVA, uuid.str())) {
             result->set_code(EEXIST);
             result->set_message(
                 fmt::format("{} existed. ip:{}, port:{}", uuid.str(), deva_server.ip(), deva_server.port()));
             continue;
         }
 
-        auto status = _store->hset(kAsuraDeva, uuid.str(), deva_server.SerializeAsString());
+        auto status = _store->hset(ASURA_DEVA, uuid.str(), deva_server.SerializeAsString());
         if (!status.ok()) {
             result->set_code(status.error_code());
             result->set_message(status.error_cstr());
@@ -76,10 +75,11 @@ void TopologyServiceImpl::RegisterDeva(::google::protobuf::RpcController* contro
     }
 }
 
-void TopologyServiceImpl::RegisterManusya(::google::protobuf::RpcController* controller,
-                                          const pain::proto::asura::RegisterManusyaRequest* request,
-                                          pain::proto::asura::RegisterManusyaResponse* response,
-                                          ::google::protobuf::Closure* done) {
+void TopologyServiceImpl::RegisterManusya(
+    ::google::protobuf::RpcController* controller,
+    [[maybe_unused]] const pain::proto::asura::RegisterManusyaRequest* request,
+    [[maybe_unused]] pain::proto::asura::RegisterManusyaResponse* response,
+    ::google::protobuf::Closure* done) { // NOLINT(readability-non-const-parameter)
     ASURA_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
     for (const auto& manusya_server : request->manusya_servers()) {
@@ -89,14 +89,14 @@ void TopologyServiceImpl::RegisterManusya(::google::protobuf::RpcController* con
         result->set_code(0);
         result->set_message("ok");
 
-        if (!_store->hexists(kAsuraManusya, uuid.str())) {
+        if (!_store->hexists(ASURA_MANUSYA, uuid.str())) {
             result->set_code(EEXIST);
             result->set_message(
                 fmt::format("{} existed. ip:{}, port:{}", uuid.str(), manusya_server.ip(), manusya_server.port()));
             continue;
         }
 
-        auto status = _store->hset(kAsuraManusya, uuid.str(), manusya_server.SerializeAsString());
+        auto status = _store->hset(ASURA_MANUSYA, uuid.str(), manusya_server.SerializeAsString());
         if (!status.ok()) {
             result->set_code(status.error_code());
             result->set_message(status.error_cstr());
@@ -105,12 +105,12 @@ void TopologyServiceImpl::RegisterManusya(::google::protobuf::RpcController* con
 }
 
 void TopologyServiceImpl::ListDeva(::google::protobuf::RpcController* controller,
-                                   const pain::proto::asura::ListDevaRequest* request,
-                                   pain::proto::asura::ListDevaResponse* response,
-                                   ::google::protobuf::Closure* done) {
+                                   [[maybe_unused]] const pain::proto::asura::ListDevaRequest* request,
+                                   [[maybe_unused]] pain::proto::asura::ListDevaResponse* response,
+                                   ::google::protobuf::Closure* done) { // NOLINT(readability-non-const-parameter)
     ASURA_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
-    auto it = _store->hgetall(kAsuraDeva);
+    auto it = _store->hgetall(ASURA_DEVA);
     while (it->valid()) {
         auto deva = response->add_deva_servers();
         auto value = it->value();
@@ -120,12 +120,12 @@ void TopologyServiceImpl::ListDeva(::google::protobuf::RpcController* controller
 }
 
 void TopologyServiceImpl::ListManusya(::google::protobuf::RpcController* controller,
-                                      const pain::proto::asura::ListManusyaRequest* request,
-                                      pain::proto::asura::ListManusyaResponse* response,
-                                      ::google::protobuf::Closure* done) {
+                                      [[maybe_unused]] const pain::proto::asura::ListManusyaRequest* request,
+                                      [[maybe_unused]] pain::proto::asura::ListManusyaResponse* response,
+                                      ::google::protobuf::Closure* done) { // NOLINT(readability-non-const-parameter)
     ASURA_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
-    auto it = _store->hgetall(kAsuraManusya);
+    auto it = _store->hgetall(ASURA_MANUSYA);
     while (it->valid()) {
         auto manusya = response->add_manusya_servers();
         auto value = it->value();

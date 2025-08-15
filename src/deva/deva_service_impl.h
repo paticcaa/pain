@@ -13,7 +13,7 @@ namespace pain::deva {
 class DevaServiceImpl : public pain::proto::deva::DevaService {
 public:
     DevaServiceImpl();
-    virtual ~DevaServiceImpl() override {}
+    ~DevaServiceImpl() override = default;
     DEVA_SERVICE_METHOD(OpenFile);
     DEVA_SERVICE_METHOD(CloseFile);
     DEVA_SERVICE_METHOD(RemoveFile);

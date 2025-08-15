@@ -9,7 +9,7 @@ class MemFileHandle : public FileHandle {
 public:
     MemFileHandle(const char* path, StorePtr store) : FileHandle(store), _path(path){};
 
-    virtual ~MemFileHandle() = default;
+    ~MemFileHandle() override = default;
 
     const std::string& handle() {
         return _path;

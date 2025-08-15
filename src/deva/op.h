@@ -25,10 +25,10 @@ struct OpMeta {
     OpType type;
     uint64_t timestamp;
     uint32_t size;
-    char reserved[40];
+    char reserved[40]; // NOLINT(readability-magic-numbers)
 };
 
-static_assert(sizeof(OpMeta) == 64, "OpMeta size must be 64byte");
+static_assert(sizeof(OpMeta) == 64, "OpMeta size must be 64byte"); // NOLINT(readability-magic-numbers)
 
 class Op;
 using OpPtr = boost::intrusive_ptr<Op>;

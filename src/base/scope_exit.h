@@ -5,13 +5,13 @@ namespace pain {
 
 template <typename F>
 struct ScopeExit {
-    F _func;
-    bool _run;
-    explicit ScopeExit(F f) noexcept : _func(std::move(f)), _run(true) {}
-    ScopeExit(ScopeExit&& rhs) noexcept : _func((rhs._run = false, std::move(rhs._func))), _run(true) {}
+    F func;
+    bool run;
+    explicit ScopeExit(F f) noexcept : func(std::move(f)), run(true) {}
+    ScopeExit(ScopeExit&& rhs) noexcept : func((rhs.run = false, std::move(rhs.func))), run(true) {}
     ~ScopeExit() noexcept {
-        if (_run) {
-            _func();
+        if (run) {
+            func();
         }
     }
 
@@ -19,7 +19,7 @@ struct ScopeExit {
     ScopeExit(ScopeExit const&) = delete;
     ScopeExit& operator=(ScopeExit const&) = delete;
     void release() noexcept {
-        _run = false;
+        run = false;
     }
 };
 

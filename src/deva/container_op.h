@@ -13,7 +13,7 @@ class OpClosure : public braft::Closure {
 public:
     OpClosure(OpPtr op) : _op(op) {}
 
-    void Run() {
+    void Run() override {
         std::unique_ptr<OpClosure> guard(this);
         if (status().ok()) {
             _op->on_apply(_index);

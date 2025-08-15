@@ -12,7 +12,7 @@ namespace pain::manusya {
 class ManusyaServiceImpl : public pain::proto::manusya::ManusyaService {
 public:
     ManusyaServiceImpl();
-    virtual ~ManusyaServiceImpl() {}
+    ~ManusyaServiceImpl() override = default;
     MANUSYA_SERVICE_METHOD(CreateChunk);
     MANUSYA_SERVICE_METHOD(AppendChunk);
     MANUSYA_SERVICE_METHOD(ListChunk);

@@ -10,7 +10,7 @@ using RocksdbStorePtr = boost::intrusive_ptr<RocksdbStore>;
 class RocksdbStore : public Store {
 public:
     RocksdbStore();
-    ~RocksdbStore();
+    ~RocksdbStore() override;
 
     static Status open(const char* data_path, RocksdbStorePtr* store);
     Status close();

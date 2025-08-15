@@ -6,10 +6,8 @@
 
 #include <boost/stacktrace.hpp>
 
-namespace pain {
+namespace pain::rusty {
 
-// rusty style Result
-namespace rust {
 template <typename T, typename E>
 class [[nodiscard]] Result {
 public:
@@ -29,95 +27,86 @@ public:
     constexpr T& value() & noexcept {
         if (is_ok()) {
             return std::get<Ok>(_value).value;
-        } else {
-            std::cerr << "value error" << std::endl;
-            std::cerr << "Backtrace: " << std::endl;
-            std::cerr << boost::stacktrace::stacktrace() << std::endl;
-            abort();
         }
+        std::cerr << "value error" << std::endl;
+        std::cerr << "Backtrace: " << std::endl;
+        std::cerr << boost::stacktrace::stacktrace() << std::endl;
+        abort();
     }
 
     constexpr const T& value() const& noexcept {
         if (is_ok()) {
             return std::get<Ok>(_value).value;
-        } else {
-            std::cerr << "value error" << std::endl;
-            std::cerr << "Backtrace: " << std::endl;
-            std::cerr << boost::stacktrace::stacktrace() << std::endl;
-            abort();
         }
+        std::cerr << "value error" << std::endl;
+        std::cerr << "Backtrace: " << std::endl;
+        std::cerr << boost::stacktrace::stacktrace() << std::endl;
+        abort();
     }
 
     template <typename U>
     constexpr T value_or(U&& v) & noexcept {
         if (is_ok()) {
             return std::get<Ok>(_value).value;
-        } else {
-            return std::forward<U>(v);
         }
+        return std::forward<U>(v);
     }
 
     constexpr E& err() & noexcept {
         if (!is_ok()) {
             return std::get<Err>(_value).value;
-        } else {
-            std::cerr << "err error" << std::endl;
-            std::cerr << "Backtrace: " << std::endl;
-            std::cerr << boost::stacktrace::stacktrace() << std::endl;
-            abort();
         }
+        std::cerr << "err error" << std::endl;
+        std::cerr << "Backtrace: " << std::endl;
+        std::cerr << boost::stacktrace::stacktrace() << std::endl;
+        abort();
     }
 
     constexpr const E& err() const& noexcept {
         if (!is_ok()) {
             return std::get<Err>(_value).value;
-        } else {
-            std::cerr << "err error" << std::endl;
-            std::cerr << "Backtrace: " << std::endl;
-            std::cerr << boost::stacktrace::stacktrace() << std::endl;
-            abort();
         }
+        std::cerr << "err error" << std::endl;
+        std::cerr << "Backtrace: " << std::endl;
+        std::cerr << boost::stacktrace::stacktrace() << std::endl;
+        abort();
     }
 
     constexpr T unwrap() && noexcept {
         if (is_ok()) {
             return std::get<Ok>(std::move(_value)).value;
-        } else {
-            std::cerr << "unwrap error" << std::endl;
-            std::cerr << "Backtrace: " << std::endl;
-            std::cerr << boost::stacktrace::stacktrace() << std::endl;
-            abort();
         }
+        std::cerr << "unwrap error" << std::endl;
+        std::cerr << "Backtrace: " << std::endl;
+        std::cerr << boost::stacktrace::stacktrace() << std::endl;
+        abort();
     }
 
     constexpr T unwrap_or(T v) && noexcept {
         if (is_ok()) {
             return std::get<Ok>(std::move(_value)).value;
-        } else {
-            return v;
         }
+        return v;
     }
 
     constexpr T expect(const char* msg) && noexcept {
         if (is_ok()) {
             return std::get<Ok>(std::move(_value)).value;
-        } else {
-            std::cerr << msg << std::endl;
-            std::cerr << "Backtrace: " << std::endl;
-            std::cerr << boost::stacktrace::stacktrace() << std::endl;
-            abort();
         }
+        std::cerr << msg << std::endl;
+        std::cerr << "Backtrace: " << std::endl;
+        std::cerr << boost::stacktrace::stacktrace() << std::endl;
+        abort();
     }
 
     constexpr E unwrap_err() && noexcept {
         if (!is_ok()) {
             return std::get<Err>(std::move(_value)).value;
-        } else {
-            std::cerr << "err error" << std::endl;
-            std::cerr << "Backtrace: " << std::endl;
-            std::cerr << boost::stacktrace::stacktrace() << std::endl;
-            abort();
         }
+        std::cerr << "err error" << std::endl;
+        std::cerr << "Backtrace: " << std::endl;
+        std::cerr << boost::stacktrace::stacktrace() << std::endl;
+        abort();
     }
 
     template <typename U, typename F>
@@ -125,9 +114,8 @@ public:
         if (is_ok()) {
             return Result<U, E>(
                 typename Result<U, E>::Ok(std::invoke(std::forward<F>(f), std::get<Ok>(std::move(_value)).value)));
-        } else {
-            return Result<U, E>(typename Result<U, E>::Err(std::get<Err>(std::move(_value)).value));
         }
+        return Result<U, E>(typename Result<U, E>::Err(std::get<Err>(std::move(_value)).value));
     }
 
     template <typename U, typename F>
@@ -135,9 +123,8 @@ public:
         if (is_ok()) {
             return Result<U, E>(
                 typename Result<U, E>::Ok(std::invoke(std::forward<F>(f), std::get<Ok>(std::move(_value)).value)));
-        } else {
-            return Result<U, E>(typename Result<U, E>::Ok(std::forward<U>(u)));
         }
+        return Result<U, E>(typename Result<U, E>::Ok(std::forward<U>(u)));
     }
 
     constexpr bool is_ok() const {
@@ -152,18 +139,18 @@ private:
 };
 
 template <typename T, typename E>
-constexpr Result<T, E> Ok(T v) {
+constexpr Result<T, E> Ok(T v) { // NOLINT(readability-identifier-naming)
     return Result<T, E>(typename Result<T, E>::Ok{std::move(v)});
 }
 
 template <typename T, typename E>
-constexpr Result<T, E> Err(E e) {
+constexpr Result<T, E> Err(E e) { // NOLINT(readability-identifier-naming)
     return Result<T, E>(typename Result<T, E>::Err{std::move(e)});
 }
-} // namespace rust
-} // namespace pain
+} // namespace pain::rusty
 
 namespace pain {
+// NOLINTBEGIN
 template <typename T, typename E>
     requires(!std::is_same_v<T, E>)
 class [[nodiscard]] Result {
@@ -177,113 +164,103 @@ public:
     constexpr T& value() & noexcept {
         if (is_ok()) {
             return std::get<T>(_value);
-        } else {
-            std::cerr << "value error" << std::endl;
-            std::cerr << "Backtrace: " << std::endl;
-            std::cerr << boost::stacktrace::stacktrace() << std::endl;
-            abort();
         }
+
+        std::cerr << "value error" << std::endl;
+        std::cerr << "Backtrace: " << std::endl;
+        std::cerr << boost::stacktrace::stacktrace() << std::endl;
+        abort();
     }
 
     constexpr const T& value() const& noexcept {
         if (is_ok()) {
             return std::get<T>(_value);
-        } else {
-            std::cerr << "value error" << std::endl;
-            std::cerr << "Backtrace: " << std::endl;
-            std::cerr << boost::stacktrace::stacktrace() << std::endl;
-            abort();
         }
+        std::cerr << "value error" << std::endl;
+        std::cerr << "Backtrace: " << std::endl;
+        std::cerr << boost::stacktrace::stacktrace() << std::endl;
+        abort();
     }
 
     template <typename U>
     constexpr T value_or(U&& v) & noexcept {
         if (is_ok()) {
             return std::get<T>(_value);
-        } else {
-            return std::forward<U>(v);
         }
+        return std::forward<U>(v);
     }
 
     constexpr E& err() & noexcept {
         if (!is_ok()) {
             return std::get<E>(_value);
-        } else {
-            std::cerr << "err error" << std::endl;
-            std::cerr << "Backtrace: " << std::endl;
-            std::cerr << boost::stacktrace::stacktrace() << std::endl;
-            abort();
         }
+        std::cerr << "err error" << std::endl;
+        std::cerr << "Backtrace: " << std::endl;
+        std::cerr << boost::stacktrace::stacktrace() << std::endl;
+        abort();
     }
 
     constexpr const E& err() const& noexcept {
         if (!is_ok()) {
             return std::get<E>(_value);
-        } else {
-            std::cerr << "err error" << std::endl;
-            std::cerr << "Backtrace: " << std::endl;
-            std::cerr << boost::stacktrace::stacktrace() << std::endl;
-            abort();
         }
+        std::cerr << "err error" << std::endl;
+        std::cerr << "Backtrace: " << std::endl;
+        std::cerr << boost::stacktrace::stacktrace() << std::endl;
+        abort();
     }
 
     constexpr T unwrap() && noexcept {
         if (is_ok()) {
             return std::get<T>(std::move(_value));
-        } else {
-            std::cerr << "unwrap error" << std::endl;
-            std::cerr << "Backtrace: " << std::endl;
-            std::cerr << boost::stacktrace::stacktrace() << std::endl;
-            abort();
         }
+        std::cerr << "unwrap error" << std::endl;
+        std::cerr << "Backtrace: " << std::endl;
+        std::cerr << boost::stacktrace::stacktrace() << std::endl;
+        abort();
     }
 
     constexpr T unwrap_or(T v) && noexcept {
         if (is_ok()) {
             return std::get<T>(std::move(_value));
-        } else {
-            return v;
         }
+        return v;
     }
 
     constexpr T expect(const char* msg) && noexcept {
         if (is_ok()) {
             return std::get<T>(std::move(_value));
-        } else {
-            std::cerr << msg << std::endl;
-            std::cerr << "Backtrace: " << std::endl;
-            std::cerr << boost::stacktrace::stacktrace() << std::endl;
-            abort();
         }
+        std::cerr << msg << std::endl;
+        std::cerr << "Backtrace: " << std::endl;
+        std::cerr << boost::stacktrace::stacktrace() << std::endl;
+        abort();
     }
 
     constexpr E unwrap_err() && noexcept {
         if (!is_ok()) {
             return std::get<E>(std::move(_value));
-        } else {
-            std::cerr << "err error" << std::endl;
-            std::cerr << "Backtrace: " << std::endl;
-            std::cerr << boost::stacktrace::stacktrace() << std::endl;
-            abort();
         }
+        std::cerr << "err error" << std::endl;
+        std::cerr << "Backtrace: " << std::endl;
+        std::cerr << boost::stacktrace::stacktrace() << std::endl;
+        abort();
     }
 
     template <typename U, typename F>
     constexpr Result<U, E> map(F&& f) && {
         if (is_ok()) {
             return Result<U, E>(std::invoke(std::forward<F>(f), std::get<T>(std::move(_value))));
-        } else {
-            return Result<U, E>(std::get<E>(std::move(_value)));
         }
+        return Result<U, E>(std::get<E>(std::move(_value)));
     }
 
     template <typename U, typename F>
     constexpr Result<U, E> map_or(U&& u, F&& f) && {
         if (is_ok()) {
             return Result<U, E>(std::invoke(std::forward<F>(f), std::get<T>(std::move(_value))));
-        } else {
-            return Result<U, E>(std::forward<U>(u));
         }
+        return Result<U, E>(std::forward<U>(u));
     }
 
     constexpr bool is_ok() const {

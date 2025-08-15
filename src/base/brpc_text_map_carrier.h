@@ -9,7 +9,7 @@ class BrpcTextMapCarrier : public opentelemetry::context::propagation::TextMapCa
 public:
     BrpcTextMapCarrier(brpc::Controller* cntl) : _cntl(cntl) {}
     BrpcTextMapCarrier() = default;
-    virtual std::string_view Get(std::string_view key) const noexcept override {
+    std::string_view Get(std::string_view key) const noexcept override {
         auto protocol = _cntl->request_protocol();
         if (protocol == brpc::PROTOCOL_HTTP || protocol == brpc::PROTOCOL_H2) {
             auto& headers = _cntl->http_request();
@@ -19,18 +19,18 @@ public:
                 return *value;
             }
             return "";
-        } else {
-            auto user_fields = _cntl->request_user_fields();
-            auto value = user_fields->seek(std::string(key));
-            if (value != nullptr) {
-                return *value;
-            }
+        }
+
+        auto user_fields = _cntl->request_user_fields();
+        auto value = user_fields->seek(std::string(key));
+        if (value != nullptr) {
+            return *value;
         }
 
         return "";
     }
 
-    virtual void Set(std::string_view key, std::string_view value) noexcept override {
+    void Set(std::string_view key, std::string_view value) noexcept override {
         auto protocol = _cntl->request_protocol();
         if (protocol == brpc::PROTOCOL_HTTP || protocol == brpc::PROTOCOL_H2) {
             auto& headers = _cntl->http_request();
@@ -40,6 +40,7 @@ public:
         }
     }
 
+private:
     brpc::Controller* _cntl;
 };
 } // namespace pain

@@ -3,8 +3,8 @@
 namespace pain::deva {
 
 Namespace& Namespace::instance() {
-    static Namespace ns;
-    return ns;
+    static Namespace s_namespace;
+    return s_namespace;
 }
 
 Namespace::Namespace() {
@@ -23,7 +23,7 @@ Status Namespace::create(const UUID& parent, const std::string& name, FileType t
         return Status(ENOENT, "No such file or directory");
     }
     _entries[parent].push_back({inode, name, type});
-    if (type == FileType::DIRECTORY) {
+    if (type == FileType::kDirectory) {
         _entries[inode] = {};
     }
     return Status::OK();
@@ -82,7 +82,7 @@ Status Namespace::lookup(const char* path, UUID* inode, FileType* file_type) con
 
     std::unique_lock guard(_mutex);
     UUID parent = _root;
-    *file_type = FileType::DIRECTORY;
+    *file_type = FileType::kDirectory;
     for (const auto& component : components) {
         auto it = _entries.find(parent);
         if (it == _entries.end()) {
@@ -97,7 +97,7 @@ Status Namespace::lookup(const char* path, UUID* inode, FileType* file_type) con
             return Status(ENOENT, "No such file or directory");
         }
 
-        if (entry->type == FileType::FILE && &component != &components.back()) {
+        if (entry->type == FileType::kFile && &component != &components.back()) {
             return Status(ENOENT, "Not a directory");
         }
         parent = entry->inode;

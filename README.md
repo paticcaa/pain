@@ -55,6 +55,9 @@ sudo apt install -y autoconf automake libtool pkg-config
 
 # format your project and it's useful before pulling a request
 ./z.py format # or ./z.py f
+
+# lint
+./z.py lint # or ./z.py l
 ```
 
 Using `./z.py -h` for more information.

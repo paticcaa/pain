@@ -3,13 +3,14 @@
 #include <opentelemetry/context/runtime_context.h>
 
 #include "base/bthread_local.h"
+// NOLINTBEGIN
 
 // this file style abide by the opentelemetry style guide
 namespace pain {
 class BthreadLocalContextStorage : public opentelemetry::context::RuntimeContextStorage {
 public:
     BthreadLocalContextStorage() noexcept;
-    ~BthreadLocalContextStorage() noexcept;
+    ~BthreadLocalContextStorage() noexcept override;
 
     // Return the current context.
     opentelemetry::context::Context GetCurrent() noexcept override;
@@ -59,3 +60,4 @@ private:
 };
 
 } // namespace pain
+// NOLINTEND

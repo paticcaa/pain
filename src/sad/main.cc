@@ -29,10 +29,10 @@ int main(int argc, char* argv[]) {
         .level_log = spdlog::level::from_str(pain::sad::program().get<std::string>("--log-level")),
         .async_threads = 1,
     };
-    static auto flush_log = pain::make_logger(logger_options);
+    static auto s_flush_log = pain::make_logger(logger_options);
 
-    static pain::SpdlogSink spdlog_sink;
-    logging::SetLogSink(&spdlog_sink);
+    static pain::SpdlogSink s_spdlog_sink;
+    logging::SetLogSink(&s_spdlog_sink);
     PLOG_WARN(("desc", "sad start"));
     pain::init_tracer("sad");
     auto cleanup_tracer = pain::make_scope_exit([] {

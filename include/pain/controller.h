@@ -9,7 +9,7 @@ class ControllerImpl;
 class Controller : public google::protobuf::RpcController {
 public:
     Controller();
-    virtual ~Controller();
+    ~Controller() override;
     void Reset() override;
     bool Failed() const override;
     std::string ErrorText() const override;

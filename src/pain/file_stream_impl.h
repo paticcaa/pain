@@ -15,6 +15,7 @@ namespace pain {
 
 class Controller;
 
+// NOLINTNEXTLINE(cppcoreguidelines-virtual-class-destructor)
 class FileStreamImpl : public pain::proto::FileService {
 public:
     FILE_STREAM_METHOD(Open);
@@ -24,7 +25,7 @@ public:
     FILE_STREAM_METHOD(Close);
 
 private:
-    ~FileStreamImpl() = default;
+    ~FileStreamImpl() override = default;
     UUID _uuid;
     std::list<Chunk> _chunks;
     friend class FileStream;

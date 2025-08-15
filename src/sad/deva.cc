@@ -14,30 +14,36 @@
 #include "sad/common.h"
 #include "sad/macro.h"
 
-#define REGISTER_DEVA_CMD(cmd, callback) REGISTER(cmd, deva_parser, callback)
+#define REGISTER_DEVA_CMD(cmd, ...) REGISTER(cmd, deva_parser(), DEFER(__VA_ARGS__))
 
 namespace pain::sad {
 argparse::ArgumentParser& program();
 }
 namespace pain::sad::deva {
-argparse::ArgumentParser deva_parser("deva", "1.0", argparse::default_arguments::none);
+// NOLINTNEXTLINE
+argparse::ArgumentParser& deva_parser() {
+    static argparse::ArgumentParser s_deva_parser("deva", "1.0", argparse::default_arguments::none);
+    return s_deva_parser;
+}
 
-EXECUTE(program().add_subparser(deva_parser));
-EXECUTE(deva_parser.add_description("send cmd to deva server")
+EXECUTE(program().add_subparser(deva_parser()));
+EXECUTE(deva_parser()
+            .add_description("send cmd to deva server")
             .add_argument("--host")
             .default_value(std::string("127.0.0.1:8001")));
 
+// NOLINTNEXTLINE
 static std::map<std::string, std::function<Status(argparse::ArgumentParser&)>> subcommands = {};
 
 void add(const std::string& name, std::function<Status(argparse::ArgumentParser& parser)> func) {
-    std::string name_;
+    std::string normalized_name;
     for (auto c : name) {
         if (c == '_') {
             c = '-';
         }
-        name_ += c;
+        normalized_name += c;
     }
-    subcommands[name_] = func;
+    subcommands[normalized_name] = func;
 }
 
 Status execute(argparse::ArgumentParser& parser) {
@@ -62,8 +68,8 @@ COMMAND(open) {
     auto create = args.get<bool>("--create");
     brpc::Channel channel;
     brpc::ChannelOptions options;
-    options.connect_timeout_ms = 2000;
-    options.timeout_ms = 10000;
+    options.connect_timeout_ms = 2000; // NOLINT(readability-magic-numbers)
+    options.timeout_ms = 10000;        // NOLINT(readability-magic-numbers)
     options.max_retry = 0;
     if (channel.Init(host.c_str(), &options) != 0) {
         return Status(EAGAIN, "Fail to initialize channel");

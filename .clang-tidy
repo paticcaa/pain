@@ -28,7 +28,7 @@ Checks:
   - 'readability-misleading-indentation'
   - 'readability-misplaced-array-index'
   #- 'readability-named-parameter'
-  - 'readability-non-const-parameter'
+  #- 'readability-non-const-parameter'
   - 'readability-operators-representation'
   #- 'readability-qualified-auto'
   #- 'readability-redundant-access-specifiers'
@@ -62,7 +62,7 @@ Checks:
   #- 'modernize-make-shared'
   - 'modernize-make-unique'
   #- 'modernize-min-max-use-initializer-list'
-  - 'modernize-pass-by-value'
+  #- 'modernize-pass-by-value'
   #- 'modernize-raw-string-literal'
   #- 'modernize-redundant-void-arg'
   #- 'modernize-replace-auto-ptr'
@@ -156,6 +156,8 @@ CheckOptions:
   - key: readability-identifier-naming.MemberCase
     value: lower_case
   - key: readability-identifier-naming.PrivateMemberPrefix
+    value: '_'
+  - key: readability-identifier-naming.ProtectedMemberPrefix
     value: '_'
   - key: readability-identifier-naming.ConstantMemberCase
     value: lower_case

@@ -16,20 +16,20 @@ TEST(Namespace, create) {
     UUID d = UUID::from_str_or_die("00000000-0000-0000-0000-000000000004");
     UUID e = UUID::from_str_or_die("00000000-0000-0000-0000-000000000005");
     UUID f = UUID::from_str_or_die("00000000-0000-0000-0000-000000000006");
-    auto status = ns.create(ns.root(), "a", FileType::DIRECTORY, a);
+    auto status = ns.create(ns.root(), "a", FileType::kDirectory, a);
     ASSERT_TRUE(status.ok()) << status.error_str();
-    status = ns.create(ns.root(), "b", FileType::DIRECTORY, b);
+    status = ns.create(ns.root(), "b", FileType::kDirectory, b);
     ASSERT_TRUE(status.ok()) << status.error_str();
-    status = ns.create(ns.root(), "c", FileType::DIRECTORY, c);
+    status = ns.create(ns.root(), "c", FileType::kDirectory, c);
     ASSERT_TRUE(status.ok()) << status.error_str();
 
     std::list<DirEntry> entries;
     ns.list(ns.root(), &entries);
     ASSERT_EQ(entries.size(), 3);
 
-    ns.create(a, "d", FileType::DIRECTORY, d);
-    ns.create(a, "e", FileType::DIRECTORY, e);
-    ns.create(a, "f", FileType::DIRECTORY, f);
+    ns.create(a, "d", FileType::kDirectory, d);
+    ns.create(a, "e", FileType::kDirectory, e);
+    ns.create(a, "f", FileType::kDirectory, f);
 
     ns.list(a, &entries);
     ASSERT_EQ(entries.size(), 3);
@@ -128,49 +128,49 @@ TEST(Namespace, lookup) {
     UUID f = UUID::from_str_or_die("00000000-0000-0000-0000-000000000006");
 
     Namespace ns;
-    ns.create(ns.root(), "a", FileType::DIRECTORY, a);
-    ns.create(ns.root(), "b", FileType::DIRECTORY, b);
-    ns.create(ns.root(), "c", FileType::DIRECTORY, c);
-    ns.create(a, "d", FileType::DIRECTORY, d);
-    ns.create(a, "e", FileType::DIRECTORY, e);
-    ns.create(a, "f", FileType::FILE, f);
+    ns.create(ns.root(), "a", FileType::kDirectory, a);
+    ns.create(ns.root(), "b", FileType::kDirectory, b);
+    ns.create(ns.root(), "c", FileType::kDirectory, c);
+    ns.create(a, "d", FileType::kDirectory, d);
+    ns.create(a, "e", FileType::kDirectory, e);
+    ns.create(a, "f", FileType::kFile, f);
 
     UUID inode;
-    FileType file_type;
+    FileType file_type = FileType::kFile;
     auto status = ns.lookup("/", &inode, &file_type);
     ASSERT_TRUE(status.ok());
     ASSERT_EQ(inode, ns.root());
-    ASSERT_EQ(file_type, FileType::DIRECTORY);
+    ASSERT_EQ(file_type, FileType::kDirectory);
 
     status = ns.lookup("/a", &inode, &file_type);
     ASSERT_TRUE(status.ok());
     ASSERT_EQ(inode, a);
-    ASSERT_EQ(file_type, FileType::DIRECTORY);
+    ASSERT_EQ(file_type, FileType::kDirectory);
 
     status = ns.lookup("/b", &inode, &file_type);
     ASSERT_TRUE(status.ok());
     ASSERT_EQ(inode, b);
-    ASSERT_EQ(file_type, FileType::DIRECTORY);
+    ASSERT_EQ(file_type, FileType::kDirectory);
 
     status = ns.lookup("/c", &inode, &file_type);
     ASSERT_TRUE(status.ok());
     ASSERT_EQ(inode, c);
-    ASSERT_EQ(file_type, FileType::DIRECTORY);
+    ASSERT_EQ(file_type, FileType::kDirectory);
 
     status = ns.lookup("/a/d", &inode, &file_type);
     ASSERT_TRUE(status.ok());
     ASSERT_EQ(inode, d);
-    ASSERT_EQ(file_type, FileType::DIRECTORY);
+    ASSERT_EQ(file_type, FileType::kDirectory);
 
     status = ns.lookup("/a/e", &inode, &file_type);
     ASSERT_TRUE(status.ok());
     ASSERT_EQ(inode, e);
-    ASSERT_EQ(file_type, FileType::DIRECTORY);
+    ASSERT_EQ(file_type, FileType::kDirectory);
 
     status = ns.lookup("/a/f", &inode, &file_type);
     ASSERT_TRUE(status.ok());
     ASSERT_EQ(inode, f);
-    ASSERT_EQ(file_type, FileType::FILE);
+    ASSERT_EQ(file_type, FileType::kFile);
 
     status = ns.lookup("/a/g", &inode, &file_type);
     ASSERT_FALSE(status.ok());
@@ -187,40 +187,40 @@ TEST(Namespace, lookup_and_list) {
     UUID d = UUID::from_str_or_die("00000000-0000-0000-0000-000000000004");
     UUID e = UUID::from_str_or_die("00000000-0000-0000-0000-000000000005");
     UUID f = UUID::from_str_or_die("00000000-0000-0000-0000-000000000006");
-    auto status = ns.create(ns.root(), "a", FileType::DIRECTORY, a);
+    auto status = ns.create(ns.root(), "a", FileType::kDirectory, a);
     ASSERT_TRUE(status.ok()) << status.error_str();
-    status = ns.create(ns.root(), "b", FileType::DIRECTORY, b);
+    status = ns.create(ns.root(), "b", FileType::kDirectory, b);
     ASSERT_TRUE(status.ok()) << status.error_str();
-    status = ns.create(ns.root(), "c", FileType::DIRECTORY, c);
+    status = ns.create(ns.root(), "c", FileType::kDirectory, c);
     ASSERT_TRUE(status.ok()) << status.error_str();
 
     std::list<DirEntry> entries;
     ns.list(ns.root(), &entries);
     ASSERT_EQ(entries.size(), 3) << fmt::format("{}", fmt::join(entries, ", "));
 
-    ns.create(a, "d", FileType::FILE, d);
-    ns.create(a, "e", FileType::FILE, e);
-    ns.create(a, "f", FileType::FILE, f);
+    ns.create(a, "d", FileType::kFile, d);
+    ns.create(a, "e", FileType::kFile, e);
+    ns.create(a, "f", FileType::kFile, f);
 
     UUID inode;
-    FileType file_type;
+    FileType file_type = FileType::kFile;
     status = ns.lookup("/a", &inode, &file_type);
     ASSERT_TRUE(status.ok());
     ASSERT_EQ(inode, a);
-    ASSERT_EQ(file_type, FileType::DIRECTORY);
+    ASSERT_EQ(file_type, FileType::kDirectory);
     entries.clear();
     ns.list(inode, &entries);
     ASSERT_EQ(entries.size(), 3);
 
     for (const auto& entry : entries) {
         if (entry.name == "d") {
-            ASSERT_EQ(entry.type, FileType::FILE);
+            ASSERT_EQ(entry.type, FileType::kFile);
             ASSERT_EQ(entry.inode, d);
         } else if (entry.name == "e") {
-            ASSERT_EQ(entry.type, FileType::FILE);
+            ASSERT_EQ(entry.type, FileType::kFile);
             ASSERT_EQ(entry.inode, e);
         } else if (entry.name == "f") {
-            ASSERT_EQ(entry.type, FileType::FILE);
+            ASSERT_EQ(entry.type, FileType::kFile);
             ASSERT_EQ(entry.inode, f);
         } else {
             ASSERT_FALSE(true) << "unexpected entry: " << entry.name;

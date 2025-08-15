@@ -20,11 +20,16 @@ std::string Controller::ErrorText() const {
 
 void Controller::StartCancel() {}
 
-void Controller::SetFailed(const std::string& reason) {}
+void Controller::SetFailed(const std::string& reason) {
+    std::ignore = reason;
+}
 bool Controller::IsCanceled() const {
     return false;
 }
-void Controller::NotifyOnCancel(google::protobuf::Closure* callback) {}
+
+void Controller::NotifyOnCancel(google::protobuf::Closure* callback) {
+    std::ignore = callback;
+}
 
 uint32_t Controller::error_code() const {
     return _impl->error_code();

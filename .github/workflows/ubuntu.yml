@@ -86,7 +86,7 @@ jobs:
       - name: Installation
         run: |
           sudo apt-get update
-          sudo apt-get install -y p7zip clang-format-16 ccache
+          sudo apt-get install -y p7zip clang-format-16 ccache clang-tidy
           sudo apt install -y libcunit1-dev libaio-dev libssl-dev libjson-c-dev
           sudo apt install -y libcmocka-dev uuid-dev libiscsi-dev liblz4-dev
           sudo apt install -y libkeyutils-dev libncurses5-dev libncursesw5-dev 
@@ -112,6 +112,15 @@ jobs:
           CXX: g++-13
         run: |
           bazel test --disk_cache=bazel-disk -c ${{matrix.mode}} --verbose_failures=true --jobs=${{env.proc_num}} //src/...
+
+      - name: CompileCommands
+        if: ${{matrix.mode == 'dbg'}}
+        run: ./tools/compile_commands.sh all
+
+      - name: Lint
+        if: ${{matrix.mode == 'dbg'}}
+        run: ./z.py lint
+
       - uses: actions/cache/save@v4
         if: always()
         with:

@@ -2,7 +2,8 @@
 #include <system_error>
 #include "base/result.h"
 
-using namespace pain::rust;
+// NOLINTBEGIN
+using namespace pain::rusty;
 
 TEST(Result, ok) {
     auto r = Ok<int, std::error_code>(42);
@@ -88,3 +89,4 @@ TEST(Result, divide_err) {
     ASSERT_EQ(r.is_err(), true);
     EXPECT_EQ(r.err(), std::make_error_code(std::errc::invalid_argument));
 }
+// NOLINTEND

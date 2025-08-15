@@ -9,10 +9,14 @@
 namespace pain::manusya {
 
 StorePtr Store::create(const char* uri) {
-    if (strncmp(uri, "local://", 8) == 0) {
-        const char* data_path = uri + 8;
+    constexpr size_t local_prefix_len = 8;
+    constexpr size_t memory_prefix_len = 9;
+    if (strncmp(uri, "local://", local_prefix_len) == 0) {
+        const char* data_path = uri + local_prefix_len;
         return StorePtr(new LocalStore(data_path));
-    } else if (strncmp(uri, "memory://", 9) == 0) {
+    }
+
+    if (strncmp(uri, "memory://", memory_prefix_len) == 0) {
         return StorePtr(new MemStore());
     }
 
