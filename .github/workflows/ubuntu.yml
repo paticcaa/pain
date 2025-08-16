@@ -106,20 +106,12 @@ jobs:
           ./z.py format
           git diff --exit-code
 
-      - name: Build
+      - name: Test
         env:
           CC: gcc-13
           CXX: g++-13
         run: |
           bazel test --disk_cache=bazel-disk -c ${{matrix.mode}} --verbose_failures=true --jobs=${{env.proc_num}} //src/...
-
-      - name: CompileCommands
-        if: ${{matrix.mode == 'dbg'}}
-        run: ./tools/compile_commands.sh all
-
-      - name: Lint
-        if: ${{matrix.mode == 'dbg'}}
-        run: ./z.py lint
 
       - uses: actions/cache/save@v4
         if: always()

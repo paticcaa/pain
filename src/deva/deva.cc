@@ -46,10 +46,13 @@ DEVA_METHOD(SealAndNewChunk) {
 }
 
 Status Deva::save_snapshot(std::string_view path, std::vector<std::string>* files) {
+    std::ignore = path;
+    std::ignore = files;
     return Status::OK();
 }
 
 Status Deva::load_snapshot(std::string_view path) {
+    std::ignore = path;
     return Status::OK();
 }
 

@@ -45,13 +45,21 @@ sudo apt install -y autoconf automake libtool pkg-config
 
 ```bash
 ./z.py build # or ./z.py b
+./z.py deploy -a start # deploy pain to ~/deployment
 ```
 
 - More commands
 
 ```bash
+# show targes
+./z.py show # or ./z.py s
+
 # only build sad target
 ./z.py b sad
+
+# test
+./z.py test test_manusya # or ./z.py t test_manusya
+./z.py t # test all cases
 
 # format your project and it's useful before pulling a request
 ./z.py format # or ./z.py f

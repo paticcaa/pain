@@ -22,22 +22,9 @@ cc_library(
 )
 
 cc_test(
-    name = "test_pain_base_result",
-    srcs = glob(["test/test_result.cc"]),
+    name = "test_pain_base",
+    srcs = glob(["test/*.cc"]),
     copts = PAIN_TEST_COPTS,
-    linkopts = PAIN_LINKOPTS,
-    linkstatic = True,
-    deps = [
-        "//src/base:pain_base",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
-    ],
-)
-
-cc_test(
-    name = "test_pain_base_rusty_result",
-    srcs = glob(["test/test_rusty_result.cc"]),
-    copts = PAIN_COPTS,
     linkopts = PAIN_LINKOPTS,
     linkstatic = True,
     deps = [

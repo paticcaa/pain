@@ -3,6 +3,7 @@ import argparse
 import subprocess
 import logging
 import os
+import json
 
 # 配置日志
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -21,23 +22,41 @@ def run_in_shell(cmd, stdout=None, stderr=None):
 def config_project(args):
     print('Unimplemented')
 
-def build_project(args):
+
+def get_modules():
+    modules = {
+        'deva': '//src/deva:deva',
+        'asura': '//src/asura:asura',
+        'manusya': '//src/manusya:manusya',
+        'pain': '//src/pain:pain',
+        'sad': '//src/sad:sad',
+        'test_pain_base': '//src/base:test_pain_base',
+        'test_deva': '//src/deva:test_deva',
+        'test_asura': '//src/asura:test_asura',
+        'test_manusya': '//src/manusya:test_manusya',
+    }
+    return modules
+
+def get_targets(names):
+    modules = get_modules()
     targets = []
-    if not args.rest:
+    if not names:
         targets = ['//src/...']
     else:
-        modules = {
-            'deva': '//src/deva:deva',
-            'asura': '//src/asura:asura',
-            'manusya': '//src/manusya:manusya',
-            'pain': '//src/pain:pain',
-            'sad': '//src/sad:sad',
-        }
-        for target in args.rest:
+        for target in names:
             if target in modules:
                 targets.append(modules[target])
             else:
                 print('Unknown target: {}'.format(target))
+
+    return targets
+
+def show_targets(args):
+    modules = get_modules()
+    print(json.dumps(modules, indent=4))
+
+def build_project(args):
+    targets = get_targets(args.rest)
 
     cmd = ['bazel', 'build', '-s', '--verbose_failures', '--disk_cache={}'.format(args.cache_dir)] + targets
     print('> ' + ' '.join(cmd))
@@ -46,7 +65,8 @@ def build_project(args):
         print('Unimplemented')
 
 def test_project(args):
-    cmd = ['bazel', 'test', '-s', '--verbose_failures', '--disk_cache={}'.format(args.cache_dir), '//src/...']
+    targets = get_targets(args.rest)
+    cmd = ['bazel', 'test', '-s', '--verbose_failures', '--disk_cache={}'.format(args.cache_dir)] + targets
     print('> ' + ' '.join(cmd))
     run_in_shell(' '.join(cmd))
 
@@ -171,6 +191,9 @@ if __name__ == "__main__":
     test_parser.add_argument('--cache-dir', default='/mnt/bazel_cache')
     test_parser.set_defaults(func=test_project)
     test_parser.add_argument('rest', nargs=argparse.REMAINDER)
+
+    show_parser = subparsers.add_parser('show', aliases=['s'])
+    show_parser.set_defaults(func=show_targets)
 
     args = parser.parse_args()
     args.func(args)

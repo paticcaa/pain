@@ -1,4 +1,4 @@
-load('//:copts.bzl', 'PAIN_COPTS', 'PAIN_LINKOPTS')
+load('//:copts.bzl', 'PAIN_COPTS', 'PAIN_LINKOPTS', 'PAIN_TEST_COPTS')
 
 cc_binary(
     name = "manusya",
@@ -24,5 +24,19 @@ cc_library(
         "@brpc",
         "@boost.smart_ptr",
         "@boost.intrusive",
+    ],
+)
+
+
+cc_test(
+    name = "test_manusya",
+    srcs = glob(["test/*.cc"]),
+    copts = PAIN_TEST_COPTS,
+    linkopts = PAIN_LINKOPTS,
+    linkstatic = True,
+    deps = [
+        ":manusya_core",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
     ],
 )

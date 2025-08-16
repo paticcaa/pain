@@ -3,6 +3,7 @@
 #include "base/result.h"
 
 // NOLINTBEGIN
+namespace {
 using namespace pain;
 
 TEST(Result, ok) {
@@ -89,4 +90,5 @@ TEST(Result, divide_err) {
     ASSERT_EQ(r.is_err(), true);
     EXPECT_EQ(r.err(), std::make_error_code(std::errc::invalid_argument));
 }
+} // namespace
 // NOLINTEND
