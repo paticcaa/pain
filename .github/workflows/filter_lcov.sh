@@ -2,7 +2,7 @@
 # This file copied from https://github.com/baidu/babylon/blob/main/.github/workflows/filter_lcov.sh
 set -ex
 
-grep -Pn 'BABYLON_LOG\(.*\)' src/ -R | awk -F: '{print $1":"$2}' > ignore_branches
+grep -Pn 'PLOG_.*?\(.*\)' src/ -R | awk -F: '{print $1":"$2}' > ignore_branches
 
 awk -F: '
 ARGIND == 1 {skip_lines[$1] = skip_lines[$1]""$2","}
