@@ -1,5 +1,6 @@
 # pain
 [![Linux](https://github.com/ivanallen/pain/actions/workflows/ubuntu.yml/badge.svg)](https://github.com/ivanallen/pain/actions/workflows/ubuntu.yml)
+[![Coverage Status](https://coveralls.io/repos/github/ivanallen/pain/badge.svg)](https://coveralls.io/github/ivanallen/pain)
 
 A distributed storage system.
 
