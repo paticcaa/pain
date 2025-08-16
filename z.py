@@ -66,7 +66,15 @@ def build_project(args):
 
 def test_project(args):
     targets = get_targets(args.rest)
-    cmd = ['bazel', 'test', '-s', '--verbose_failures', '--disk_cache={}'.format(args.cache_dir)] + targets
+    cmd = [
+        'bazel',
+        'test',
+        '-s',
+        '--verbose_failures',
+        '--test_output=errors',
+        '--cache_test_results=no',
+        '--disk_cache={}'.format(args.cache_dir)
+    ] + targets
     print('> ' + ' '.join(cmd))
     run_in_shell(' '.join(cmd))
 

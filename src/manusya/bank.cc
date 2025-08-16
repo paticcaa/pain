@@ -30,6 +30,9 @@ Status Bank::load() {
 }
 
 Status Bank::create_chunk(ChunkOptions options, ChunkPtr* chunk) {
+    if (chunk == nullptr) {
+        return Status(EINVAL, "chunk is nullptr");
+    }
     auto status = Chunk::create(options, _store, chunk);
     if (!status.ok()) {
         return status;

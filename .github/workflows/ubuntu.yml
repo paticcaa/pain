@@ -56,7 +56,7 @@ jobs:
           CC: gcc-13
           CXX: g++-13
         run: |
-          bazel test --disk_cache=bazel-disk -c ${{matrix.mode}} --verbose_failures=true --jobs=${{env.proc_num}} //src/...
+          bazel test --disk_cache=bazel-disk -c ${{matrix.mode}} --verbose_failures=true --test_output=errors --jobs=${{env.proc_num}} //src/...
 
       - uses: actions/cache/save@v4
         if: always()

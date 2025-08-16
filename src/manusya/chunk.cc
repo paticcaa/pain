@@ -125,6 +125,9 @@ Status Chunk::read(uint64_t offset, uint64_t size, IOBuf* buf) const {
 
 Status Chunk::create(const ChunkOptions& options, StorePtr store, ChunkPtr* chunk) {
     SPAN(span);
+    if (chunk == nullptr) {
+        return Status(EINVAL, "chunk is nullptr");
+    }
     auto c = ChunkPtr(new Chunk());
     c->_uuid = UUID::generate();
     c->_options = options;
@@ -142,6 +145,9 @@ Status Chunk::create(const ChunkOptions& options, StorePtr store, ChunkPtr* chun
 
 Status Chunk::create(const ChunkOptions& options, StorePtr store, const UUID& uuid, ChunkPtr* chunk) {
     SPAN(span);
+    if (chunk == nullptr) {
+        return Status(EINVAL, "chunk is nullptr");
+    }
     auto c = ChunkPtr(new Chunk());
     c->_uuid = uuid;
     c->_options = options;
