@@ -10,62 +10,7 @@ on:
 env:
   proc_num: $(nproc)
 jobs:
-  build-with-xmake:
-    if: false # disable xmake build
-    strategy:
-      matrix:
-        os: [ubuntu-24.04]
-        mode: [debug, releasedbg]
-
-    runs-on: ${{ matrix.os }}
-
-    concurrency:
-        group: ${{ github.ref }}-${{ github.base_ref }}-${{ github.head_ref }}-Linux-${{ matrix.mode }}
-        cancel-in-progress: true
-    steps:
-      - uses: actions/checkout@v1
-      - uses: xmake-io/github-action-setup-xmake@v1
-        with:
-          xmake-version: branch@dev
-          actions-cache-folder: '.xmake-cache'
-
-      - name: Installation
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libgl1-mesa-dev libglu1-mesa-dev p7zip clang-format-16
-          sudo apt install -y  libaio-dev
-          sudo apt install -y uuid-dev
-          sudo apt install -y libibverbs-dev
-          sudo apt install -y librdmacm-dev
-          sudo apt install -y libelf-dev
-          sudo apt install -y libnuma-dev
-          sudo apt install -y python3
-          sudo apt install -y python3-pip
-          sudo apt install -y patchelf
-          sudo apt install -y python3-pyelftools
-          sudo apt install -y meson
-          sudo apt install -y nasm
-          sudo apt install -y ccache
-          sudo apt install -y autoconf automake libtool pkg-config
-          sudo ln -sf /usr/bin/clang-format-16 /usr/bin/clang-format
-      
-      - name: Format
-        run: |
-          xmake format -f "**.h:**.cc:**.proto"
-          git diff --exit-code
-
-      - name: Build
-        run: |
-          xmake f -y -c -m ${{ matrix.mode }}
-          xmake b -v
-        env:
-          CC: gcc-13
-          CXX: g++-13
-      
-      - name: Test
-        run: |
-          xmake test -v
-  build-with-bazel:
+  build:
     strategy:
       matrix:
         os: [ubuntu-24.04]
@@ -118,3 +63,50 @@ jobs:
         with:
           path: bazel-disk
           key: bazel-disk-basic-${{matrix.mode}}-${{github.sha}}
+  coverage:
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/cache/restore@v4
+      with:
+        path: bazel-disk
+        key: bazel-disk-coverage-${{github.sha}}
+        restore-keys: bazel-disk-coverage-
+    - name: Installation
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y p7zip clang-format-16 ccache clang-tidy
+        sudo apt install -y libcunit1-dev libaio-dev libssl-dev libjson-c-dev
+        sudo apt install -y libcmocka-dev uuid-dev libiscsi-dev liblz4-dev
+        sudo apt install -y libkeyutils-dev libncurses5-dev libncursesw5-dev 
+        sudo apt install -y python3 python3-pip python3-dev unzip libfuse3-dev patchelf
+        sudo apt install -y libibverbs-dev
+        sudo apt install -y librdmacm-dev
+        sudo apt install -y libelf-dev
+        sudo apt install -y libnuma-dev
+        sudo apt install -y python3-pyelftools
+        sudo apt install -y meson
+        sudo apt install -y nasm
+        sudo apt install -y autoconf automake libtool pkg-config
+        sudo ln -sf /usr/bin/clang-format-16 /usr/bin/clang-format
+    
+    - name: Coverage
+      env:
+        CC: gcc-13
+        CXX: g++-13
+      run: |
+        bazel coverage --disk_cache=bazel-disk --verbose_failures --test_output=errors --combined_report=lcov --instrumentation_filter='include/,src/' //src/...
+    
+    - name: Filter LCOV
+      run: .github/workflows/filter_lcov.sh
+    
+    - uses: coverallsapp/github-action@v2
+      with:
+        github-token: ${{github.token}}
+        file: bazel-out/_coverage/_coverage_report.lcov
+    
+    - uses: actions/cache/save@v4
+      if: always()
+      with:
+        path: bazel-disk
+        key: bazel-disk-coverage-${{github.sha}}
