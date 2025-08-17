@@ -21,15 +21,37 @@ private:
 
 Future<Status> MemStore::open(const char* path, int flags, FileHandlePtr* fh) {
     SPAN(span);
-    std::ignore = flags;
+    if (path == nullptr) {
+        return make_ready_future(Status(EINVAL, "path is nullptr"));
+    }
+    if (fh == nullptr) {
+        return make_ready_future(Status(EINVAL, "fh is nullptr"));
+    }
+    if (_files.find(path) != _files.end()) {
+        if ((flags & O_EXCL) != 0) {
+            return make_ready_future(Status(EEXIST, "file already exists"));
+        }
+        if ((flags & O_TRUNC) != 0) {
+            _files[path].clear();
+        }
+    } else {
+        if ((flags & O_CREAT) != 0) {
+            _files[path] = IOBuf();
+        } else {
+            return make_ready_future(Status(ENOENT, "file not found"));
+        }
+    }
     *fh = FileHandlePtr(new MemFileHandle(path, this));
     return make_ready_future(Status::OK());
 }
 
 Future<Status> MemStore::append(FileHandlePtr fh, uint64_t offset, IOBuf buf) {
     SPAN(span);
+    if (fh == nullptr) {
+        return make_ready_future(Status(EINVAL, "fh is nullptr"));
+    }
     std::unique_lock lock(_mutex);
-    auto path = fh->as<MemFileHandle>()->handle();
+    auto& path = fh->as<MemFileHandle>()->handle();
     auto& iobuf = _files[path];
 
     iobuf.append(buf);
@@ -38,6 +60,9 @@ Future<Status> MemStore::append(FileHandlePtr fh, uint64_t offset, IOBuf buf) {
 
 Future<Status> MemStore::read(FileHandlePtr fh, uint64_t offset, uint64_t size, IOBuf* buf) {
     SPAN(span);
+    if (fh == nullptr) {
+        return make_ready_future(Status(EINVAL, "fh is nullptr"));
+    }
     std::unique_lock lock(_mutex);
     auto path = fh->as<MemFileHandle>()->handle();
     auto& iobuf = _files[path];
@@ -52,6 +77,9 @@ Future<Status> MemStore::seal(FileHandlePtr fh) {
 
 Future<Status> MemStore::size(FileHandlePtr fh, uint64_t* size) {
     SPAN(span);
+    if (fh == nullptr) {
+        return make_ready_future(Status(EINVAL, "fh is nullptr"));
+    }
     std::unique_lock lock(_mutex);
     auto path = fh->as<MemFileHandle>()->handle();
     auto& iobuf = _files[path];
@@ -61,6 +89,9 @@ Future<Status> MemStore::size(FileHandlePtr fh, uint64_t* size) {
 
 Future<Status> MemStore::remove(const char* path) {
     SPAN(span);
+    if (path == nullptr) {
+        return make_ready_future(Status(EINVAL, "path is nullptr"));
+    }
     std::unique_lock lock(_mutex);
     _files.erase(path);
     return make_ready_future(Status::OK());
@@ -68,6 +99,15 @@ Future<Status> MemStore::remove(const char* path) {
 
 Future<Status> MemStore::set_attr(FileHandlePtr fh, const char* key, const char* value) {
     SPAN(span);
+    if (fh == nullptr) {
+        return make_ready_future(Status(EINVAL, "fh is nullptr"));
+    }
+    if (key == nullptr) {
+        return make_ready_future(Status(EINVAL, "key is nullptr"));
+    }
+    if (value == nullptr) {
+        return make_ready_future(Status(EINVAL, "value is nullptr"));
+    }
     std::unique_lock lock(_mutex);
     auto path = fh->as<MemFileHandle>()->handle();
     _attrs[path][key] = value;
@@ -76,6 +116,15 @@ Future<Status> MemStore::set_attr(FileHandlePtr fh, const char* key, const char*
 
 Future<Status> MemStore::get_attr(FileHandlePtr fh, const char* key, std::string* value) {
     SPAN(span);
+    if (fh == nullptr) {
+        return make_ready_future(Status(EINVAL, "fh is nullptr"));
+    }
+    if (key == nullptr) {
+        return make_ready_future(Status(EINVAL, "key is nullptr"));
+    }
+    if (value == nullptr) {
+        return make_ready_future(Status(EINVAL, "value is nullptr"));
+    }
     std::unique_lock lock(_mutex);
     auto path = fh->as<MemFileHandle>()->handle();
     auto it = _attrs[path].find(key);
@@ -88,6 +137,12 @@ Future<Status> MemStore::get_attr(FileHandlePtr fh, const char* key, std::string
 
 Future<Status> MemStore::list_attrs(FileHandlePtr fh, std::map<std::string, std::string>* attrs) {
     SPAN(span);
+    if (fh == nullptr) {
+        return make_ready_future(Status(EINVAL, "fh is nullptr"));
+    }
+    if (attrs == nullptr) {
+        return make_ready_future(Status(EINVAL, "attrs is nullptr"));
+    }
     std::unique_lock lock(_mutex);
     auto path = fh->as<MemFileHandle>()->handle();
     *attrs = _attrs[path];

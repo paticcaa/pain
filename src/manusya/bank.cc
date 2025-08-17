@@ -33,11 +33,11 @@ Status Bank::create_chunk(ChunkOptions options, ChunkPtr* chunk) {
     if (chunk == nullptr) {
         return Status(EINVAL, "chunk is nullptr");
     }
+    std::unique_lock lock(_mutex);
     auto status = Chunk::create(options, _store, chunk);
     if (!status.ok()) {
         return status;
     }
-    std::unique_lock lock(_mutex);
     _chunks[(*chunk)->uuid()] = *chunk;
     return Status::OK();
 }

@@ -32,6 +32,10 @@ public:
     virtual Future<Status> list_attrs(FileHandlePtr fh, std::map<std::string, std::string>* attrs) = 0;
     virtual void for_each(std::function<void(const char* path)> cb) = 0;
 
+    int use_count() const {
+        return _use_count;
+    }
+
 private:
     friend void intrusive_ptr_add_ref(Store* store) {
         store->_use_count++;
