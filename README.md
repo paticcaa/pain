@@ -10,6 +10,7 @@ A distributed storage system.
 - xmake
 - python3
 - ansible
+- docker
 
 ```bash
 # install xmake
@@ -29,6 +30,7 @@ sudo apt install -y libibverbs-dev
 sudo apt install -y librdmacm-dev
 sudo apt install -y libelf-dev
 sudo apt install -y libssl-dev
+sudo apt install -y liblz4-dev
 sudo apt install -y libnuma-dev
 sudo apt install -y python3
 sudo apt install -y python3-pip
@@ -46,6 +48,8 @@ sudo apt install -y autoconf automake libtool pkg-config
 
 ```bash
 ./z.py build # or ./z.py b
+./z.py test # or ./z.py t
+./z.py install # or ./z.py i
 ./z.py deploy -a start # deploy pain to ~/deployment
 ```
 

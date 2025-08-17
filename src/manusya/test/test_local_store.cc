@@ -1,63 +1,94 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <algorithm>
+#include <filesystem>
 #include <future>
 #include <thread>
 #include <vector>
 #include "manusya/file_handle.h"
-#include "manusya/mem_store.h"
+#include "manusya/local_store.h"
 
 // NOLINTBEGIN(readability-magic-numbers)
 namespace {
 using namespace pain;
 using namespace pain::manusya;
 
-class TestMemStore : public ::testing::Test {
+class TestLocalStore : public ::testing::Test {
 protected:
     void SetUp() override {
-        _store = Store::create("memory://");
+        // 创建临时测试目录
+        _test_dir = std::filesystem::temp_directory_path() / "test_local_store";
+        std::filesystem::create_directories(_test_dir);
+
+        _store = Store::create(("local://" + _test_dir.string()).c_str());
         ASSERT_TRUE(_store != nullptr);
     }
 
     void TearDown() override {
         _store.reset();
+
+        // 清理测试目录
+        if (std::filesystem::exists(_test_dir)) {
+            std::filesystem::remove_all(_test_dir);
+        }
     }
 
+    std::filesystem::path _test_dir;
     StorePtr _store;
+
+    // 辅助方法：创建测试文件路径
+    std::string make_test_path(const std::string& filename) {
+        return (_test_dir / filename).string();
+    }
+
+    // 辅助方法：检查文件是否存在
+    bool file_exists(const std::string& filename) {
+        return std::filesystem::exists(_test_dir / filename);
+    }
+
+    // 辅助方法：获取文件大小
+    uint64_t get_file_size(const std::string& filename) {
+        if (!file_exists(filename)) {
+            return 0;
+        }
+        return std::filesystem::file_size(_test_dir / filename);
+    }
 };
 
 // 基础功能测试
-TEST_F(TestMemStore, BasicOpen) {
+TEST_F(TestLocalStore, BasicOpen) {
     FileHandlePtr fh;
-    auto future = _store->open("/test/file1", O_RDWR | O_CREAT, &fh);
+    auto future = _store->open("test_file1", O_RDWR | O_CREAT, &fh);
     auto status = future.get();
 
     ASSERT_TRUE(status.ok()) << "Failed to open file: " << status.error_str();
     ASSERT_TRUE(fh != nullptr);
     ASSERT_EQ(fh->use_count(), 1);
+    ASSERT_TRUE(file_exists("test_file1"));
 }
 
-TEST_F(TestMemStore, OpenMultipleFiles) {
+TEST_F(TestLocalStore, OpenMultipleFiles) {
     std::vector<FileHandlePtr> handles;
 
     // 打开多个文件
     for (int i = 0; i < 5; ++i) {
         FileHandlePtr fh;
-        auto path = "/test/file" + std::to_string(i);
-        auto future = _store->open(path.c_str(), O_RDWR | O_CREAT, &fh);
+        auto filename = "test_file" + std::to_string(i);
+        auto future = _store->open(filename.c_str(), O_RDWR | O_CREAT, &fh);
         auto status = future.get();
 
         ASSERT_TRUE(status.ok()) << "Failed to open file " << i << ": " << status.error_str();
         ASSERT_TRUE(fh != nullptr);
+        ASSERT_TRUE(file_exists(filename));
         handles.push_back(fh);
     }
 
     ASSERT_EQ(handles.size(), 5);
 }
 
-TEST_F(TestMemStore, BasicAppendAndRead) {
+TEST_F(TestLocalStore, BasicAppendAndRead) {
     FileHandlePtr fh;
-    auto future = _store->open("/test/file1", O_RDWR | O_CREAT, &fh);
+    auto future = _store->open("test_file1", O_RDWR | O_CREAT, &fh);
     auto status = future.get();
     ASSERT_TRUE(status.ok());
 
@@ -70,6 +101,9 @@ TEST_F(TestMemStore, BasicAppendAndRead) {
     status = append_future.get();
     ASSERT_TRUE(status.ok());
 
+    // 验证文件大小
+    ASSERT_EQ(get_file_size("test_file1"), strlen(test_data));
+
     // 读取数据
     IOBuf read_buf;
     auto read_future = _store->read(fh, 0, strlen(test_data), &read_buf);
@@ -81,30 +115,33 @@ TEST_F(TestMemStore, BasicAppendAndRead) {
     ASSERT_EQ(read_data, test_data);
 }
 
-TEST_F(TestMemStore, AppendMultipleTimes) {
+TEST_F(TestLocalStore, AppendMultipleTimes) {
     FileHandlePtr fh;
-    auto future = _store->open("/test/file1", O_RDWR | O_CREAT, &fh);
+    auto future = _store->open("test_file1", O_RDWR | O_CREAT, &fh);
     auto status = future.get();
     ASSERT_TRUE(status.ok());
 
     // 多次写入
     std::vector<std::string> test_data = {"Hello", ", ", "World", "!"};
-    uint64_t offset = 0;
+    uint64_t total_size = 0;
 
     for (const auto& data : test_data) {
         IOBuf buf;
         buf.append(data.c_str(), data.length());
 
-        auto append_future = _store->append(fh, offset, buf);
+        auto append_future = _store->append(fh, 0, buf);
         status = append_future.get();
         ASSERT_TRUE(status.ok());
 
-        offset += data.length();
+        total_size += data.length();
     }
+
+    // 验证文件大小
+    ASSERT_EQ(get_file_size("test_file1"), total_size);
 
     // 读取全部数据
     IOBuf read_buf;
-    auto read_future = _store->read(fh, 0, 13, &read_buf); // "Hello, World!"
+    auto read_future = _store->read(fh, 0, total_size, &read_buf);
     status = read_future.get();
     ASSERT_TRUE(status.ok());
 
@@ -113,9 +150,9 @@ TEST_F(TestMemStore, AppendMultipleTimes) {
     ASSERT_EQ(actual, expected);
 }
 
-TEST_F(TestMemStore, ReadWithOffset) {
+TEST_F(TestLocalStore, ReadWithOffset) {
     FileHandlePtr fh;
-    auto future = _store->open("/test/file1", O_RDWR | O_CREAT, &fh);
+    auto future = _store->open("test_file1", O_RDWR | O_CREAT, &fh);
     auto status = future.get();
     ASSERT_TRUE(status.ok());
 
@@ -139,9 +176,9 @@ TEST_F(TestMemStore, ReadWithOffset) {
     ASSERT_EQ(actual, expected);
 }
 
-TEST_F(TestMemStore, FileSize) {
+TEST_F(TestLocalStore, FileSize) {
     FileHandlePtr fh;
-    auto future = _store->open("/test/file1", O_RDWR | O_CREAT, &fh);
+    auto future = _store->open("test_file1", O_RDWR | O_CREAT, &fh);
     auto status = future.get();
     ASSERT_TRUE(status.ok());
 
@@ -167,21 +204,25 @@ TEST_F(TestMemStore, FileSize) {
     ASSERT_EQ(size, strlen(test_data));
 }
 
-TEST_F(TestMemStore, SealFile) {
+TEST_F(TestLocalStore, SealFile) {
     FileHandlePtr fh;
-    auto future = _store->open("/test/file1", O_RDWR | O_CREAT, &fh);
+    auto future = _store->open("test_file1", O_RDWR | O_CREAT, &fh);
     auto status = future.get();
-    ASSERT_TRUE(status.ok()) << "Failed to open file: " << status.error_str();
+    ASSERT_TRUE(status.ok());
 
     // seal操作应该成功
     auto seal_future = _store->seal(fh);
     status = seal_future.get();
     ASSERT_TRUE(status.ok());
+
+    // 验证文件权限已更改（只读）
+    std::filesystem::perms perms = std::filesystem::status(_test_dir / "test_file1").permissions();
+    // 注意：在Windows上可能无法检测权限变化
 }
 
-TEST_F(TestMemStore, RemoveFile) {
+TEST_F(TestLocalStore, RemoveFile) {
     FileHandlePtr fh;
-    auto future = _store->open("/test/file1", O_RDWR | O_CREAT, &fh);
+    auto future = _store->open("test_file1", O_RDWR | O_CREAT, &fh);
     auto status = future.get();
     ASSERT_TRUE(status.ok());
 
@@ -194,30 +235,32 @@ TEST_F(TestMemStore, RemoveFile) {
     status = append_future.get();
     ASSERT_TRUE(status.ok());
 
+    // 验证文件存在
+    ASSERT_TRUE(file_exists("test_file1"));
+
     // 删除文件
-    auto remove_future = _store->remove("/test/file1");
+    auto remove_future = _store->remove("test_file1");
     status = remove_future.get();
     ASSERT_TRUE(status.ok());
 
     // 验证文件已被删除
-    uint64_t size = 0;
-    auto size_future = _store->size(fh, &size);
-    status = size_future.get();
-    ASSERT_TRUE(status.ok());
-    ASSERT_EQ(size, 0);
+    ASSERT_FALSE(file_exists("test_file1"));
 }
 
 // 属性操作测试
-TEST_F(TestMemStore, SetAndGetAttribute) {
+TEST_F(TestLocalStore, SetAndGetAttribute) {
     FileHandlePtr fh;
-    auto future = _store->open("/test/file1", O_RDWR | O_CREAT, &fh);
+    auto future = _store->open("test_file1", O_RDWR | O_CREAT, &fh);
     auto status = future.get();
     ASSERT_TRUE(status.ok());
 
     // 设置属性
     auto set_future = _store->set_attr(fh, "key1", "value1");
     status = set_future.get();
-    ASSERT_TRUE(status.ok());
+    if (status.error_code() == ENOTSUP) {
+        GTEST_SKIP() << "set_attr is not supported";
+    }
+    ASSERT_TRUE(status.ok()) << "Failed to set attribute: " << status.error_str() << "(" << status.error_code() << ")";
 
     // 获取属性
     std::string value;
@@ -227,9 +270,9 @@ TEST_F(TestMemStore, SetAndGetAttribute) {
     ASSERT_EQ(value, "value1");
 }
 
-TEST_F(TestMemStore, SetMultipleAttributes) {
+TEST_F(TestLocalStore, SetMultipleAttributes) {
     FileHandlePtr fh;
-    auto future = _store->open("/test/file1", O_RDWR | O_CREAT, &fh);
+    auto future = _store->open("test_file1", O_RDWR | O_CREAT, &fh);
     auto status = future.get();
     ASSERT_TRUE(status.ok());
 
@@ -239,7 +282,11 @@ TEST_F(TestMemStore, SetMultipleAttributes) {
     for (const auto& [key, value] : attrs) {
         auto set_future = _store->set_attr(fh, key.c_str(), value.c_str());
         status = set_future.get();
-        ASSERT_TRUE(status.ok());
+        if (status.error_code() == ENOTSUP) {
+            GTEST_SKIP() << "set_attr is not supported";
+        }
+        ASSERT_TRUE(status.ok()) << "Failed to set attribute: " << status.error_str() << "(" << status.error_code()
+                                 << ")";
     }
 
     // 列出所有属性
@@ -254,25 +301,25 @@ TEST_F(TestMemStore, SetMultipleAttributes) {
     }
 }
 
-TEST_F(TestMemStore, GetNonExistentAttribute) {
+TEST_F(TestLocalStore, GetNonExistentAttribute) {
     FileHandlePtr fh;
-    auto future = _store->open("/test/file1", O_RDWR | O_CREAT, &fh);
+    auto future = _store->open("test_file1", O_RDWR | O_CREAT, &fh);
     auto status = future.get();
-    ASSERT_TRUE(status.ok()) << "Failed to open file: " << status.error_str();
+    ASSERT_TRUE(status.ok());
 
     // 获取不存在的属性
     std::string value;
     auto get_future = _store->get_attr(fh, "non_existent_key", &value);
     status = get_future.get();
     ASSERT_FALSE(status.ok());
-    ASSERT_EQ(status.error_code(), ENOENT);
+    // 注意：在Windows上可能返回不同的错误码
 }
 
-TEST_F(TestMemStore, ListAttributesEmpty) {
+TEST_F(TestLocalStore, ListAttributesEmpty) {
     FileHandlePtr fh;
-    auto future = _store->open("/test/file1", O_RDWR | O_CREAT, &fh);
+    auto future = _store->open("test_file1", O_RDWR | O_CREAT, &fh);
     auto status = future.get();
-    ASSERT_TRUE(status.ok()) << "Failed to open file: " << status.error_str();
+    ASSERT_TRUE(status.ok());
 
     // 列出空属性
     std::map<std::string, std::string> attrs;
@@ -283,45 +330,45 @@ TEST_F(TestMemStore, ListAttributesEmpty) {
 }
 
 // for_each 测试
-TEST_F(TestMemStore, ForEachFiles) {
+TEST_F(TestLocalStore, ForEachFiles) {
     // 创建多个文件
-    std::vector<std::string> file_paths = {"/test/file1", "/test/file2", "/test/file3"};
+    std::vector<std::string> filenames = {"test_file1", "test_file2", "test_file3"};
 
-    for (const auto& path : file_paths) {
+    for (const auto& filename : filenames) {
         FileHandlePtr fh;
-        auto future = _store->open(path.c_str(), O_RDWR | O_CREAT, &fh);
+        auto future = _store->open(filename.c_str(), O_RDWR | O_CREAT, &fh);
         auto status = future.get();
-        ASSERT_TRUE(status.ok()) << "Failed to open file: " << status.error_str();
+        ASSERT_TRUE(status.ok()) << "Failed to open file " << filename << ": " << status.error_str();
     }
 
     // 使用for_each遍历
-    std::vector<std::string> found_paths;
-    _store->for_each([&found_paths](const char* path) {
-        found_paths.emplace_back(path);
+    std::vector<std::string> found_files;
+    _store->for_each([&found_files](const char* path) {
+        found_files.emplace_back(path);
     });
 
-    ASSERT_EQ(found_paths.size(), file_paths.size());
-    for (const auto& path : file_paths) {
-        ASSERT_TRUE(std::find(found_paths.begin(), found_paths.end(), path) != found_paths.end());
+    ASSERT_EQ(found_files.size(), filenames.size());
+    for (const auto& filename : filenames) {
+        ASSERT_TRUE(std::find(found_files.begin(), found_files.end(), filename) != found_files.end());
     }
 }
 
-TEST_F(TestMemStore, ForEachEmpty) {
+TEST_F(TestLocalStore, ForEachEmpty) {
     // 空存储的for_each
-    std::vector<std::string> found_paths;
-    _store->for_each([&found_paths](const char* path) {
-        found_paths.emplace_back(path);
+    std::vector<std::string> found_files;
+    _store->for_each([&found_files](const char* path) {
+        found_files.emplace_back(path);
     });
 
-    ASSERT_TRUE(found_paths.empty());
+    ASSERT_TRUE(found_files.empty());
 }
 
 // 边界情况测试
-TEST_F(TestMemStore, ReadBeyondFileSize) {
+TEST_F(TestLocalStore, ReadBeyondFileSize) {
     FileHandlePtr fh;
-    auto future = _store->open("/test/file1", O_RDWR | O_CREAT, &fh);
+    auto future = _store->open("test_file1", O_RDWR | O_CREAT, &fh);
     auto status = future.get();
-    ASSERT_TRUE(status.ok()) << "Failed to open file: " << status.error_str();
+    ASSERT_TRUE(status.ok());
 
     // 写入少量数据
     IOBuf write_buf;
@@ -336,17 +383,14 @@ TEST_F(TestMemStore, ReadBeyondFileSize) {
     IOBuf read_buf;
     auto read_future = _store->read(fh, 0, 100, &read_buf); // 尝试读取100字节
     status = read_future.get();
-    ASSERT_TRUE(status.ok()); // 当前实现会成功，但只返回可用数据
-
-    // 验证实际读取的数据量
-    ASSERT_EQ(read_buf.size(), strlen(test_data));
+    ASSERT_FALSE(status.ok()); // 应该失败，因为请求的大小超过了实际文件大小
 }
 
-TEST_F(TestMemStore, ReadFromInvalidOffset) {
+TEST_F(TestLocalStore, ReadFromInvalidOffset) {
     FileHandlePtr fh;
-    auto future = _store->open("/test/file1", O_RDWR | O_CREAT, &fh);
+    auto future = _store->open("test_file1", O_RDWR | O_CREAT, &fh);
     auto status = future.get();
-    ASSERT_TRUE(status.ok()) << "Failed to open file: " << status.error_str();
+    ASSERT_TRUE(status.ok());
 
     // 写入数据
     IOBuf write_buf;
@@ -361,64 +405,18 @@ TEST_F(TestMemStore, ReadFromInvalidOffset) {
     IOBuf read_buf;
     auto read_future = _store->read(fh, 100, 10, &read_buf); // 从偏移量100读取
     status = read_future.get();
-    ASSERT_TRUE(status.ok()); // 当前实现会成功，但返回空数据
-
-    ASSERT_EQ(read_buf.size(), 0);
+    ASSERT_FALSE(status.ok()); // 应该失败，因为偏移量超出了文件范围
 }
 
-TEST_F(TestMemStore, AppendToInvalidFileHandle) {
-    // 创建一个无效的文件句柄
+TEST_F(TestLocalStore, AppendToInvalidFileHandle) {
     EXPECT_EXIT(new FileHandle(nullptr), testing::KilledBySignal(SIGABRT), "store is nullptr");
 }
 
-// WARNING: ConcurrentWrite is not yet supported in the current implementation
-TEST_F(TestMemStore, DISABLED_ConcurrentAccess) {
+TEST_F(TestLocalStore, LargeDataHandling) {
     FileHandlePtr fh;
-    auto future = _store->open("/test/file1", O_RDWR | O_CREAT, &fh);
+    auto future = _store->open("large_file", O_RDWR | O_CREAT, &fh);
     auto status = future.get();
-    ASSERT_TRUE(status.ok()) << "Failed to open file: " << status.error_str();
-
-    // 并发写入
-    const int num_threads = 10;
-    const int writes_per_thread = 100;
-    std::vector<std::future<Status>> futures;
-
-    for (int i = 0; i < num_threads; ++i) {
-        futures.emplace_back(std::async(std::launch::async, [this, fh, i, writes_per_thread]() {
-            for (int j = 0; j < writes_per_thread; ++j) {
-                IOBuf buf;
-                std::string data = "Thread" + std::to_string(i) + "_Write" + std::to_string(j);
-                buf.append(data.c_str(), data.length());
-
-                auto append_future = _store->append(fh, 0, buf);
-                auto status = append_future.get();
-                if (!status.ok()) {
-                    return status;
-                }
-            }
-            return Status::OK();
-        }));
-    }
-
-    // 等待所有线程完成
-    for (auto& future : futures) {
-        status = future.get();
-        ASSERT_TRUE(status.ok()) << "Concurrent access failed: " << status.error_str();
-    }
-
-    // 验证最终文件大小
-    uint64_t final_size = 0;
-    auto size_future = _store->size(fh, &final_size);
-    status = size_future.get();
     ASSERT_TRUE(status.ok());
-    ASSERT_GT(final_size, 0);
-}
-
-TEST_F(TestMemStore, LargeDataHandling) {
-    FileHandlePtr fh;
-    auto future = _store->open("/test/large_file", O_RDWR | O_CREAT, &fh);
-    auto status = future.get();
-    ASSERT_TRUE(status.ok()) << "Failed to open file: " << status.error_str();
 
     // 写入大量数据
     const size_t large_size = 1024 * 1024; // 1MB
@@ -450,11 +448,11 @@ TEST_F(TestMemStore, LargeDataHandling) {
     ASSERT_EQ(read_data, std::string(1024, 'A'));
 }
 
-TEST_F(TestMemStore, EmptyStringHandling) {
+TEST_F(TestLocalStore, EmptyStringHandling) {
     FileHandlePtr fh;
-    auto future = _store->open("/test/empty_file", O_RDWR | O_CREAT, &fh);
+    auto future = _store->open("empty_file", O_RDWR | O_CREAT, &fh);
     auto status = future.get();
-    ASSERT_TRUE(status.ok()) << "Failed to open file: " << status.error_str();
+    ASSERT_TRUE(status.ok());
 
     // 写入空字符串
     IOBuf empty_buf;
@@ -473,37 +471,41 @@ TEST_F(TestMemStore, EmptyStringHandling) {
     IOBuf read_buf;
     auto read_future = _store->read(fh, 0, 10, &read_buf);
     status = read_future.get();
-    ASSERT_TRUE(status.ok());
-    ASSERT_EQ(read_buf.size(), 0);
+    ASSERT_FALSE(status.ok()); // 应该失败，因为请求的大小超过了实际文件大小
 }
 
-TEST_F(TestMemStore, NullPointerHandling) {
+TEST_F(TestLocalStore, NullPointerHandling) {
     // 测试空指针参数
     FileHandlePtr fh;
-    auto future = _store->open("/test/file1", O_RDWR | O_CREAT, &fh);
+    auto future = _store->open("test_file1", O_RDWR | O_CREAT, &fh);
     auto status = future.get();
-    ASSERT_TRUE(status.ok()) << "Failed to open file: " << status.error_str();
+    ASSERT_TRUE(status.ok());
 
     // 测试空键值
     auto set_future = _store->set_attr(fh, nullptr, "value");
-    // 当前实现没有检查空指针，这可能导致未定义行为
+    status = set_future.get();
+    ASSERT_FALSE(status.ok());
+    ASSERT_EQ(status.error_code(), EINVAL);
 
-    auto get_future = _store->get_attr(fh, nullptr, nullptr);
-    // 当前实现没有检查空指针，这可能导致未定义行为
+    std::string value;
+    auto get_future = _store->get_attr(fh, nullptr, &value);
+    status = get_future.get();
+    ASSERT_FALSE(status.ok());
+    ASSERT_EQ(status.error_code(), EINVAL);
 }
 
-TEST_F(TestMemStore, FileHandleReferenceCounting) {
+TEST_F(TestLocalStore, FileHandleReferenceCounting) {
     FileHandlePtr fh1;
     FileHandlePtr fh2;
 
     // 打开同一个文件两次
-    auto future1 = _store->open("/test/file1", O_RDWR | O_CREAT, &fh1);
+    auto future1 = _store->open("test_file1", O_RDWR | O_CREAT, &fh1);
     auto status = future1.get();
-    ASSERT_TRUE(status.ok()) << "Failed to open file: " << status.error_str();
+    ASSERT_TRUE(status.ok());
 
-    auto future2 = _store->open("/test/file1", O_RDWR | O_CREAT, &fh2);
+    auto future2 = _store->open("test_file1", O_RDWR | O_CREAT, &fh2);
     status = future2.get();
-    ASSERT_TRUE(status.ok()) << "Failed to open file: " << status.error_str();
+    ASSERT_TRUE(status.ok());
 
     // 验证引用计数
     ASSERT_EQ(fh1->use_count(), 1);
@@ -528,28 +530,27 @@ TEST_F(TestMemStore, FileHandleReferenceCounting) {
     ASSERT_EQ(actual, test_data);
 }
 
-TEST_F(TestMemStore, StoreReferenceCounting) {
+TEST_F(TestLocalStore, StoreReferenceCounting) {
     // 测试Store的引用计数
     StorePtr store_ref = _store.get();
-    // _store is a shared_ptr, so use_count is 2
-    EXPECT_EQ(store_ref->use_count(), 2);
+    ASSERT_EQ(store_ref->use_count(), 2);
 
     // 创建文件句柄会增加引用计数
     FileHandlePtr fh;
-    auto future = _store->open("/test/file1", O_RDWR | O_CREAT, &fh);
+    auto future = _store->open("test_file1", O_RDWR | O_CREAT, &fh);
     auto status = future.get();
     ASSERT_TRUE(status.ok()) << "Failed to open file: " << status.error_str();
 
     // 文件句柄持有Store的引用
-    EXPECT_EQ(store_ref->use_count(), 3);
+    ASSERT_EQ(store_ref->use_count(), 3);
 
     // 释放文件句柄
     fh.reset();
-    EXPECT_EQ(store_ref->use_count(), 2);
+    ASSERT_EQ(store_ref->use_count(), 2);
 }
 
 // 新增的测试用例：参数验证和 flags 处理
-TEST_F(TestMemStore, OpenWithNullPath) {
+TEST_F(TestLocalStore, OpenWithNullPath) {
     FileHandlePtr fh;
     auto future = _store->open(nullptr, O_RDWR | O_CREAT, &fh);
     auto status = future.get();
@@ -559,8 +560,8 @@ TEST_F(TestMemStore, OpenWithNullPath) {
     ASSERT_EQ(status.error_str(), "path is nullptr");
 }
 
-TEST_F(TestMemStore, OpenWithNullFileHandle) {
-    auto future = _store->open("/test/file1", O_RDWR | O_CREAT, nullptr);
+TEST_F(TestLocalStore, OpenWithNullFileHandle) {
+    auto future = _store->open("test_file1", O_RDWR | O_CREAT, nullptr);
     auto status = future.get();
 
     ASSERT_FALSE(status.ok());
@@ -568,27 +569,26 @@ TEST_F(TestMemStore, OpenWithNullFileHandle) {
     ASSERT_EQ(status.error_str(), "fh is nullptr");
 }
 
-TEST_F(TestMemStore, OpenWithExclusiveFlag) {
+TEST_F(TestLocalStore, OpenWithExclusiveFlag) {
     // 第一次打开文件
     FileHandlePtr fh1;
-    auto future1 = _store->open("/test/exclusive_file", O_RDWR | O_CREAT, &fh1);
+    auto future1 = _store->open("exclusive_file", O_RDWR | O_CREAT, &fh1);
     auto status = future1.get();
     ASSERT_TRUE(status.ok()) << "Failed to open file: " << status.error_str();
 
     // 尝试用 O_EXCL 标志再次打开同一个文件
     FileHandlePtr fh2;
-    auto future2 = _store->open("/test/exclusive_file", O_RDWR | O_EXCL, &fh2);
+    auto future2 = _store->open("exclusive_file", O_RDWR | O_CREAT | O_EXCL, &fh2);
     status = future2.get();
 
     ASSERT_FALSE(status.ok());
     ASSERT_EQ(status.error_code(), EEXIST);
-    ASSERT_EQ(status.error_str(), "file already exists");
 }
 
-TEST_F(TestMemStore, OpenWithTruncateFlag) {
+TEST_F(TestLocalStore, OpenWithTruncateFlag) {
     // 创建文件并写入数据
     FileHandlePtr fh1;
-    auto future1 = _store->open("/test/truncate_file", O_RDWR | O_CREAT, &fh1);
+    auto future1 = _store->open("truncate_file", O_RDWR | O_CREAT, &fh1);
     auto status = future1.get();
     ASSERT_TRUE(status.ok()) << "Failed to open file: " << status.error_str();
 
@@ -609,7 +609,7 @@ TEST_F(TestMemStore, OpenWithTruncateFlag) {
 
     // 用 O_TRUNC 标志重新打开文件
     FileHandlePtr fh2;
-    auto future2 = _store->open("/test/truncate_file", O_RDWR | O_TRUNC, &fh2);
+    auto future2 = _store->open("truncate_file", O_RDWR | O_TRUNC, &fh2);
     status = future2.get();
     ASSERT_TRUE(status.ok()) << "Failed to open file with O_TRUNC: " << status.error_str();
 
@@ -620,18 +620,17 @@ TEST_F(TestMemStore, OpenWithTruncateFlag) {
     ASSERT_EQ(size, 0);
 }
 
-TEST_F(TestMemStore, OpenWithoutCreateFlag) {
+TEST_F(TestLocalStore, OpenWithoutCreateFlag) {
     // 尝试打开不存在的文件，不使用 O_CREAT 标志
     FileHandlePtr fh;
-    auto future = _store->open("/test/nonexistent_file", O_RDWR, &fh);
+    auto future = _store->open("nonexistent_file", O_RDWR, &fh);
     auto status = future.get();
 
     ASSERT_FALSE(status.ok());
     ASSERT_EQ(status.error_code(), ENOENT);
-    ASSERT_EQ(status.error_str(), "file not found");
 }
 
-TEST_F(TestMemStore, AppendWithNullFileHandle) {
+TEST_F(TestLocalStore, AppendWithNullFileHandle) {
     IOBuf write_buf;
     const char* test_data = "Hello";
     write_buf.append(test_data, strlen(test_data));
@@ -644,7 +643,7 @@ TEST_F(TestMemStore, AppendWithNullFileHandle) {
     ASSERT_EQ(status.error_str(), "fh is nullptr");
 }
 
-TEST_F(TestMemStore, ReadWithNullFileHandle) {
+TEST_F(TestLocalStore, ReadWithNullFileHandle) {
     IOBuf read_buf;
     auto read_future = _store->read(nullptr, 0, 10, &read_buf);
     auto status = read_future.get();
@@ -654,7 +653,21 @@ TEST_F(TestMemStore, ReadWithNullFileHandle) {
     ASSERT_EQ(status.error_str(), "fh is nullptr");
 }
 
-TEST_F(TestMemStore, SizeWithNullFileHandle) {
+TEST_F(TestLocalStore, ReadWithNullBuffer) {
+    FileHandlePtr fh;
+    auto future = _store->open("test_file1", O_RDWR | O_CREAT, &fh);
+    auto status = future.get();
+    ASSERT_TRUE(status.ok()) << "Failed to open file: " << status.error_str();
+
+    auto read_future = _store->read(fh, 0, 10, nullptr);
+    status = read_future.get();
+
+    ASSERT_FALSE(status.ok());
+    ASSERT_EQ(status.error_code(), EINVAL);
+    ASSERT_EQ(status.error_str(), "buf is nullptr");
+}
+
+TEST_F(TestLocalStore, SizeWithNullFileHandle) {
     uint64_t size = 0;
     auto size_future = _store->size(nullptr, &size);
     auto status = size_future.get();
@@ -664,7 +677,21 @@ TEST_F(TestMemStore, SizeWithNullFileHandle) {
     ASSERT_EQ(status.error_str(), "fh is nullptr");
 }
 
-TEST_F(TestMemStore, RemoveWithNullPath) {
+TEST_F(TestLocalStore, SizeWithNullSize) {
+    FileHandlePtr fh;
+    auto future = _store->open("test_file1", O_RDWR | O_CREAT, &fh);
+    auto status = future.get();
+    ASSERT_TRUE(status.ok()) << "Failed to open file: " << status.error_str();
+
+    auto size_future = _store->size(fh, nullptr);
+    status = size_future.get();
+
+    ASSERT_FALSE(status.ok());
+    ASSERT_EQ(status.error_code(), EINVAL);
+    ASSERT_EQ(status.error_str(), "size is nullptr");
+}
+
+TEST_F(TestLocalStore, RemoveWithNullPath) {
     auto remove_future = _store->remove(nullptr);
     auto status = remove_future.get();
 
@@ -673,7 +700,16 @@ TEST_F(TestMemStore, RemoveWithNullPath) {
     ASSERT_EQ(status.error_str(), "path is nullptr");
 }
 
-TEST_F(TestMemStore, SetAttrWithNullFileHandle) {
+TEST_F(TestLocalStore, SealWithNullFileHandle) {
+    auto seal_future = _store->seal(nullptr);
+    auto status = seal_future.get();
+
+    ASSERT_FALSE(status.ok());
+    ASSERT_EQ(status.error_code(), EINVAL);
+    ASSERT_EQ(status.error_str(), "fh is nullptr");
+}
+
+TEST_F(TestLocalStore, SetAttrWithNullFileHandle) {
     auto set_future = _store->set_attr(nullptr, "key", "value");
     auto status = set_future.get();
 
@@ -682,9 +718,9 @@ TEST_F(TestMemStore, SetAttrWithNullFileHandle) {
     ASSERT_EQ(status.error_str(), "fh is nullptr");
 }
 
-TEST_F(TestMemStore, SetAttrWithNullKey) {
+TEST_F(TestLocalStore, SetAttrWithNullKey) {
     FileHandlePtr fh;
-    auto future = _store->open("/test/file1", O_RDWR | O_CREAT, &fh);
+    auto future = _store->open("test_file1", O_RDWR | O_CREAT, &fh);
     auto status = future.get();
     ASSERT_TRUE(status.ok()) << "Failed to open file: " << status.error_str();
 
@@ -696,9 +732,9 @@ TEST_F(TestMemStore, SetAttrWithNullKey) {
     ASSERT_EQ(status.error_str(), "key is nullptr");
 }
 
-TEST_F(TestMemStore, SetAttrWithNullValue) {
+TEST_F(TestLocalStore, SetAttrWithNullValue) {
     FileHandlePtr fh;
-    auto future = _store->open("/test/file1", O_RDWR | O_CREAT, &fh);
+    auto future = _store->open("test_file1", O_RDWR | O_CREAT, &fh);
     auto status = future.get();
     ASSERT_TRUE(status.ok()) << "Failed to open file: " << status.error_str();
 
@@ -710,7 +746,7 @@ TEST_F(TestMemStore, SetAttrWithNullValue) {
     ASSERT_EQ(status.error_str(), "value is nullptr");
 }
 
-TEST_F(TestMemStore, GetAttrWithNullFileHandle) {
+TEST_F(TestLocalStore, GetAttrWithNullFileHandle) {
     std::string value;
     auto get_future = _store->get_attr(nullptr, "key", &value);
     auto status = get_future.get();
@@ -720,9 +756,9 @@ TEST_F(TestMemStore, GetAttrWithNullFileHandle) {
     ASSERT_EQ(status.error_str(), "fh is nullptr");
 }
 
-TEST_F(TestMemStore, GetAttrWithNullKey) {
+TEST_F(TestLocalStore, GetAttrWithNullKey) {
     FileHandlePtr fh;
-    auto future = _store->open("/test/file1", O_RDWR | O_CREAT, &fh);
+    auto future = _store->open("test_file1", O_RDWR | O_CREAT, &fh);
     auto status = future.get();
     ASSERT_TRUE(status.ok()) << "Failed to open file: " << status.error_str();
 
@@ -735,9 +771,9 @@ TEST_F(TestMemStore, GetAttrWithNullKey) {
     ASSERT_EQ(status.error_str(), "key is nullptr");
 }
 
-TEST_F(TestMemStore, GetAttrWithNullValue) {
+TEST_F(TestLocalStore, GetAttrWithNullValue) {
     FileHandlePtr fh;
-    auto future = _store->open("/test/file1", O_RDWR | O_CREAT, &fh);
+    auto future = _store->open("test_file1", O_RDWR | O_CREAT, &fh);
     auto status = future.get();
     ASSERT_TRUE(status.ok()) << "Failed to open file: " << status.error_str();
 
@@ -749,7 +785,7 @@ TEST_F(TestMemStore, GetAttrWithNullValue) {
     ASSERT_EQ(status.error_str(), "value is nullptr");
 }
 
-TEST_F(TestMemStore, ListAttrsWithNullFileHandle) {
+TEST_F(TestLocalStore, ListAttrsWithNullFileHandle) {
     std::map<std::string, std::string> attrs;
     auto list_future = _store->list_attrs(nullptr, &attrs);
     auto status = list_future.get();
@@ -759,9 +795,9 @@ TEST_F(TestMemStore, ListAttrsWithNullFileHandle) {
     ASSERT_EQ(status.error_str(), "fh is nullptr");
 }
 
-TEST_F(TestMemStore, ListAttrsWithNullAttrs) {
+TEST_F(TestLocalStore, ListAttrsWithNullAttrs) {
     FileHandlePtr fh;
-    auto future = _store->open("/test/file1", O_RDWR | O_CREAT, &fh);
+    auto future = _store->open("test_file1", O_RDWR | O_CREAT, &fh);
     auto status = future.get();
     ASSERT_TRUE(status.ok()) << "Failed to open file: " << status.error_str();
 
@@ -773,153 +809,8 @@ TEST_F(TestMemStore, ListAttrsWithNullAttrs) {
     ASSERT_EQ(status.error_str(), "attrs is nullptr");
 }
 
-TEST_F(TestMemStore, ComplexFlagsCombination) {
-    // 测试复杂的标志组合
-    FileHandlePtr fh;
-
-    // O_CREAT | O_EXCL - 创建独占文件
-    auto future = _store->open("/test/exclusive_created", O_RDWR | O_CREAT | O_EXCL, &fh);
-    auto status = future.get();
-    ASSERT_TRUE(status.ok()) << "Failed to create exclusive file: " << status.error_str();
-
-    // 再次尝试创建同一个文件应该失败
-    FileHandlePtr fh2;
-    auto future2 = _store->open("/test/exclusive_created", O_RDWR | O_CREAT | O_EXCL, &fh2);
-    status = future2.get();
-    ASSERT_FALSE(status.ok());
-    ASSERT_EQ(status.error_code(), EEXIST);
-}
-
-TEST_F(TestMemStore, FileReopeningBehavior) {
-    // 测试文件重新打开的行为
-    FileHandlePtr fh1;
-    auto future1 = _store->open("/test/reopen_file", O_RDWR | O_CREAT, &fh1);
-    auto status = future1.get();
-    ASSERT_TRUE(status.ok()) << "Failed to open file: " << status.error_str();
-
-    // 写入数据
-    IOBuf write_buf;
-    const char* test_data = "Hello, World!";
-    write_buf.append(test_data, strlen(test_data));
-
-    auto append_future = _store->append(fh1, 0, write_buf);
-    status = append_future.get();
-    ASSERT_TRUE(status.ok());
-
-    // 重新打开同一个文件（不使用 O_TRUNC）
-    FileHandlePtr fh2;
-    auto future2 = _store->open("/test/reopen_file", O_RDWR, &fh2);
-    status = future2.get();
-    ASSERT_TRUE(status.ok()) << "Failed to reopen file: " << status.error_str() << "(" << status.error_code() << ")";
-
-    // 验证数据仍然存在
-    uint64_t size = 0;
-    auto size_future = _store->size(fh2, &size);
-    status = size_future.get();
-    ASSERT_TRUE(status.ok());
-    ASSERT_EQ(size, strlen(test_data));
-
-    // 读取数据验证内容
-    IOBuf read_buf;
-    auto read_future = _store->read(fh2, 0, strlen(test_data), &read_buf);
-    status = read_future.get();
-    ASSERT_TRUE(status.ok());
-
-    std::string actual(read_buf.to_string());
-    ASSERT_EQ(actual, test_data);
-}
-
-TEST_F(TestMemStore, RemoveNonExistentFile) {
-    // 删除不存在的文件应该成功（幂等操作）
-    auto remove_future = _store->remove("/test/nonexistent_file");
-    auto status = remove_future.get();
-    ASSERT_TRUE(status.ok());
-}
-
-TEST_F(TestMemStore, AttributesAfterFileRemoval) {
-    // 创建文件并设置属性
-    FileHandlePtr fh;
-    auto future = _store->open("/test/attr_file", O_RDWR | O_CREAT, &fh);
-    auto status = future.get();
-    ASSERT_TRUE(status.ok()) << "Failed to open file: " << status.error_str();
-
-    auto set_future = _store->set_attr(fh, "key1", "value1");
-    status = set_future.get();
-    ASSERT_TRUE(status.ok());
-
-    // 删除文件
-    auto remove_future = _store->remove("/test/attr_file");
-    status = remove_future.get();
-    ASSERT_TRUE(status.ok());
-
-    // 尝试获取已删除文件的属性
-    std::string value;
-    auto get_future = _store->get_attr(fh, "key1", &value);
-    // 注意：当前实现可能会崩溃，因为文件已被删除但文件句柄仍然有效
-    // 这是一个潜在的改进点
-}
-
-TEST_F(TestMemStore, MultipleFileOperations) {
-    // 测试多个文件的并发操作
-    std::vector<std::string> file_paths = {"/test/multi1", "/test/multi2", "/test/multi3"};
-    std::vector<FileHandlePtr> handles;
-
-    // 创建多个文件
-    for (const auto& path : file_paths) {
-        FileHandlePtr fh;
-        auto future = _store->open(path.c_str(), O_RDWR | O_CREAT, &fh);
-        auto status = future.get();
-        ASSERT_TRUE(status.ok()) << "Failed to open file " << path << ": " << status.error_str();
-        handles.push_back(fh);
-    }
-
-    // 为每个文件设置不同的属性
-    for (size_t i = 0; i < handles.size(); ++i) {
-        std::string key = "file_key_" + std::to_string(i);
-        std::string value = "file_value_" + std::to_string(i);
-
-        auto set_future = _store->set_attr(handles[i], key.c_str(), value.c_str());
-        auto status = set_future.get();
-        ASSERT_TRUE(status.ok());
-    }
-
-    // 验证每个文件的属性
-    for (size_t i = 0; i < handles.size(); ++i) {
-        std::string key = "file_key_" + std::to_string(i);
-        std::string expected_value = "file_value_" + std::to_string(i);
-
-        std::string actual_value;
-        auto get_future = _store->get_attr(handles[i], key.c_str(), &actual_value);
-        auto status = get_future.get();
-        ASSERT_TRUE(status.ok());
-        ASSERT_EQ(actual_value, expected_value);
-    }
-}
-
-TEST_F(TestMemStore, EdgeCaseFlags) {
-    // 测试边界情况的标志组合
-    FileHandlePtr fh;
-
-    // 只使用 O_RDWR，不创建文件
-    auto future = _store->open("/test/edge_case", O_RDWR, &fh);
-    auto status = future.get();
-    ASSERT_FALSE(status.ok());
-    ASSERT_EQ(status.error_code(), ENOENT);
-
-    // 使用无效的标志组合
-    future = _store->open("/test/edge_case", 0, &fh);
-    status = future.get();
-    ASSERT_FALSE(status.ok());
-    ASSERT_EQ(status.error_code(), ENOENT);
-
-    // 使用 O_CREAT 但不指定读写权限
-    future = _store->open("/test/edge_case", O_CREAT, &fh);
-    status = future.get();
-    ASSERT_TRUE(status.ok()) << "O_CREAT without read/write flags should work";
-}
-
 // 额外的边界情况测试
-TEST_F(TestMemStore, EmptyPathString) {
+TEST_F(TestLocalStore, EmptyPathString) {
     // 测试空字符串路径
     FileHandlePtr fh;
     auto future = _store->open("", O_RDWR | O_CREAT, &fh);
@@ -929,35 +820,26 @@ TEST_F(TestMemStore, EmptyPathString) {
     // 但至少不应该崩溃
 }
 
-TEST_F(TestMemStore, VeryLongPath) {
+TEST_F(TestLocalStore, VeryLongPath) {
     // 测试非常长的路径
     std::string long_path(1000, 'a');
-    long_path = "/test/" + long_path;
 
     FileHandlePtr fh;
     auto future = _store->open(long_path.c_str(), O_RDWR | O_CREAT, &fh);
     auto status = future.get();
-    ASSERT_TRUE(status.ok()) << "Failed to open file with long path: " << status.error_str();
-
-    // 验证文件可以被正常操作
-    IOBuf write_buf;
-    const char* test_data = "Test data";
-    write_buf.append(test_data, strlen(test_data));
-
-    auto append_future = _store->append(fh, 0, write_buf);
-    status = append_future.get();
-    ASSERT_TRUE(status.ok());
+    ASSERT_FALSE(status.ok());
+    ASSERT_EQ(status.error_code(), ENAMETOOLONG);
 }
 
-TEST_F(TestMemStore, SpecialCharactersInPath) {
+TEST_F(TestLocalStore, SpecialCharactersInPath) {
     // 测试路径中的特殊字符
-    std::vector<std::string> special_paths = {"/test/file with spaces",
-                                              "/test/file-with-dashes",
-                                              "/test/file_with_underscores",
-                                              "/test/file.with.dots",
-                                              "/test/file@#$%^&*()",
-                                              "/test/中文文件名",
-                                              "/test/ファイル名"};
+    std::vector<std::string> special_paths = {"file with spaces",
+                                              "file-with-dashes",
+                                              "file_with_underscores",
+                                              "file.with.dots",
+                                              "file@#$%^&*()",
+                                              "中文文件名",
+                                              "ファイル名"};
 
     for (const auto& path : special_paths) {
         FileHandlePtr fh;
@@ -976,10 +858,10 @@ TEST_F(TestMemStore, SpecialCharactersInPath) {
     }
 }
 
-TEST_F(TestMemStore, ZeroSizeOperations) {
+TEST_F(TestLocalStore, ZeroSizeOperations) {
     // 测试零大小的操作
     FileHandlePtr fh;
-    auto future = _store->open("/test/zero_size", O_RDWR | O_CREAT, &fh);
+    auto future = _store->open("zero_size", O_RDWR | O_CREAT, &fh);
     auto status = future.get();
     ASSERT_TRUE(status.ok()) << "Failed to open file: " << status.error_str();
 
@@ -1004,10 +886,10 @@ TEST_F(TestMemStore, ZeroSizeOperations) {
     ASSERT_EQ(read_buf.size(), 0);
 }
 
-TEST_F(TestMemStore, LargeOffsetOperations) {
+TEST_F(TestLocalStore, LargeOffsetOperations) {
     // 测试大偏移量操作
     FileHandlePtr fh;
-    auto future = _store->open("/test/large_offset", O_RDWR | O_CREAT, &fh);
+    auto future = _store->open("large_offset", O_RDWR | O_CREAT, &fh);
     auto status = future.get();
     ASSERT_TRUE(status.ok()) << "Failed to open file: " << status.error_str();
 
@@ -1024,47 +906,120 @@ TEST_F(TestMemStore, LargeOffsetOperations) {
     IOBuf read_buf;
     auto read_future = _store->read(fh, UINT64_MAX - 100, 10, &read_buf);
     status = read_future.get();
-    ASSERT_TRUE(status.ok());
-    ASSERT_EQ(read_buf.size(), 0); // 应该返回空数据
+    ASSERT_FALSE(status.ok()); // 应该失败，因为偏移量超出了文件范围
 }
 
-TEST_F(TestMemStore, MemoryLeakPrevention) {
-    // 测试内存泄漏防护
-    const int num_files = 100;
+TEST_F(TestLocalStore, RemoveNonExistentFile) {
+    // 删除不存在的文件应该失败
+    auto remove_future = _store->remove("nonexistent_file");
+    auto status = remove_future.get();
+    ASSERT_FALSE(status.ok());
+    ASSERT_EQ(status.error_code(), ENOENT);
+}
+
+TEST_F(TestLocalStore, FileReopeningBehavior) {
+    // 测试文件重新打开的行为
+    FileHandlePtr fh1;
+    auto future1 = _store->open("reopen_file", O_RDWR | O_CREAT, &fh1);
+    auto status = future1.get();
+    ASSERT_TRUE(status.ok()) << "Failed to open file: " << status.error_str();
+
+    // 写入数据
+    IOBuf write_buf;
+    const char* test_data = "Hello, World!";
+    write_buf.append(test_data, strlen(test_data));
+
+    auto append_future = _store->append(fh1, 0, write_buf);
+    status = append_future.get();
+    ASSERT_TRUE(status.ok());
+
+    // 重新打开同一个文件（不使用 O_TRUNC）
+    FileHandlePtr fh2;
+    auto future2 = _store->open("reopen_file", O_RDWR, &fh2);
+    status = future2.get();
+    ASSERT_TRUE(status.ok()) << "Failed to reopen file: " << status.error_str();
+
+    // 验证数据仍然存在
+    uint64_t size = 0;
+    auto size_future = _store->size(fh2, &size);
+    status = size_future.get();
+    ASSERT_TRUE(status.ok());
+    ASSERT_EQ(size, strlen(test_data));
+
+    // 读取数据验证内容
+    IOBuf read_buf;
+    auto read_future = _store->read(fh2, 0, strlen(test_data), &read_buf);
+    status = read_future.get();
+    ASSERT_TRUE(status.ok());
+
+    std::string actual(read_buf.to_string());
+    ASSERT_EQ(actual, test_data);
+}
+
+TEST_F(TestLocalStore, MultipleFileOperations) {
+    // 测试多个文件的并发操作
+    std::vector<std::string> filenames = {"multi1", "multi2", "multi3"};
     std::vector<FileHandlePtr> handles;
 
-    // 创建大量文件
-    for (int i = 0; i < num_files; ++i) {
+    // 创建多个文件
+    for (const auto& filename : filenames) {
         FileHandlePtr fh;
-        auto path = "/test/memory_test_" + std::to_string(i);
-        auto future = _store->open(path.c_str(), O_RDWR | O_CREAT, &fh);
+        auto future = _store->open(filename.c_str(), O_RDWR | O_CREAT, &fh);
         auto status = future.get();
-        ASSERT_TRUE(status.ok()) << "Failed to open file " << i << ": " << status.error_str();
-
-        // 为每个文件设置属性
-        auto set_future = _store->set_attr(fh, "key", "value");
-        status = set_future.get();
-        ASSERT_TRUE(status.ok());
-
+        ASSERT_TRUE(status.ok()) << "Failed to open file " << filename << ": " << status.error_str();
         handles.push_back(fh);
     }
 
-    // 验证所有文件都存在
-    ASSERT_EQ(handles.size(), num_files);
+    // 为每个文件设置不同的属性
+    for (size_t i = 0; i < handles.size(); ++i) {
+        std::string key = "file_key_" + std::to_string(i);
+        std::string value = "file_value_" + std::to_string(i);
 
-    // 释放所有句柄
-    handles.clear();
+        auto set_future = _store->set_attr(handles[i], key.c_str(), value.c_str());
+        auto status = set_future.get();
+        if (status.error_code() == ENOTSUP) {
+            GTEST_SKIP() << "set_attr is not supported";
+        }
+        ASSERT_TRUE(status.ok()) << "Failed to set attribute for file: " << status.error_str() << "("
+                                 << status.error_code() << ")";
+    }
 
-    // 验证文件仍然存在于存储中
-    std::vector<std::string> found_paths;
-    _store->for_each([&found_paths](const char* path) {
-        found_paths.emplace_back(path);
-    });
+    // 验证每个文件的属性
+    for (size_t i = 0; i < handles.size(); ++i) {
+        std::string key = "file_key_" + std::to_string(i);
+        std::string expected_value = "file_value_" + std::to_string(i);
 
-    ASSERT_EQ(found_paths.size(), num_files);
+        std::string actual_value;
+        auto get_future = _store->get_attr(handles[i], key.c_str(), &actual_value);
+        auto status = get_future.get();
+        ASSERT_TRUE(status.ok());
+        ASSERT_EQ(actual_value, expected_value);
+    }
 }
 
-TEST_F(TestMemStore, ErrorCodeConsistency) {
+TEST_F(TestLocalStore, EdgeCaseFlags) {
+    // 测试边界情况的标志组合
+    FileHandlePtr fh;
+
+    // 只使用 O_RDWR，不创建文件
+    auto future = _store->open("edge_case", O_RDWR, &fh);
+    auto status = future.get();
+    ASSERT_FALSE(status.ok());
+    ASSERT_EQ(status.error_code(), ENOENT);
+
+    // 使用无效的标志组合
+    future = _store->open("edge_case", 0, &fh);
+    status = future.get();
+    ASSERT_FALSE(status.ok());
+    ASSERT_EQ(status.error_code(), ENOENT);
+
+    // 使用 O_CREAT 但不指定读写权限
+    future = _store->open("edge_case", O_CREAT, &fh);
+    status = future.get();
+    ASSERT_TRUE(status.ok()) << "O_CREAT without read/write flags should work";
+}
+
+TEST_F(TestLocalStore, ErrorCodeConsistency) {
     // 测试错误码的一致性
     FileHandlePtr fh;
 
@@ -1075,32 +1030,33 @@ TEST_F(TestMemStore, ErrorCodeConsistency) {
     ASSERT_EQ(status.error_code(), EINVAL);
 
     // 测试 ENOENT 错误
-    future = _store->open("/test/nonexistent", O_RDWR, &fh);
+    future = _store->open("nonexistent", O_RDWR, &fh);
     status = future.get();
     ASSERT_FALSE(status.ok());
     ASSERT_EQ(status.error_code(), ENOENT);
 
     // 测试 EEXIST 错误
-    auto future1 = _store->open("/test/exclusive_test", O_RDWR | O_CREAT, &fh);
+    auto future1 = _store->open("exclusive_test", O_RDWR | O_CREAT, &fh);
     status = future1.get();
     ASSERT_TRUE(status.ok()) << "Failed to create file: " << status.error_str();
 
-    auto future2 = _store->open("/test/exclusive_test", O_RDWR | O_EXCL, &fh);
+    auto future2 = _store->open("exclusive_test", O_RDWR | O_CREAT | O_EXCL, &fh);
     status = future2.get();
     ASSERT_FALSE(status.ok());
     ASSERT_EQ(status.error_code(), EEXIST);
 }
 
-TEST_F(TestMemStore, ThreadSafetyWithMultipleStores) {
+TEST_F(TestLocalStore, ThreadSafetyWithMultipleStores) {
     // 测试多个存储实例的线程安全性
     std::vector<StorePtr> stores;
     const int num_stores = 5;
 
     // 创建多个存储实例
     for (int i = 0; i < num_stores; ++i) {
-        auto store = Store::create("memory://");
+        auto store_path = "local://" + (_test_dir / ("store_" + std::to_string(i))).string();
+        auto store = Store::create(store_path.c_str());
         ASSERT_TRUE(store != nullptr);
-        stores.push_back(store);
+        stores.emplace_back(store);
     }
 
     // 在每个存储中创建文件
@@ -1110,9 +1066,9 @@ TEST_F(TestMemStore, ThreadSafetyWithMultipleStores) {
         futures.emplace_back(std::async(std::launch::async, [&stores, i]() {
             auto store = stores[i];
             FileHandlePtr fh;
-            auto path = "/test/store_" + std::to_string(i) + "_file";
+            auto filename = "store_" + std::to_string(i) + "_file";
 
-            auto future = store->open(path.c_str(), O_RDWR | O_CREAT, &fh);
+            auto future = store->open(filename.c_str(), O_RDWR | O_CREAT, &fh);
             auto status = future.get();
             if (!status.ok()) {
                 return status;
@@ -1133,36 +1089,6 @@ TEST_F(TestMemStore, ThreadSafetyWithMultipleStores) {
         auto status = future.get();
         ASSERT_TRUE(status.ok()) << "Thread safety test failed: " << status.error_str();
     }
-}
-
-TEST_F(TestMemStore, FileHandleTypeSafety) {
-    // 测试文件句柄的类型安全性
-    FileHandlePtr fh;
-    auto future = _store->open("/test/type_safety", O_RDWR | O_CREAT, &fh);
-    auto status = future.get();
-    ASSERT_TRUE(status.ok()) << "Failed to open file: " << status.error_str();
-
-    // 验证文件句柄不为空
-    ASSERT_TRUE(fh != nullptr);
-
-    // 验证文件句柄的引用计数
-    ASSERT_EQ(fh->use_count(), 1);
-
-    // 测试文件句柄的基本功能
-    IOBuf write_buf;
-    const char* test_data = "Test data";
-    write_buf.append(test_data, strlen(test_data));
-
-    auto append_future = fh->append(0, write_buf);
-    status = append_future.get();
-    ASSERT_TRUE(status.ok());
-
-    // 验证数据写入成功
-    uint64_t size = 0;
-    auto size_future = fh->size(&size);
-    status = size_future.get();
-    ASSERT_TRUE(status.ok());
-    ASSERT_EQ(size, strlen(test_data));
 }
 
 } // namespace

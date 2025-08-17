@@ -34,6 +34,7 @@ private:
 };
 
 LocalStore::LocalStore(const char* data_path) : _data_path(data_path) {
+    BOOST_ASSERT(data_path != nullptr);
     constexpr mode_t mode = 0774;
     int r = ::mkdir(data_path, mode);
     if (r < 0 && errno != EEXIST) {
@@ -42,6 +43,12 @@ LocalStore::LocalStore(const char* data_path) : _data_path(data_path) {
 }
 
 Future<Status> LocalStore::open(const char* path, int flags, FileHandlePtr* fh) {
+    if (path == nullptr) {
+        return make_ready_future(Status(EINVAL, "path is nullptr"));
+    }
+    if (fh == nullptr) {
+        return make_ready_future(Status(EINVAL, "fh is nullptr"));
+    }
     auto data_path = std::format("{}/{}", _data_path, path);
     constexpr mode_t mode = 0666;
     int fd = ::open(data_path.c_str(), flags, mode);
@@ -55,6 +62,10 @@ Future<Status> LocalStore::open(const char* path, int flags, FileHandlePtr* fh) 
 
 Future<Status> LocalStore::append(FileHandlePtr fh, uint64_t offset, IOBuf buf) {
     std::ignore = offset;
+    if (fh == nullptr) {
+        return make_ready_future(Status(EINVAL, "fh is nullptr"));
+    }
+
     int fd = fh->as<LocalFileHandle>()->handle();
 
     auto buf_size = buf.size();
@@ -70,6 +81,13 @@ Future<Status> LocalStore::append(FileHandlePtr fh, uint64_t offset, IOBuf buf) 
 }
 
 Future<Status> LocalStore::read(FileHandlePtr fh, uint64_t offset, uint64_t size, IOBuf* buf) {
+    if (fh == nullptr) {
+        return make_ready_future(Status(EINVAL, "fh is nullptr"));
+    }
+    if (buf == nullptr) {
+        return make_ready_future(Status(EINVAL, "buf is nullptr"));
+    }
+
     int fd = fh->as<LocalFileHandle>()->handle();
 
     butil::IOPortal iop;
@@ -95,6 +113,10 @@ Future<Status> LocalStore::read(FileHandlePtr fh, uint64_t offset, uint64_t size
 }
 
 Future<Status> LocalStore::seal(FileHandlePtr fh) {
+    if (fh == nullptr) {
+        return make_ready_future(Status(EINVAL, "fh is nullptr"));
+    }
+
     int fd = fh->as<LocalFileHandle>()->handle();
     constexpr mode_t mode = 0444;
     int r = ::fchmod(fd, mode);
@@ -105,6 +127,13 @@ Future<Status> LocalStore::seal(FileHandlePtr fh) {
 }
 
 Future<Status> LocalStore::size(FileHandlePtr fh, uint64_t* size) {
+    if (fh == nullptr) {
+        return make_ready_future(Status(EINVAL, "fh is nullptr"));
+    }
+    if (size == nullptr) {
+        return make_ready_future(Status(EINVAL, "size is nullptr"));
+    }
+
     int fd = fh->as<LocalFileHandle>()->handle();
     struct stat st;
     if (fstat(fd, &st) < 0) {
@@ -116,6 +145,10 @@ Future<Status> LocalStore::size(FileHandlePtr fh, uint64_t* size) {
 }
 
 Future<Status> LocalStore::remove(const char* path) {
+    if (path == nullptr) {
+        return make_ready_future(Status(EINVAL, "path is nullptr"));
+    }
+
     auto data_path = std::format("{}/{}", _data_path, path);
     int r = ::unlink(data_path.c_str());
     if (r < 0) {
@@ -125,6 +158,16 @@ Future<Status> LocalStore::remove(const char* path) {
 }
 
 Future<Status> LocalStore::set_attr(FileHandlePtr fh, const char* key, const char* value) {
+    if (fh == nullptr) {
+        return make_ready_future(Status(EINVAL, "fh is nullptr"));
+    }
+    if (key == nullptr) {
+        return make_ready_future(Status(EINVAL, "key is nullptr"));
+    }
+    if (value == nullptr) {
+        return make_ready_future(Status(EINVAL, "value is nullptr"));
+    }
+
     int fd = fh->as<LocalFileHandle>()->handle();
     int r = fsetxattr(fd, key, value, strlen(value), 0);
     if (r < 0) {
@@ -134,6 +177,16 @@ Future<Status> LocalStore::set_attr(FileHandlePtr fh, const char* key, const cha
 }
 
 Future<Status> LocalStore::get_attr(FileHandlePtr fh, const char* key, std::string* value) {
+    if (fh == nullptr) {
+        return make_ready_future(Status(EINVAL, "fh is nullptr"));
+    }
+    if (key == nullptr) {
+        return make_ready_future(Status(EINVAL, "key is nullptr"));
+    }
+    if (value == nullptr) {
+        return make_ready_future(Status(EINVAL, "value is nullptr"));
+    }
+
     int fd = fh->as<LocalFileHandle>()->handle();
     constexpr size_t buf_size = 1024;
     char buf[buf_size];
@@ -146,6 +199,13 @@ Future<Status> LocalStore::get_attr(FileHandlePtr fh, const char* key, std::stri
 }
 
 Future<Status> LocalStore::list_attrs(FileHandlePtr fh, std::map<std::string, std::string>* attrs) {
+    if (fh == nullptr) {
+        return make_ready_future(Status(EINVAL, "fh is nullptr"));
+    }
+    if (attrs == nullptr) {
+        return make_ready_future(Status(EINVAL, "attrs is nullptr"));
+    }
+
     int fd = fh->as<LocalFileHandle>()->handle();
     constexpr size_t buf_size = 1024;
     char buf[buf_size];

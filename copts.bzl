@@ -36,7 +36,10 @@ PAIN_COPTS = select({
 }) + [
     '-Isrc',
     '-march=native',
+    '-fno-omit-frame-pointer',
     '-DSPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE',
+    '-DSPDLOG_FMT_EXTERNAL',
+    '-DBOOST_ENABLE_ASSERT_HANDLER',
 ]
 
 PAIN_TEST_COPTS = PAIN_COPTS + select({

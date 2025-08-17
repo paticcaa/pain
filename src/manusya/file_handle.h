@@ -13,7 +13,9 @@ using FileHandlePtr = boost::intrusive_ptr<FileHandle>;
 
 class FileHandle {
 public:
-    FileHandle(StorePtr store) : _store(store) {}
+    FileHandle(StorePtr store) : _store(store) {
+        BOOST_ASSERT_MSG(store != nullptr, "store is nullptr");
+    }
     virtual ~FileHandle() = default;
 
     template <typename T>
