@@ -4,7 +4,7 @@
 #include <iostream>
 #include <variant>
 
-#include <boost/stacktrace.hpp>
+#include <boost/assert.hpp>
 
 namespace pain {
 
@@ -25,23 +25,13 @@ public:
     constexpr Result& operator=(Result&& other) noexcept = default;
 
     constexpr T& value() & noexcept {
-        if (is_ok()) {
-            return std::get<Ok>(_value).value;
-        }
-        std::cerr << "value error" << std::endl;
-        std::cerr << "Backtrace: " << std::endl;
-        std::cerr << boost::stacktrace::stacktrace() << std::endl;
-        abort();
+        BOOST_ASSERT_MSG(is_ok(), "value error");
+        return std::get<Ok>(_value).value;
     }
 
     constexpr const T& value() const& noexcept {
-        if (is_ok()) {
-            return std::get<Ok>(_value).value;
-        }
-        std::cerr << "value error" << std::endl;
-        std::cerr << "Backtrace: " << std::endl;
-        std::cerr << boost::stacktrace::stacktrace() << std::endl;
-        abort();
+        BOOST_ASSERT_MSG(is_ok(), "value error");
+        return std::get<Ok>(_value).value;
     }
 
     template <typename U>
@@ -53,33 +43,18 @@ public:
     }
 
     constexpr E& err() & noexcept {
-        if (!is_ok()) {
-            return std::get<Err>(_value).value;
-        }
-        std::cerr << "err error" << std::endl;
-        std::cerr << "Backtrace: " << std::endl;
-        std::cerr << boost::stacktrace::stacktrace() << std::endl;
-        abort();
+        BOOST_ASSERT_MSG(!is_ok(), "err error");
+        return std::get<Err>(_value).value;
     }
 
     constexpr const E& err() const& noexcept {
-        if (!is_ok()) {
-            return std::get<Err>(_value).value;
-        }
-        std::cerr << "err error" << std::endl;
-        std::cerr << "Backtrace: " << std::endl;
-        std::cerr << boost::stacktrace::stacktrace() << std::endl;
-        abort();
+        BOOST_ASSERT_MSG(!is_ok(), "err error");
+        return std::get<Err>(_value).value;
     }
 
     constexpr T unwrap() && noexcept {
-        if (is_ok()) {
-            return std::get<Ok>(std::move(_value)).value;
-        }
-        std::cerr << "unwrap error" << std::endl;
-        std::cerr << "Backtrace: " << std::endl;
-        std::cerr << boost::stacktrace::stacktrace() << std::endl;
-        abort();
+        BOOST_ASSERT_MSG(is_ok(), "unwrap error");
+        return std::get<Ok>(std::move(_value)).value;
     }
 
     constexpr T unwrap_or(T v) && noexcept {
@@ -90,23 +65,13 @@ public:
     }
 
     constexpr T expect(const char* msg) && noexcept {
-        if (is_ok()) {
-            return std::get<Ok>(std::move(_value)).value;
-        }
-        std::cerr << msg << std::endl;
-        std::cerr << "Backtrace: " << std::endl;
-        std::cerr << boost::stacktrace::stacktrace() << std::endl;
-        abort();
+        BOOST_ASSERT_MSG(is_ok(), msg);
+        return std::get<Ok>(std::move(_value)).value;
     }
 
     constexpr E unwrap_err() && noexcept {
-        if (!is_ok()) {
-            return std::get<Err>(std::move(_value)).value;
-        }
-        std::cerr << "err error" << std::endl;
-        std::cerr << "Backtrace: " << std::endl;
-        std::cerr << boost::stacktrace::stacktrace() << std::endl;
-        abort();
+        BOOST_ASSERT_MSG(!is_ok(), "unwrap error");
+        return std::get<Err>(std::move(_value)).value;
     }
 
     template <typename U, typename F>

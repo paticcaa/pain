@@ -14,6 +14,21 @@ TEST(TestResultNormal, ok) {
     EXPECT_EQ(std::move(r).unwrap(), 42);
 }
 
+TEST(TestResultNormal, ok_expect) {
+    auto r = Ok<int, std::error_code>(42);
+    ASSERT_EQ(r.is_ok(), true);
+    ASSERT_EQ(r.is_err(), false);
+    EXPECT_EQ(r.value(), 42);
+    EXPECT_EQ(std::move(r).expect("ok_expect"), 42);
+}
+
+TEST(TestResultNormal, ok_const) {
+    const auto r = Ok<int, std::error_code>(42);
+    ASSERT_EQ(r.is_ok(), true);
+    ASSERT_EQ(r.is_err(), false);
+    EXPECT_EQ(r.value(), 42);
+}
+
 TEST(TestResultNormal, ok_with_same_type) {
     auto r = Ok<int, int>(42);
     ASSERT_EQ(r.is_ok(), true);
@@ -29,6 +44,14 @@ TEST(TestResultNormal, err) {
     ASSERT_EQ(r.is_err(), true);
     EXPECT_EQ(r.err(), expect);
     EXPECT_EQ(std::move(r).unwrap_err(), expect);
+}
+
+TEST(TestResultNormal, err_const) {
+    auto expect = std::make_error_code(std::errc::invalid_argument);
+    const auto r = Err<int, std::error_code>(expect);
+    ASSERT_EQ(r.is_ok(), false);
+    ASSERT_EQ(r.is_err(), true);
+    EXPECT_EQ(r.err(), expect);
 }
 
 TEST(TestResultNormal, map_ok) {
@@ -173,7 +196,7 @@ TEST(TestResultDeath, UnwrapErrOnSuccess) {
             volatile auto err_val = std::move(r).unwrap_err();
             (void)err_val; // 避免未使用变量警告
         },
-        "err error");
+        "unwrap error");
 }
 
 // 测试在错误状态下调用 expect() 会导致 abort
@@ -199,7 +222,7 @@ TEST(TestResultDeath, ValueOnErrorShowsStacktrace) {
             volatile int val = r.value();
             (void)val; // 避免未使用变量警告
         },
-        "Backtrace:");
+        "value error");
 }
 
 // 测试在错误状态下调用 err() 会显示堆栈跟踪
@@ -211,7 +234,7 @@ TEST(TestResultDeath, ErrOnSuccessShowsStacktrace) {
             volatile auto err_val = r.err();
             (void)err_val; // 避免未使用变量警告
         },
-        "Backtrace:");
+        "StackTrace");
 }
 
 // 测试在错误状态下调用 unwrap() 会显示堆栈跟踪
@@ -224,7 +247,7 @@ TEST(TestResultDeath, UnwrapOnErrorShowsStacktrace) {
             volatile int val = std::move(r).unwrap();
             (void)val; // 避免未使用变量警告
         },
-        "Backtrace:");
+        "StackTrace");
 }
 
 // 测试在成功状态下调用 unwrap_err() 会显示堆栈跟踪
@@ -236,7 +259,7 @@ TEST(TestResultDeath, UnwrapErrOnSuccessShowsStacktrace) {
             volatile auto err_val = std::move(r).unwrap_err();
             (void)err_val; // 避免未使用变量警告
         },
-        "Backtrace:");
+        "StackTrace");
 }
 
 // 测试在错误状态下调用 expect() 会显示堆栈跟踪
@@ -249,7 +272,7 @@ TEST(TestResultDeath, ExpectOnErrorShowsStacktrace) {
             volatile int val = std::move(r).expect("Custom error message");
             (void)val; // 避免未使用变量警告
         },
-        "Backtrace:");
+        "StackTrace");
 }
 
 // 测试 value_or 在错误状态下返回默认值（不会 abort）
