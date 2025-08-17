@@ -11,7 +11,7 @@ A high-performance distributed storage system designed for scalability and relia
 
 The following tools and dependencies are required for building and running Pain:
 
-- **bazel** - Build system
+- **bazel(>=8.3)** - Build system
 - **Python 3** - Script execution and automation
 - **Ansible** - Deployment automation
 - **Docker** - Container runtime
@@ -19,7 +19,7 @@ The following tools and dependencies are required for building and running Pain:
 ### Installation Instructions
 
 ```bash
-# Instal bazel
+# Install bazel
 # Please refer to https://bazel.build/install
 
 # Install Ansible automation tool
