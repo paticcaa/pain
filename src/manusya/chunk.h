@@ -84,6 +84,10 @@ public:
         return _options;
     }
 
+    int use_count() const {
+        return _use_count;
+    }
+
 private:
     friend void intrusive_ptr_add_ref(Chunk* chunk) {
         chunk->_use_count++;

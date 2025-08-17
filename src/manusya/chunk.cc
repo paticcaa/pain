@@ -45,7 +45,10 @@ Status Chunk::append(const IOBuf& buf, uint64_t offset) {
                     return;
                 }
                 rq->unlink();
-                rq->promise.set_value(Status(ETIMEDOUT, "append request timeout"));
+                rq->promise.set_value(Status(
+                    EINVAL,
+                    std::format(
+                        "invalid offset at {}@{}, current size:{}", rq->offset, rq->buf.size(), rq->chunk->_size)));
                 intrusive_ptr_release(rq);
             },
             rq.get());
@@ -94,6 +97,9 @@ Status Chunk::append(const IOBuf& buf, uint64_t offset) {
 
 Status Chunk::query_and_seal(uint64_t* length) {
     SPAN(span);
+    if (length == nullptr) {
+        return Status(EINVAL, "length is nullptr");
+    }
     std::lock_guard lock(_mutex);
     auto status = _fh->seal().get();
     if (!status.ok()) {
@@ -109,6 +115,9 @@ Status Chunk::query_and_seal(uint64_t* length) {
 
 Status Chunk::read(uint64_t offset, uint64_t size, IOBuf* buf) const {
     SPAN(span);
+    if (buf == nullptr) {
+        return Status(EINVAL, "buf is nullptr");
+    }
     std::lock_guard lock(_mutex);
     if (offset + size > _size) {
         return Status(EINVAL,
@@ -128,12 +137,15 @@ Status Chunk::create(const ChunkOptions& options, StorePtr store, ChunkPtr* chun
     if (chunk == nullptr) {
         return Status(EINVAL, "chunk is nullptr");
     }
+    if (store == nullptr) {
+        return Status(EINVAL, "store is nullptr");
+    }
     auto c = ChunkPtr(new Chunk());
     c->_uuid = UUID::generate();
     c->_options = options;
     c->_store = store;
     c->_size = 0;
-    auto status = store->open(c->_uuid.str().c_str(), O_CREAT | O_WRONLY | O_EXCL, &c->_fh).get();
+    auto status = store->open(c->_uuid.str().c_str(), O_CREAT | O_RDWR | O_EXCL, &c->_fh).get();
 
     if (!status.ok()) {
         return status;
@@ -148,11 +160,14 @@ Status Chunk::create(const ChunkOptions& options, StorePtr store, const UUID& uu
     if (chunk == nullptr) {
         return Status(EINVAL, "chunk is nullptr");
     }
+    if (store == nullptr) {
+        return Status(EINVAL, "store is nullptr");
+    }
     auto c = ChunkPtr(new Chunk());
     c->_uuid = uuid;
     c->_options = options;
     c->_store = store;
-    auto status = store->open(c->_uuid.str().c_str(), O_RDONLY, &c->_fh).get();
+    auto status = store->open(c->_uuid.str().c_str(), O_CREAT | O_RDWR | O_EXCL, &c->_fh).get();
 
     if (!status.ok()) {
         return status;
