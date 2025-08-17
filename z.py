@@ -176,7 +176,7 @@ if __name__ == "__main__":
     build_parser = subparsers.add_parser('build', aliases=['b'])
     build_parser.set_defaults(func=build_project)
     build_parser.add_argument('-i', '--install', action='store_true')
-    build_parser.add_argument('--cache-dir', default='/mnt/bazel_cache')
+    build_parser.add_argument('--cache-dir', default='/home/summer/bazel_cache')
     build_parser.add_argument('rest', nargs=argparse.REMAINDER)
 
     line_parser = subparsers.add_parser('line')
@@ -196,7 +196,7 @@ if __name__ == "__main__":
     lint_parser.add_argument('rest', nargs=argparse.REMAINDER)
 
     test_parser = subparsers.add_parser('test', aliases = ['t'])
-    test_parser.add_argument('--cache-dir', default='/mnt/bazel_cache')
+    test_parser.add_argument('--cache-dir', default='/home/summer/bazel_cache')
     test_parser.set_defaults(func=test_project)
     test_parser.add_argument('rest', nargs=argparse.REMAINDER)
 
