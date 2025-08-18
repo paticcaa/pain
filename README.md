@@ -16,6 +16,10 @@ The following tools and dependencies are required for building and running Pain:
 - **Ansible** - Deployment automation
 - **Docker** - Container runtime
 
+### ENVIROMENT VALIABLE
+export CC=/usr/bin/gcc
+export CXX=/usr/bin/g++
+
 ### Installation Instructions
 
 ```bash
@@ -46,6 +50,8 @@ sudo apt install -y meson
 sudo apt install -y nasm
 sudo apt install -y ccache
 sudo apt install -y autoconf automake libtool pkg-config
+sudo apt install -y liblz4-devel
+sudo apt install -y openssh-server 
 ```
 
 ## Build and Development
