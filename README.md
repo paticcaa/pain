@@ -46,9 +46,14 @@ sudo apt install -y meson
 sudo apt install -y nasm
 sudo apt install -y ccache
 sudo apt install -y autoconf automake libtool pkg-config
+sudo apt install -y openssh-server 
 ```
 
 ## Build and Development
+
+### Environment Variable
+export CC=$(which gcc)
+export CXX=$(which g++)
 
 ### Core Build Commands
 
