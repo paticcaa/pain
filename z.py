@@ -196,7 +196,7 @@ if __name__ == "__main__":
     lint_parser.add_argument('rest', nargs=argparse.REMAINDER)
 
     test_parser = subparsers.add_parser('test', aliases = ['t'])
-    test_parser.add_argument('--cache-dir', default='/mnt/bazel_cache')
+    test_parser.add_argument('--cache-dir', default=os.getenv("PAIN_BAZEL_CACHE_DIR", '/mnt/bazel_cache'))
     test_parser.set_defaults(func=test_project)
     test_parser.add_argument('rest', nargs=argparse.REMAINDER)
 

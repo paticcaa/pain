@@ -52,12 +52,19 @@ sudo apt install -y openssh-server
 ## Build and Development
 
 ### Environment Variable
+
+```bash
 export CC=$(which gcc)
 export CXX=$(which g++)
+```
 
 ### Core Build Commands
 
 ```bash
+# set build cache dir
+# /mnt/bazel_cache is default path
+export PAIN_BAZEL_CACHE_DIR=/mnt/bazel_cache
+
 # Build the project
 ./z.py build    # or ./z.py b
 

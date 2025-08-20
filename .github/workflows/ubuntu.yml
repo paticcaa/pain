@@ -3,10 +3,10 @@ name: Linux
 on:
   push:
     branches: [main]
-    paths-ignore: ['**.md', '**.txt']
+    paths-ignore: ['**.md', '**.txt', '**.py', '**.sh', '**.yml']
   pull_request:
     branches: [main]
-    paths-ignore: ['**.md', '**.txt']
+    paths-ignore: ['**.md', '**.txt', '**.py', '**.sh', '**.yml']
 env:
   proc_num: $(nproc)
 jobs:
