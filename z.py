@@ -150,7 +150,7 @@ def line_project(args):
     run_in_shell('find include src -iname "*.h" -o -iname "*.cc" -o -iname "*.c" | xargs wc -l')
 
 def install_project(args):
-    run_in_shell('bazel run //:install')
+    run_in_shell('bazel run --disk_cache={} //:install'.format(args.cache_dir))
 
 
 def deploy_project(args):
@@ -158,6 +158,9 @@ def deploy_project(args):
         run_in_shell('ansible-playbook -i ./deploy/hosts ./deploy/deploy.yml -t start')
     elif args.action == 'stop':
         run_in_shell('ansible-playbook -i ./deploy/hosts ./deploy/deploy.yml -t stop')
+    elif args.action == 'restart':
+        run_in_shell('ansible-playbook -i ./deploy/hosts ./deploy/deploy.yml -t stop')
+        run_in_shell('ansible-playbook -i ./deploy/hosts ./deploy/deploy.yml -t start')
     else:
         print('Unimplemented')
 
@@ -184,11 +187,12 @@ if __name__ == "__main__":
 
     install_parser = subparsers.add_parser('install', aliases=['i'])
     install_parser.set_defaults(func=install_project)
+    install_parser.add_argument('--cache-dir', default=os.getenv("PAIN_BAZEL_CACHE_DIR", '/mnt/bazel_cache'))
     install_parser.add_argument('rest', nargs=argparse.REMAINDER)
 
     deploy_parser = subparsers.add_parser('deploy', aliases=['d'])
     deploy_parser.set_defaults(func=deploy_project)
-    deploy_parser.add_argument('-a', '--action', choices=['start', 'stop'], required=True)
+    deploy_parser.add_argument('-a', '--action', choices=['start', 'stop', 'restart'], required=True)
     deploy_parser.add_argument('rest', nargs=argparse.REMAINDER)
 
     lint_parser = subparsers.add_parser('lint', aliases=['l'])

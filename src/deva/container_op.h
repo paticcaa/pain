@@ -4,6 +4,7 @@
 #include <functional>
 #include "base/plog.h"
 #include "base/types.h"
+#include "deva/macro.h"
 #include "deva/op.h"
 #include "deva/rsm.h"
 
@@ -11,9 +12,10 @@ namespace pain::deva {
 
 class OpClosure : public braft::Closure {
 public:
-    OpClosure(OpPtr op) : _op(op) {}
+    OpClosure(OpPtr op, opentelemetry::nostd::shared_ptr<opentelemetry::trace::Span> span) : _op(op), _span(span) {}
 
     void Run() override {
+        opentelemetry::trace::Scope scope(_span);
         std::unique_ptr<OpClosure> guard(this);
         if (status().ok()) {
             _op->on_apply(_index);
@@ -29,6 +31,7 @@ public:
 private:
     int64_t _index = 0;
     OpPtr _op;
+    opentelemetry::nostd::shared_ptr<opentelemetry::trace::Span> _span;
 };
 
 OpPtr decode(OpType op_type, IOBuf* buf, RsmPtr rsm);
@@ -53,12 +56,13 @@ public:
     }
 
     void apply() override {
+        SPAN(span);
         braft::Task task;
         IOBuf buf;
         OpPtr self(this);
         pain::deva::encode(self, &buf);
         task.data = &buf;
-        task.done = new OpClosure(self);
+        task.done = new OpClosure(self, span);
         task.expected_term = -1;
         _rsm->apply(task);
         PLOG_DEBUG(("desc", "apply op")("type", _type));

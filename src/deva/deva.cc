@@ -11,36 +11,43 @@
 namespace pain::deva {
 
 DEVA_METHOD(CreateFile) {
+    SPAN(span);
     PLOG_INFO(("desc", "create_file")("index", index));
     return Status::OK();
 }
 
 DEVA_METHOD(RemoveFile) {
+    SPAN(span);
     PLOG_INFO(("desc", "remove_file")("index", index));
     return Status::OK();
 }
 
 DEVA_METHOD(SealFile) {
+    SPAN(span);
     PLOG_INFO(("desc", "seal_file")("index", index));
     return Status::OK();
 }
 
 DEVA_METHOD(CreateChunk) {
+    SPAN(span);
     PLOG_INFO(("desc", "remove")("index", index));
     return Status::OK();
 }
 
 DEVA_METHOD(CheckInChunk) {
+    SPAN(span);
     PLOG_INFO(("desc", "seal")("index", index));
     return Status::OK();
 }
 
 DEVA_METHOD(SealChunk) {
+    SPAN(span);
     PLOG_INFO(("desc", "create_chunk")("index", index));
     return Status::OK();
 }
 
 DEVA_METHOD(SealAndNewChunk) {
+    SPAN(span);
     PLOG_INFO(("desc", "remove_chunk")("index", index));
     return Status::OK();
 }

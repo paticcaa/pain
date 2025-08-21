@@ -20,6 +20,7 @@ DevaServiceImpl::DevaServiceImpl() {}
 DEVA_SERVICE_METHOD(OpenFile) {
     brpc::ClosureGuard done_guard(done);
     DEFINE_SPAN(span, controller);
+    PLOG_DEBUG(("desc", "OpenFile")("request", request->DebugString()));
     auto& path = request->path();
     auto flags = request->flags();
 

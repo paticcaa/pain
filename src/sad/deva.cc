@@ -59,7 +59,7 @@ Status execute(argparse::ArgumentParser& parser) {
 
 REGISTER_DEVA_CMD(open, [](argparse::ArgumentParser& parser) {
     parser.add_argument("--path").required();
-    parser.add_argument("c", "--create").default_value(false);
+    parser.add_argument("-c", "--create").default_value(false).implicit_value(true);
 });
 COMMAND(open) {
     SPAN(span);
