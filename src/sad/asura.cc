@@ -206,38 +206,4 @@ COMMAND(list_manusya) {
     return Status::OK();
 }
 
-REGISTER_ASURA_CMD(create_pool, [](argparse::ArgumentParser& parser) {
-    parser.add_description("create pool");
-    parser.add_argument("--name").required();
-});
-COMMAND(create_pool) {
-    SPAN(span);
-    auto host = args.get<std::string>("--host");
-    auto name = args.get<std::string>("--name");
-
-    brpc::Channel channel;
-    brpc::ChannelOptions options;
-    options.connect_timeout_ms = 2000; // NOLINT(readability-magic-numbers)
-    options.timeout_ms = 10000;        // NOLINT(readability-magic-numbers)
-    options.max_retry = 0;             // NOLINT(readability-magic-numbers)
-    if (channel.Init(host.c_str(), &options) != 0) {
-        return Status(EAGAIN, "Fail to initialize channel");
-    }
-
-    brpc::Controller cntl;
-    pain::proto::asura::CreatePoolRequest request;
-    pain::proto::asura::CreatePoolResponse response;
-    pain::proto::asura::TopologyService::Stub stub(&channel);
-    pain::inject_tracer(&cntl);
-
-    request.set_pool_name(name);
-    stub.CreatePool(&cntl, &request, &response, nullptr);
-    if (cntl.Failed()) {
-        return Status(cntl.ErrorCode(), cntl.ErrorText());
-    }
-
-    print(cntl, &response);
-    return Status::OK();
-}
-
 } // namespace pain::sad::asura

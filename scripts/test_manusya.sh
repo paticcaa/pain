@@ -5,7 +5,7 @@
 SCRIPT_DIR=$(dirname $0)
 SAD=${SCRIPT_DIR}/../output/bin/sad
 
-uuid=$($SAD manusya create-chunk --enable-append-out-of-order | jq .uuid | tr -d '"')
+uuid=$($SAD manusya create-chunk | jq .uuid | tr -d '"')
 echo "chunk uuid: $uuid"
 
 if [ -z $uuid ]; then

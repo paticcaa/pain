@@ -7,44 +7,8 @@
 
 namespace pain::asura {
 
-static const std::string_view ASURA_POOL = "asura_pool";
 static const std::string_view ASURA_DEVA = "asura_deva";
 static const std::string_view ASURA_MANUSYA = "asura_manusya";
-
-void TopologyServiceImpl::CreatePool(::google::protobuf::RpcController* controller,
-                                     [[maybe_unused]] const pain::proto::asura::CreatePoolRequest* request,
-                                     [[maybe_unused]] pain::proto::asura::CreatePoolResponse* response,
-                                     ::google::protobuf::Closure* done) { // NOLINT(readability-non-const-parameter)
-    ASURA_SPAN(span, controller);
-    brpc::ClosureGuard done_guard(done);
-    pain::proto::asura::Pool pool;
-    if (_store->hexists(ASURA_POOL, request->pool_name())) {
-        cntl->SetFailed(EEXIST, "pool %s already exists", request->pool_name().c_str());
-        return;
-    }
-
-    auto uuid = UUID::generate();
-    pool.set_name(request->pool_name());
-    pool.mutable_uuid()->set_high(uuid.high());
-    pool.mutable_uuid()->set_low(uuid.low());
-    pool.mutable_placement_policy()->CopyFrom(request->placement_policy());
-    _store->hset("pool", request->pool_name(), pool.SerializeAsString());
-}
-
-void TopologyServiceImpl::ListPool(::google::protobuf::RpcController* controller,
-                                   [[maybe_unused]] const pain::proto::asura::ListPoolRequest* request,
-                                   [[maybe_unused]] pain::proto::asura::ListPoolResponse* response,
-                                   ::google::protobuf::Closure* done) { // NOLINT(readability-non-const-parameter)
-    ASURA_SPAN(span, controller);
-    brpc::ClosureGuard done_guard(done);
-    auto it = _store->hgetall(ASURA_POOL);
-    while (it->valid()) {
-        auto pool = response->add_pools();
-        auto value = it->value();
-        pool->ParseFromArray(value.data(), value.size());
-        it->next();
-    }
-}
 
 void TopologyServiceImpl::RegisterDeva(::google::protobuf::RpcController* controller,
                                        [[maybe_unused]] const pain::proto::asura::RegisterDevaRequest* request,
