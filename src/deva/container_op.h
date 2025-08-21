@@ -12,7 +12,7 @@ namespace pain::deva {
 
 class OpClosure : public braft::Closure {
 public:
-    OpClosure(OpPtr op, opentelemetry::nostd::shared_ptr<opentelemetry::trace::Span> span) : _op(op), _span(span) {}
+    OpClosure(OpPtr op, std::shared_ptr<opentelemetry::trace::Span> span) : _op(op), _span(span) {}
 
     void Run() override {
         opentelemetry::trace::Scope scope(_span);
@@ -31,7 +31,7 @@ public:
 private:
     int64_t _index = 0;
     OpPtr _op;
-    opentelemetry::nostd::shared_ptr<opentelemetry::trace::Span> _span;
+    std::shared_ptr<opentelemetry::trace::Span> _span;
 };
 
 OpPtr decode(OpType op_type, IOBuf* buf, RsmPtr rsm);

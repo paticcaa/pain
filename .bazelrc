@@ -4,3 +4,5 @@ build --cxxopt=-std=c++23
 build --compilation_mode=dbg
 build --action_env=CC
 build --action_env=CXX
+common --@opentelemetry-cpp//api:abi_version_no=2
+common --@opentelemetry-cpp//api:with_cxx_stdlib=best
