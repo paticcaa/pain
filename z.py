@@ -176,7 +176,7 @@ if __name__ == "__main__":
     build_parser = subparsers.add_parser('build', aliases=['b'])
     build_parser.set_defaults(func=build_project)
     build_parser.add_argument('-i', '--install', action='store_true')
-    build_parser.add_argument('--cache-dir', default='/mnt/bazel_cache')
+    build_parser.add_argument('--cache-dir', default=os.getenv("PAIN_BAZEL_CACHE_DIR", '/mnt/bazel_cache'))
     build_parser.add_argument('rest', nargs=argparse.REMAINDER)
 
     line_parser = subparsers.add_parser('line')
