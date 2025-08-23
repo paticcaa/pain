@@ -7,10 +7,10 @@
 #include <fmt/format.h>
 #include <argparse/argparse.hpp>
 
+#include <pain/base/tracer.h>
+#include <pain/base/types.h>
+#include <pain/base/uuid.h>
 #include "pain/proto/asura.pb.h"
-#include "base/tracer.h"
-#include "base/types.h"
-#include "base/uuid.h"
 #include "sad/common.h"
 #include "sad/macro.h"
 
@@ -57,7 +57,7 @@ REGISTER_ASURA_CMD(register_deva, [](argparse::ArgumentParser& parser) {
     parser.add_description("add deva");
     parser.add_argument("--ip").required();
     // NOLINTNEXTLINE
-    parser.add_argument("--port").default_value(0U).scan<'i', uint32_t>().required();
+    parser.add_argument("--port").required().scan<'i', uint32_t>().required();
 });
 COMMAND(register_deva) {
     SPAN(span);
@@ -77,7 +77,7 @@ COMMAND(register_deva) {
     brpc::Controller cntl;
     pain::proto::asura::RegisterDevaRequest request;
     pain::proto::asura::RegisterDevaResponse response;
-    pain::proto::asura::TopologyService::Stub stub(&channel);
+    pain::proto::asura::AsuraService::Stub stub(&channel);
     pain::inject_tracer(&cntl);
 
     auto id = pain::UUID::generate();
@@ -113,7 +113,7 @@ COMMAND(list_deva) {
     brpc::Controller cntl;
     pain::proto::asura::ListDevaRequest request;
     pain::proto::asura::ListDevaResponse response;
-    pain::proto::asura::TopologyService::Stub stub(&channel);
+    pain::proto::asura::AsuraService::Stub stub(&channel);
     pain::inject_tracer(&cntl);
 
     stub.ListDeva(&cntl, &request, &response, nullptr);
@@ -155,7 +155,7 @@ COMMAND(register_manusya) {
     brpc::Controller cntl;
     pain::proto::asura::RegisterManusyaRequest request;
     pain::proto::asura::RegisterManusyaResponse response;
-    pain::proto::asura::TopologyService::Stub stub(&channel);
+    pain::proto::asura::AsuraService::Stub stub(&channel);
     pain::inject_tracer(&cntl);
 
     auto id = pain::UUID::generate();
@@ -194,7 +194,7 @@ COMMAND(list_manusya) {
     brpc::Controller cntl;
     pain::proto::asura::ListManusyaRequest request;
     pain::proto::asura::ListManusyaResponse response;
-    pain::proto::asura::TopologyService::Stub stub(&channel);
+    pain::proto::asura::AsuraService::Stub stub(&channel);
     pain::inject_tracer(&cntl);
 
     stub.ListManusya(&cntl, &request, &response, nullptr);

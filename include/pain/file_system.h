@@ -1,5 +1,7 @@
 #pragma once
 
+#include <pain/proto/asura.pb.h>
+#include <pain/status.h>
 #include <memory>
 
 /*
@@ -26,6 +28,7 @@
 namespace pain {
 
 class FileStream;
+class FileSystemImpl;
 class FileSystem {
 public:
     FileSystem() = default;
@@ -33,9 +36,15 @@ public:
     FileSystem(FileSystem&&) = default;
     FileSystem& operator=(const FileSystem&) = delete;
     FileSystem& operator=(FileSystem&&) = default;
+    ~FileSystem();
 
-    static std::shared_ptr<FileSystem> create(const char* uri);
-    std::shared_ptr<FileStream> open(const char* path, int flags);
+    static Status create(const char* uri, FileSystem** fs);
+    Status open(const char* path, int flags, FileStream** file_stream);
+    Status remove(const char* path);
+    Status mkdir(const char* path);
+
+private:
+    FileSystemImpl* _impl;
 };
 
 } // namespace pain

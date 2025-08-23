@@ -1,9 +1,9 @@
 #include <brpc/server.h>
-#include "asura/topology_service_impl.h"
-#include "base/plog.h"
-#include "base/scope_exit.h"
-#include "base/spdlog_sink.h"
-#include "base/tracer.h"
+#include <pain/base/plog.h>
+#include <pain/base/scope_exit.h>
+#include <pain/base/spdlog_sink.h>
+#include <pain/base/tracer.h>
+#include "asura/asura_service_impl.h"
 #include "common/rocksdb_store.h"
 
 DEFINE_string(asura_listen_address, "127.0.0.1:8001", "Listen address of asura");
@@ -37,13 +37,13 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    pain::asura::TopologyServiceImpl topology_service_impl(store);
+    pain::asura::AsuraServiceImpl asura_service_impl(store);
     pain::init_tracer("asura");
     auto stop_tracer = pain::make_scope_exit([]() {
         pain::cleanup_tracer();
     });
 
-    if (server.AddService(&topology_service_impl, brpc::SERVER_DOESNT_OWN_SERVICE) != 0) {
+    if (server.AddService(&asura_service_impl, brpc::SERVER_DOESNT_OWN_SERVICE) != 0) {
         LOG(ERROR) << "Fail to add service";
         return -1;
     }

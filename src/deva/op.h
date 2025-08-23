@@ -1,10 +1,10 @@
 #pragma once
+#include <pain/base/types.h>
 #include <atomic>
 #include <cstdint>
 #include <fmt/format.h>
 #include <boost/intrusive_ptr.hpp>
 #include <magic_enum/magic_enum.hpp>
-#include "base/types.h"
 
 namespace pain::deva {
 
@@ -12,8 +12,9 @@ enum class OpType {
     kInvalid = 0,
     // DevaOp: 1 ~ 100
     kCreateFile = 1,
-    kRemoveFile = 2,
-    kSealFile = 3,
+    kCreateDir = 2,
+    kRemoveFile = 3,
+    kSealFile = 4,
     kCreateChunk = 5,
     kCheckInChunk = 6,
     kSealChunk = 7,

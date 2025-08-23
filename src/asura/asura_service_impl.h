@@ -6,9 +6,9 @@
 
 namespace pain::asura {
 
-class TopologyServiceImpl : public pain::proto::asura::TopologyService {
+class AsuraServiceImpl : public pain::proto::asura::AsuraService {
 public:
-    TopologyServiceImpl(common::StorePtr store) : _store(store) {}
+    AsuraServiceImpl(common::StorePtr store) : _store(store) {}
     ASURA_RPC_ENTRY(RegisterDeva);
     ASURA_RPC_ENTRY(RegisterManusya);
     ASURA_RPC_ENTRY(ListDeva);

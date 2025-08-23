@@ -4,7 +4,7 @@
 
 #include <boost/intrusive_ptr.hpp>
 
-#include "base/types.h"
+#include <pain/base/types.h>
 #include "manusya/store.h"
 
 namespace pain::manusya {

@@ -1,5 +1,5 @@
 #include "manusya/bank.h"
-#include "base/plog.h"
+#include <pain/base/plog.h>
 
 DEFINE_string(manusya_store, "memory://", "The path to store the data of manusya");
 

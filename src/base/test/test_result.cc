@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
+#include <pain/base/result.h>
 #include <system_error>
-#include "base/result.h"
 
 // NOLINTBEGIN
 namespace {

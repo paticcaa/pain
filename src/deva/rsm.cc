@@ -8,10 +8,11 @@
 #include <butil/sys_byteorder.h> // butil::NetToHost32
 #include <fcntl.h>               // open
 #include <gflags/gflags.h>       // DEFINE_*
-#include <sys/types.h>           // O_CREAT
-#include "base/plog.h"
+#include <pain/base/plog.h>
+#include <sys/types.h> // O_CREAT
 #include "deva/container.h"
 #include "deva/container_op.h"
+#include "deva/deva.h"
 
 DEFINE_bool(check_term, true, "Check if the leader changed to another term");
 DEFINE_bool(disable_cli, false, "Don't allow raft_cli access this node");
@@ -169,7 +170,7 @@ void Rsm::on_start_following(const ::braft::LeaderChangeContext& ctx) {
 }
 
 RsmPtr default_rsm() {
-    static RsmPtr s_rsm = new Rsm("default", nullptr);
+    static RsmPtr s_rsm = new Rsm("default", new Deva());
     return s_rsm;
 }
 

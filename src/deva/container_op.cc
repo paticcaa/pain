@@ -1,7 +1,7 @@
 #include "deva/container_op.h"
+#include <pain/base/types.h>
 #include <boost/assert.hpp>
 #include "pain/proto/deva_store.pb.h"
-#include "base/types.h"
 #include "deva/deva.h"
 
 namespace pain::deva {

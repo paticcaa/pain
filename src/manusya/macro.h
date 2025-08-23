@@ -1,6 +1,6 @@
 #pragma once
 
-#include "base/tracer.h"
+#include <pain/base/tracer.h>
 
 #define DEFINE_SPAN(span, controller)                                                                                  \
     brpc::Controller* cntl = static_cast<brpc::Controller*>(controller);                                               \

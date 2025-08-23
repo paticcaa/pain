@@ -9,9 +9,15 @@ message CreateFileRequest {
 }
 
 message CreateFileResponse {
-    Header header = 1;
-    FileInfo file_info = 2;
+    FileInfo file_info = 1;
 }
+
+message CreateDirRequest {
+    string path = 1;
+    UUID dir_id = 2;
+}
+
+message CreateDirResponse {}
 
 message RemoveFileRequest {}
 

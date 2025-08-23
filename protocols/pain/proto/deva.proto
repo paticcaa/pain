@@ -7,6 +7,7 @@ option cc_generic_services = true;
 
 service DevaService {
     rpc OpenFile(OpenFileRequest) returns (OpenFileResponse);
+    rpc Mkdir(MkdirRequest) returns (MkdirResponse);
     rpc CloseFile(CloseFileRequest) returns (CloseFileResponse);
     rpc RemoveFile(RemoveFileRequest) returns (RemoveFileResponse);
     rpc SealFile(SealFileRequest) returns (SealFileResponse);
@@ -33,6 +34,14 @@ message OpenFileRequest {
 message OpenFileResponse {
     Header header = 1;
     FileInfo file_info = 2;
+}
+
+message MkdirRequest {
+    string path = 1;
+}
+
+message MkdirResponse {
+    Header header = 1;
 }
 
 message CloseFileRequest {

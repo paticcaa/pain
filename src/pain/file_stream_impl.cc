@@ -1,8 +1,9 @@
 #include "pain/file_stream_impl.h"
 #include <brpc/closure_guard.h>
 #include <brpc/controller.h>
+#include <pain/base/macro.h>
+#include <pain/base/plog.h>
 #include "pain/controller.h"
-#include "base/plog.h"
 
 #define FILE_STREAM_METHOD(name)                                                                                       \
     void FileStreamImpl::name(::google::protobuf::RpcController* controller,                                           \
@@ -13,9 +14,10 @@
 namespace pain {
 
 FILE_STREAM_METHOD(Append) {
+    SPAN("pain", span);
     [[maybe_unused]] pain::Controller* cntl = static_cast<pain::Controller*>(controller);
     PLOG_DEBUG(("desc", __func__)               //
-               ("uuid", _uuid.str())            //
+               ("file_id", _file_id)            //
                ("direct_io", cntl->direct_io()) //
                ("data_size", cntl->request_attachment().size()));
 
@@ -31,18 +33,6 @@ FILE_STREAM_METHOD(Append) {
 }
 
 FILE_STREAM_METHOD(Read) {
-    [[maybe_unused]] pain::Controller* cntl = static_cast<pain::Controller*>(controller);
-    PLOG_DEBUG(("desc", __func__));
-    brpc::ClosureGuard done_guard(done);
-}
-
-FILE_STREAM_METHOD(Seal) {
-    [[maybe_unused]] pain::Controller* cntl = static_cast<pain::Controller*>(controller);
-    PLOG_DEBUG(("desc", __func__));
-    brpc::ClosureGuard done_guard(done);
-}
-
-FILE_STREAM_METHOD(Close) {
     [[maybe_unused]] pain::Controller* cntl = static_cast<pain::Controller*>(controller);
     PLOG_DEBUG(("desc", __func__));
     brpc::ClosureGuard done_guard(done);

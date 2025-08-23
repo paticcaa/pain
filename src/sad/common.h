@@ -2,8 +2,8 @@
 
 #include <brpc/controller.h>
 #include <json2pb/pb_to_json.h>
+#include <pain/base/types.h>
 #include <nlohmann/json.hpp>
-#include "base/types.h"
 
 using Json = nlohmann::ordered_json;
 

@@ -14,6 +14,8 @@ public:
                     google::protobuf::Message* response,
                     google::protobuf::Closure* done) override;
 
+    void close();
+
 private:
     FileStreamImpl* _impl = nullptr;
     friend class FileSystem;

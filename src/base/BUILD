@@ -2,10 +2,11 @@ load('//:copts.bzl', 'PAIN_COPTS', 'PAIN_LINKOPTS', 'PAIN_TEST_COPTS')
 
 cc_library(
     name = "pain_base",
-    srcs = glob(["*.h", "*.cc"]),
+    srcs = glob(["*.cc"]),
     copts = PAIN_COPTS,
     linkopts = PAIN_LINKOPTS,
     deps = [
+        "//include/pain:pain_headers",
         "@opentelemetry-cpp//api",
         "@opentelemetry-cpp//exporters/otlp:otlp_http_exporter",
         "@opentelemetry-cpp//exporters/ostream:ostream_span_exporter",

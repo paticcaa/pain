@@ -17,6 +17,7 @@ public:
     DEVA_SERVICE_METHOD(OpenFile);
     DEVA_SERVICE_METHOD(CloseFile);
     DEVA_SERVICE_METHOD(RemoveFile);
+    DEVA_SERVICE_METHOD(Mkdir);
     DEVA_SERVICE_METHOD(SealFile);
     DEVA_SERVICE_METHOD(NewChunk);
     DEVA_SERVICE_METHOD(CheckInChunk);

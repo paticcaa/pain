@@ -1,6 +1,6 @@
 #pragma once
 
-#include "base/macro.h"
+#include <pain/base/macro.h>
 
 #define ASURA_SPAN(...) DEFINE_SPAN("asura", __VA_ARGS__)
 

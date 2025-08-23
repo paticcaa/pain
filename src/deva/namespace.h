@@ -5,8 +5,8 @@
 #include <map>
 #include <fmt/format.h>
 
-#include "base/types.h"
-#include "base/uuid.h"
+#include <pain/base/types.h>
+#include <pain/base/uuid.h>
 
 namespace pain::deva {
 
@@ -24,6 +24,7 @@ struct DirEntry {
 class Namespace {
 public:
     static Namespace& instance();
+    Namespace();
     Status load();
     const UUID& root() const {
         return _root;
@@ -35,7 +36,6 @@ public:
 
 private:
     Status parse_path(const char* path, std::list<std::string_view>* components) const;
-    Namespace();
     UUID _root;
     std::map<UUID, std::list<DirEntry>> _entries;
     mutable bthread::Mutex _mutex;

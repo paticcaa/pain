@@ -4,7 +4,7 @@
 namespace pain {
 
 FileStream::~FileStream() {
-    delete _impl;
+    close();
 }
 
 void FileStream::CallMethod(const google::protobuf::MethodDescriptor* method,
@@ -13,6 +13,11 @@ void FileStream::CallMethod(const google::protobuf::MethodDescriptor* method,
                             google::protobuf::Message* response,
                             google::protobuf::Closure* done) {
     _impl->CallMethod(method, controller, request, response, done);
+}
+
+void FileStream::close() {
+    delete _impl;
+    _impl = nullptr;
 }
 
 } // namespace pain

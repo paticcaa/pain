@@ -1,19 +1,19 @@
-#include "asura/topology_service_impl.h"
+#include "asura/asura_service_impl.h"
 #include <brpc/closure_guard.h>
 #include <brpc/controller.h>
+#include <pain/base/uuid.h>
 #include <cerrno>
 #include <fmt/format.h>
-#include "base/uuid.h"
 
 namespace pain::asura {
 
 static const std::string_view ASURA_DEVA = "asura_deva";
 static const std::string_view ASURA_MANUSYA = "asura_manusya";
 
-void TopologyServiceImpl::RegisterDeva(::google::protobuf::RpcController* controller,
-                                       [[maybe_unused]] const pain::proto::asura::RegisterDevaRequest* request,
-                                       [[maybe_unused]] pain::proto::asura::RegisterDevaResponse* response,
-                                       ::google::protobuf::Closure* done) { // NOLINT(readability-non-const-parameter)
+void AsuraServiceImpl::RegisterDeva(::google::protobuf::RpcController* controller,
+                                    [[maybe_unused]] const pain::proto::asura::RegisterDevaRequest* request,
+                                    [[maybe_unused]] pain::proto::asura::RegisterDevaResponse* response,
+                                    ::google::protobuf::Closure* done) { // NOLINT(readability-non-const-parameter)
     ASURA_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
 
@@ -39,11 +39,10 @@ void TopologyServiceImpl::RegisterDeva(::google::protobuf::RpcController* contro
     }
 }
 
-void TopologyServiceImpl::RegisterManusya(
-    ::google::protobuf::RpcController* controller,
-    [[maybe_unused]] const pain::proto::asura::RegisterManusyaRequest* request,
-    [[maybe_unused]] pain::proto::asura::RegisterManusyaResponse* response,
-    ::google::protobuf::Closure* done) { // NOLINT(readability-non-const-parameter)
+void AsuraServiceImpl::RegisterManusya(::google::protobuf::RpcController* controller,
+                                       [[maybe_unused]] const pain::proto::asura::RegisterManusyaRequest* request,
+                                       [[maybe_unused]] pain::proto::asura::RegisterManusyaResponse* response,
+                                       ::google::protobuf::Closure* done) { // NOLINT(readability-non-const-parameter)
     ASURA_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
     for (const auto& manusya_server : request->manusya_servers()) {
@@ -68,10 +67,10 @@ void TopologyServiceImpl::RegisterManusya(
     }
 }
 
-void TopologyServiceImpl::ListDeva(::google::protobuf::RpcController* controller,
-                                   [[maybe_unused]] const pain::proto::asura::ListDevaRequest* request,
-                                   [[maybe_unused]] pain::proto::asura::ListDevaResponse* response,
-                                   ::google::protobuf::Closure* done) { // NOLINT(readability-non-const-parameter)
+void AsuraServiceImpl::ListDeva(::google::protobuf::RpcController* controller,
+                                [[maybe_unused]] const pain::proto::asura::ListDevaRequest* request,
+                                [[maybe_unused]] pain::proto::asura::ListDevaResponse* response,
+                                ::google::protobuf::Closure* done) { // NOLINT(readability-non-const-parameter)
     ASURA_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
     auto it = _store->hgetall(ASURA_DEVA);
@@ -83,10 +82,10 @@ void TopologyServiceImpl::ListDeva(::google::protobuf::RpcController* controller
     }
 }
 
-void TopologyServiceImpl::ListManusya(::google::protobuf::RpcController* controller,
-                                      [[maybe_unused]] const pain::proto::asura::ListManusyaRequest* request,
-                                      [[maybe_unused]] pain::proto::asura::ListManusyaResponse* response,
-                                      ::google::protobuf::Closure* done) { // NOLINT(readability-non-const-parameter)
+void AsuraServiceImpl::ListManusya(::google::protobuf::RpcController* controller,
+                                   [[maybe_unused]] const pain::proto::asura::ListManusyaRequest* request,
+                                   [[maybe_unused]] pain::proto::asura::ListManusyaResponse* response,
+                                   ::google::protobuf::Closure* done) { // NOLINT(readability-non-const-parameter)
     ASURA_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
     auto it = _store->hgetall(ASURA_MANUSYA);

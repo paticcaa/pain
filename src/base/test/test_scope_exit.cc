@@ -1,11 +1,11 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <pain/base/scope_exit.h>
 #include <atomic>
 #include <functional>
 #include <memory>
 #include <string>
 #include <vector>
-#include "base/scope_exit.h"
 
 // NOLINTBEGIN(readability-magic-numbers)
 namespace {

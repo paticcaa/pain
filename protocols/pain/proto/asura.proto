@@ -5,7 +5,7 @@ import "pain/proto/common.proto";
 
 option cc_generic_services = true;
 
-service TopologyService {
+service AsuraService {
     rpc RegisterDeva(RegisterDevaRequest) returns (RegisterDevaResponse);
     rpc ListDeva(ListDevaRequest) returns (ListDevaResponse);
     rpc RegisterManusya(RegisterManusyaRequest)

@@ -1,9 +1,10 @@
 #pragma once
 #include <list>
 
+#include <pain/base/uuid.h>
 #include "pain/chunk.h"
+#include "pain/proto/common.pb.h"
 #include "pain/proto/pain.pb.h"
-#include "base/uuid.h"
 
 #define FILE_STREAM_METHOD(name)                                                                                       \
     void name(::google::protobuf::RpcController* controller,                                                           \
@@ -18,16 +19,14 @@ class Controller;
 // NOLINTNEXTLINE(cppcoreguidelines-virtual-class-destructor)
 class FileStreamImpl : public pain::proto::FileService {
 public:
-    FILE_STREAM_METHOD(Open);
     FILE_STREAM_METHOD(Append);
     FILE_STREAM_METHOD(Read);
-    FILE_STREAM_METHOD(Seal);
-    FILE_STREAM_METHOD(Close);
 
 private:
+    friend class FileSystem;
     ~FileStreamImpl() override = default;
-    UUID _uuid;
-    std::list<Chunk> _chunks;
+    proto::FileInfo _file_info;
+    std::string _file_id;
     friend class FileStream;
 };
 
