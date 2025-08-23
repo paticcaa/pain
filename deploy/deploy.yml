@@ -1,4 +1,10 @@
 ---
+# Deploy sad
+- name: deploy sad
+  hosts: sad
+  roles:
+    - sad
+
 # Deploy asura
 - name: deploy asura
   hosts: asura
@@ -17,9 +23,7 @@
   roles:
     - deva
 
-
 # Deploy manusya
-
 - name: deploy manusya
   hosts: manusya
   vars:

@@ -1,0 +1,18 @@
+---
+
+- name: get node ip
+  tags:
+    - always
+  block:
+    - name: get node ip
+      shell:
+        cmd: "hostname -I | awk '{print $1}'"
+      register: pain_node_default_ip_output
+    - name: set fact
+      set_fact:
+        # or you can use ip from iface defined in hosts file
+        # pain_node_default_ip: "{{ hostvars[inventory_hostname]['ansible_' + iface]['ipv4']['address'] }}"
+        pain_node_default_ip: "{{ pain_node_default_ip_output.stdout }}"
+    - name: debug
+      debug:
+        var: pain_node_default_ip

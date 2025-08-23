@@ -1,0 +1,21 @@
+---
+
+- name: deploy sad
+  tags:
+    - start
+    - stop
+    - sad
+    - start-sad
+    - stop-sad
+  block:
+    - name: copy files
+      copy: src={{ playbook_dir }}/../output/bin/sad dest=./deployment/sad/ mode=0775
+      when: "'start' in ansible_run_tags or 'start-sad' in ansible_run_tags"
+
+- name: clean sad
+  tags:
+    - clean
+    - clean-sad
+  block:
+    - name: remove log file
+      file: path=./deployment/sad/sad.log state=absent

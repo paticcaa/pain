@@ -20,10 +20,10 @@
         chdir: ./deployment/manusya/{{ listen_port }}
         cmd: >
           start-stop-daemon --output $(pwd)/stdout.log --start --chdir $(pwd) --pidfile manusya.pid --make-pidfile --background 
-          --exec $(pwd)/../manusya -- --manusya_listen_address={{ ansible_default_ipv4.address }}:{{ listen_port }} {{ gflags_ }}
+          --exec $(pwd)/../manusya -- --manusya_listen_address={{ pain_node_default_ip }}:{{ listen_port }} {{ gflags_ }}
     - name: wait for manusya
       wait_for:
-        host: "{{ ansible_default_ipv4.address }}"
+        host: "{{ pain_node_default_ip }}"
         port: "{{ listen_port }}"
         delay: 5
         timeout: 60

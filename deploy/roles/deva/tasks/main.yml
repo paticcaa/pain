@@ -6,12 +6,15 @@
     - deva
     - start-deva
   vars:
-    main_nodes_ips_with_port: "{% for host in groups['deva'] %}{{hostvars[host]['ansible_default_ipv4']['address']}}:{{listen_port}},{% endfor %}"
+    main_nodes_ips_with_port: "{% for host in groups['deva'] %}{{hostvars[host]['pain_node_default_ip']}}:{{listen_port}},{% endfor %}"
     gflags_: "{% for flag in gflags %}--{{ flag }}={{ gflags[flag] }} {% endfor %}"
   block:
     - name: debug
       debug:
         var: gflags
+    - name: debug
+      debug:
+        var: pain_node_default_ip
     - name: copy files
       copy: src={{ playbook_dir }}/../output/bin/deva dest={{ ansible_user_dir }}/deployment/deva/ mode=0775
     - name: create working dir
@@ -21,7 +24,23 @@
         chdir: ./deployment/deva/{{ listen_port }}
         cmd: >
           start-stop-daemon --output $(pwd)/stdout.log --start --chdir $(pwd) --pidfile deva.pid --make-pidfile --background 
-          --exec $(pwd)/../deva -- --deva_listen_address={{ ansible_default_ipv4.address }}:{{ listen_port }} --conf={{ main_nodes_ips_with_port }} {{ gflags_ }}
+          --exec $(pwd)/../deva -- --deva_listen_address={{ pain_node_default_ip }}:{{ listen_port }} --conf={{ main_nodes_ips_with_port }} {{ gflags_ }}
+    - name: wait for deva to start
+      wait_for:
+        host: "{{ pain_node_default_ip }}"
+        port: "{{ listen_port }}"
+        delay: 5
+        timeout: 60
+        state: started
+    - name: register to asura
+      shell:
+        chdir: ./deployment/deva/{{ listen_port }}
+        cmd: >
+          {{ ansible_user_dir }}/deployment/sad/sad asura register-deva --host={{ pain_node_default_ip }}:{{ hostvars[groups['asura'][0]]['listen_port'] }} --ip={{ pain_node_default_ip }} --port={{ listen_port }}
+      register: register_output
+    - name: debug
+      debug:
+        msg: "{{ register_output.stdout.split('\n') }}"
 
 - name: stop deva
   tags:
