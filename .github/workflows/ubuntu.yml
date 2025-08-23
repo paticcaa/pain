@@ -72,6 +72,10 @@ jobs:
         path: bazel-disk
         key: bazel-disk-coverage-${{github.sha}}
         restore-keys: bazel-disk-coverage-
+    - name: Free disk space
+      run: |
+        .github/workflows/free_disk_space.sh
+
     - name: Installation
       run: |
         sudo apt-get update
