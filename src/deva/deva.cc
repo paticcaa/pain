@@ -47,8 +47,18 @@ DEVA_METHOD(CreateFile) {
     if (!status.ok()) {
         return status;
     }
-    response->mutable_file_info()->mutable_file_id()->set_high(file_uuid.high());
-    response->mutable_file_info()->mutable_file_id()->set_low(file_uuid.low());
+    auto file_info = response->mutable_file_info();
+    file_info->mutable_file_id()->set_high(file_uuid.high());
+    file_info->mutable_file_id()->set_low(file_uuid.low());
+    file_info->set_type(pain::proto::FileType::FILE_TYPE_FILE);
+    file_info->set_size(0);
+    file_info->set_atime(request->atime());
+    file_info->set_mtime(request->mtime());
+    file_info->set_ctime(request->ctime());
+    file_info->set_mode(request->mode());
+    file_info->set_uid(request->uid());
+    file_info->set_gid(request->gid());
+    _file_infos[file_uuid] = *file_info;
     return Status::OK();
 }
 
@@ -62,6 +72,18 @@ DEVA_METHOD(CreateDir) {
     if (!status.ok()) {
         return status;
     }
+    auto file_info = response->mutable_file_info();
+    file_info->mutable_file_id()->set_high(dir_uuid.high());
+    file_info->mutable_file_id()->set_low(dir_uuid.low());
+    file_info->set_type(pain::proto::FileType::FILE_TYPE_DIRECTORY);
+    file_info->set_size(0);
+    file_info->set_atime(request->atime());
+    file_info->set_mtime(request->mtime());
+    file_info->set_ctime(request->ctime());
+    file_info->set_mode(request->mode());
+    file_info->set_uid(request->uid());
+    file_info->set_gid(request->gid());
+    _file_infos[dir_uuid] = *file_info;
     return Status::OK();
 }
 

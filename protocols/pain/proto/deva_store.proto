@@ -6,6 +6,12 @@ import "pain/proto/common.proto";
 message CreateFileRequest {
     string path = 1;
     UUID file_id = 2;
+    uint64 atime = 3;
+    uint64 mtime = 4;
+    uint64 ctime = 5;
+    uint32 mode = 6;
+    uint32 uid = 7;
+    uint32 gid = 8;
 }
 
 message CreateFileResponse {
@@ -15,9 +21,17 @@ message CreateFileResponse {
 message CreateDirRequest {
     string path = 1;
     UUID dir_id = 2;
+    uint64 atime = 3;
+    uint64 mtime = 4;
+    uint64 ctime = 5;
+    uint32 mode = 6;
+    uint32 uid = 7;
+    uint32 gid = 8;
 }
 
-message CreateDirResponse {}
+message CreateDirResponse {
+    FileInfo file_info = 1;
+}
 
 message RemoveFileRequest {}
 

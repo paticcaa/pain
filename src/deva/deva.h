@@ -40,6 +40,7 @@ private:
 private:
     std::atomic<int> _use_count = {};
     Namespace _namespace;
+    std::unordered_map<UUID, proto::FileInfo> _file_infos;
 
     friend void intrusive_ptr_add_ref(Deva* deva) {
         ++deva->_use_count;

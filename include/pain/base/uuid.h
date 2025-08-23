@@ -1,6 +1,7 @@
 #pragma once
 
 #include <uuid_v4/uuid_v4.h>
+#include <functional>
 #include <optional>
 
 namespace pain {
@@ -65,3 +66,17 @@ public:
 };
 
 } // namespace pain
+
+// std::hash specialization for pain::UUID
+namespace std {
+template <>
+struct hash<pain::UUID> {
+    std::size_t operator()(const pain::UUID& uuid) const noexcept {
+        // Use the low and high parts of the UUID for hashing
+        // This provides a good distribution and is consistent with the UUID structure
+        std::size_t h1 = std::hash<uint64_t>{}(uuid.low());
+        std::size_t h2 = std::hash<uint64_t>{}(uuid.high());
+        return h1 ^ (h2 << 1);
+    }
+};
+} // namespace std

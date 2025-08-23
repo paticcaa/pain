@@ -31,6 +31,12 @@ DEVA_SERVICE_METHOD(OpenFile) {
         create_request.set_path(path);
         create_request.mutable_file_id()->set_high(file_id.high());
         create_request.mutable_file_id()->set_low(file_id.low());
+        create_request.set_mode(0666); // NOLINT
+        create_request.set_uid(0);
+        create_request.set_gid(0);
+        create_request.set_atime(butil::gettimeofday_us());
+        create_request.set_mtime(butil::gettimeofday_us());
+        create_request.set_ctime(butil::gettimeofday_us());
         auto status = bridge<Deva, OpType::kCreateFile>(create_request, &create_response).get();
         if (!status.ok()) {
             PLOG_ERROR(("desc", "failed to create file")("error", status.error_str()));
@@ -69,6 +75,12 @@ DEVA_SERVICE_METHOD(Mkdir) {
     create_request.set_path(path);
     create_request.mutable_dir_id()->set_high(dir_id.high());
     create_request.mutable_dir_id()->set_low(dir_id.low());
+    create_request.set_mode(0777); // NOLINT
+    create_request.set_uid(0);
+    create_request.set_gid(0);
+    create_request.set_atime(butil::gettimeofday_us());
+    create_request.set_mtime(butil::gettimeofday_us());
+    create_request.set_ctime(butil::gettimeofday_us());
     auto status = bridge<Deva, OpType::kCreateDir>(create_request, &create_response).get();
     if (!status.ok()) {
         PLOG_ERROR(("desc", "failed to create file")("error", status.error_str()));

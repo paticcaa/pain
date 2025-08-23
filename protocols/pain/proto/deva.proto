@@ -42,6 +42,7 @@ message MkdirRequest {
 
 message MkdirResponse {
     Header header = 1;
+    FileInfo file_info = 2;
 }
 
 message CloseFileRequest {
@@ -87,7 +88,7 @@ message NewChunkResponse {
 
 message CheckInChunkRequest {
     string chunk_id = 1;
-    repeated SubChunkInfo sub_chunks = 2;
+    repeated ReplicaInfo replicas = 2;
 }
 
 message CheckInChunkResponse {

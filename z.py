@@ -155,12 +155,22 @@ def install_project(args):
 
 def deploy_project(args):
     if args.action == 'start':
-        run_in_shell('ansible-playbook -i ./deploy/hosts ./deploy/deploy.yml -t start')
+        if args.clean:
+            run_in_shell('ansible-playbook -i ./deploy/hosts ./deploy/deploy.yml -t clean')
+        tag = f"start-{args.module}" if args.module else "start"
+        run_in_shell(f'ansible-playbook -i ./deploy/hosts ./deploy/deploy.yml -t {tag}')
     elif args.action == 'stop':
-        run_in_shell('ansible-playbook -i ./deploy/hosts ./deploy/deploy.yml -t stop')
+        tag = f"stop-{args.module}" if args.module else "stop"
+        run_in_shell(f'ansible-playbook -i ./deploy/hosts ./deploy/deploy.yml -t {tag}')
+        if args.clean:
+            run_in_shell('ansible-playbook -i ./deploy/hosts ./deploy/deploy.yml -t clean')
     elif args.action == 'restart':
-        run_in_shell('ansible-playbook -i ./deploy/hosts ./deploy/deploy.yml -t stop')
-        run_in_shell('ansible-playbook -i ./deploy/hosts ./deploy/deploy.yml -t start')
+        tag = f"stop-{args.module}" if args.module else "stop"
+        run_in_shell(f'ansible-playbook -i ./deploy/hosts ./deploy/deploy.yml -t {tag}')
+        if args.clean:
+            run_in_shell('ansible-playbook -i ./deploy/hosts ./deploy/deploy.yml -t clean')
+        tag = f"start-{args.module}" if args.module else "start"
+        run_in_shell(f'ansible-playbook -i ./deploy/hosts ./deploy/deploy.yml -t {tag}')
     else:
         print('Unimplemented')
 
@@ -193,6 +203,8 @@ if __name__ == "__main__":
     deploy_parser = subparsers.add_parser('deploy', aliases=['d'])
     deploy_parser.set_defaults(func=deploy_project)
     deploy_parser.add_argument('-a', '--action', choices=['start', 'stop', 'restart'], required=True)
+    deploy_parser.add_argument('-c', '--clean', action='store_true')
+    deploy_parser.add_argument('-m', '--module', choices=['deva', 'asura', 'manusya', 'sad', 'jaeger'])
     deploy_parser.add_argument('rest', nargs=argparse.REMAINDER)
 
     lint_parser = subparsers.add_parser('lint', aliases=['l'])

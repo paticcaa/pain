@@ -35,8 +35,15 @@ Status FileSystem::create(const char* uri, FileSystem** fs) {
     opts.max_retry = 0;
     opts.connect_timeout_ms = default_connect_timeout_ms;
     brpc::Channel channel;
-    if (channel.Init(uri, "rr", &opts) != 0) {
-        return Status(EINVAL, "connect to file system failed");
+
+    if (strstr(uri, "://") != nullptr) {
+        if (channel.Init(uri, "rr", &opts) != 0) {
+            return Status(EINVAL, "connect to file system failed");
+        }
+    } else {
+        if (channel.Init(uri, &opts) != 0) {
+            return Status(EINVAL, "connect to file system failed");
+        }
     }
 
     proto::asura::AsuraService::Stub stub(&channel);
