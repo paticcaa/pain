@@ -7,7 +7,7 @@
 #include "deva/deva_service_impl.h"
 #include "deva/rsm.h"
 
-DEFINE_string(deva_listen_address, "127.0.0.1:8001", "Listen address of deva");
+DECLARE_string(rsm_listen_address);
 DEFINE_int32(idle_timeout_s,
              -1,
              "Connection will be closed if there is no "
@@ -41,14 +41,14 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    if (braft::add_service(&server, FLAGS_deva_listen_address.c_str()) != 0) {
+    if (braft::add_service(&server, FLAGS_rsm_listen_address.c_str()) != 0) {
         LOG(ERROR) << "Fail to add raft service";
         return -1;
     }
 
     brpc::ServerOptions options;
     options.idle_timeout_sec = FLAGS_idle_timeout_s;
-    if (server.Start(FLAGS_deva_listen_address.c_str(), &options) != 0) {
+    if (server.Start(FLAGS_rsm_listen_address.c_str(), &options) != 0) {
         LOG(ERROR) << "Fail to start EchoServer";
         return -1;
     }

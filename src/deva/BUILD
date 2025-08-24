@@ -30,6 +30,31 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "deva_sdk",
+    srcs = glob(["sdk/*.cc", "sdk/*.h"]),
+    copts = PAIN_COPTS,
+    linkopts = PAIN_LINKOPTS,
+    visibility = ["//visibility:public"],
+    deps = [
+        "//src/base:pain_base",
+        "//protocols/pain/proto:cc_pain_deva_proto",
+        "@brpc",
+        "@braft",
+    ],
+)
+
+cc_library(
+    name = "mock_deva",
+    srcs = glob(["mock/*.cc", "mock/*.h"]),
+    copts = PAIN_COPTS,
+    linkopts = PAIN_LINKOPTS,
+    deps = [
+        "//src/deva:deva_core",
+        "//src/deva:deva_sdk",
+    ],
+)
+
 cc_test(
     name = "test_deva",
     srcs = glob(["test/*.cc"]),
@@ -38,7 +63,7 @@ cc_test(
     linkstatic = True,
     deps = [
         "//src/deva:deva_core",
+        "//src/deva:mock_deva",
         "@googletest//:gtest",
-        "@googletest//:gtest_main",
     ],
 )

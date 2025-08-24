@@ -11,7 +11,10 @@ class Rsm;
 using RsmPtr = boost::intrusive_ptr<Rsm>;
 class Rsm : public braft::StateMachine {
 public:
-    Rsm(const std::string& group, ContainerPtr container);
+    Rsm(const butil::EndPoint& address,
+        const std::string& group,
+        const braft::NodeOptions& node_options,
+        ContainerPtr container);
     ~Rsm();
 
     int start();
@@ -50,10 +53,12 @@ public:
     }
 
 private:
+    butil::EndPoint _address;
+    std::string _group;
+    braft::NodeOptions _node_options;
     braft::Node* volatile _node;
     butil::atomic<int64_t> _leader_term;
     std::atomic<int> _use_count = {0};
-    std::string _group;
 
     friend void intrusive_ptr_add_ref(Rsm* rsm) {
         ++rsm->_use_count;

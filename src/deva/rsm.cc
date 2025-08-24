@@ -14,51 +14,36 @@
 #include "deva/container_op.h"
 #include "deva/deva.h"
 
-DEFINE_bool(check_term, true, "Check if the leader changed to another term");
-DEFINE_bool(disable_cli, false, "Don't allow raft_cli access this node");
-DEFINE_bool(log_applied_task, false, "Print notice log when a task is applied");
-DEFINE_int32(election_timeout_ms, 5000, "Start election in such milliseconds if disconnect with the leader");
-DEFINE_int32(snapshot_interval, 30, "Interval between each snapshot");
-DEFINE_string(conf, "", "Initial configuration of the replication group");
-DEFINE_string(data_path, "./data", "Path of data stored on");
-DECLARE_string(deva_listen_address);
+DEFINE_bool(rsm_check_term, true, "Check if the leader changed to another term");
+DEFINE_bool(rsm_disable_cli, false, "Don't allow raft_cli access this node");
+DEFINE_bool(rsm_log_applied_task, false, "Print notice log when a task is applied");
+DEFINE_int32(rsm_election_timeout_ms, 5000, "Start election in such milliseconds if disconnect with the leader");
+DEFINE_int32(rsm_snapshot_interval, 30, "Interval between each snapshot");
+DEFINE_string(rsm_conf, "", "Initial configuration of the replication group");
+DEFINE_string(rsm_data_path, "./data", "Path of data stored on");
+DEFINE_string(rsm_listen_address, "127.0.0.1:8001", "Listen address of deva");
 
 namespace pain::deva {
 
-Rsm::Rsm(const std::string& group, ContainerPtr container) :
+Rsm::Rsm(const butil::EndPoint& address,
+         const std::string& group,
+         const braft::NodeOptions& node_options,
+         ContainerPtr container) :
+    _address(address),
+    _group(group),
+    _node_options(node_options),
     _node(nullptr),
     _leader_term(-1),
-    _group(group),
-    _container(container) {}
+    _container(container) {
+    _node_options.fsm = this;
+}
 Rsm::~Rsm() {
     delete _node;
 }
 
 int Rsm::start() {
-    std::string data_path = FLAGS_data_path + "/data";
-    butil::EndPoint addr;
-    // NOLINTNEXTLINE
-    int r = butil::str2endpoint(FLAGS_deva_listen_address.c_str(), &addr);
-    if (r != 0) {
-        PLOG_ERROR(("desc", "invalid xbs-meta address")("address", FLAGS_deva_listen_address));
-        return -1;
-    }
-    braft::NodeOptions node_options;
-    if (node_options.initial_conf.parse_from(FLAGS_conf) != 0) {
-        LOG(ERROR) << "Fail to parse configuration `" << FLAGS_conf << '\'';
-        return -1;
-    }
-    node_options.election_timeout_ms = FLAGS_election_timeout_ms;
-    node_options.fsm = this;
-    node_options.node_owns_fsm = false;
-    node_options.snapshot_interval_s = FLAGS_snapshot_interval;
-    std::string prefix = "local://" + FLAGS_data_path;
-    node_options.log_uri = fmt::format("{}/{}/log", prefix, _group);
-    node_options.raft_meta_uri = fmt::format("{}/{}/raft_meta", prefix, _group);
-    node_options.snapshot_uri = fmt::format("{}/{}/snapshot", prefix, _group);
-    node_options.disable_cli = FLAGS_disable_cli;
-    braft::Node* node = new braft::Node(_group, braft::PeerId(addr));
-    if (node->init(node_options) != 0) {
+    braft::Node* node = new braft::Node(_group, braft::PeerId(_address));
+    if (node->init(_node_options) != 0) {
         LOG(ERROR) << "Fail to init raft node";
         delete node;
         return -1;
@@ -170,7 +155,29 @@ void Rsm::on_start_following(const ::braft::LeaderChangeContext& ctx) {
 }
 
 RsmPtr default_rsm() {
-    static RsmPtr s_rsm = new Rsm("default", new Deva());
+    std::string data_path = FLAGS_rsm_data_path + "/data";
+    butil::EndPoint addr;
+    std::string group = "default";
+    int r = butil::str2endpoint(FLAGS_rsm_listen_address.c_str(), &addr);
+    if (r != 0) {
+        PLOG_ERROR(("desc", "invalid xbs-meta address")("address", FLAGS_rsm_listen_address));
+        BOOST_ASSERT_MSG(false, "invalid xbs-meta address");
+    }
+    braft::NodeOptions node_options;
+    if (node_options.initial_conf.parse_from(FLAGS_rsm_conf) != 0) {
+        LOG(ERROR) << "Fail to parse configuration `" << FLAGS_rsm_conf << '\'';
+        BOOST_ASSERT_MSG(false, "Fail to parse configuration");
+    }
+    node_options.election_timeout_ms = FLAGS_rsm_election_timeout_ms;
+    node_options.node_owns_fsm = false;
+    node_options.snapshot_interval_s = FLAGS_rsm_snapshot_interval;
+    std::string prefix = "local://" + FLAGS_rsm_data_path;
+    node_options.log_uri = fmt::format("{}/{}/log", prefix, group);
+    node_options.raft_meta_uri = fmt::format("{}/{}/raft_meta", prefix, group);
+    node_options.snapshot_uri = fmt::format("{}/{}/snapshot", prefix, group);
+    node_options.disable_cli = FLAGS_rsm_disable_cli;
+
+    static RsmPtr s_rsm = new Rsm(addr, group, node_options, new Deva());
     return s_rsm;
 }
 
