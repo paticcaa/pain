@@ -8,9 +8,6 @@ option cc_generic_services = true;
 service AsuraService {
     rpc RegisterDeva(RegisterDevaRequest) returns (RegisterDevaResponse);
     rpc ListDeva(ListDevaRequest) returns (ListDevaResponse);
-    rpc RegisterManusya(RegisterManusyaRequest)
-        returns (RegisterManusyaResponse);
-    rpc ListManusya(ListManusyaRequest) returns (ListManusyaResponse);
 }
 
 message DevaServer {
@@ -39,33 +36,4 @@ message ListDevaRequest {}
 message ListDevaResponse {
     Header header = 1;
     repeated DevaServer deva_servers = 2;
-}
-
-message ManusyaServer {
-    UUID id = 1;
-    string ip = 2;
-    uint32 port = 3;
-    UUID pool_id = 4;
-}
-
-message RegisterManusyaRequest {
-    repeated ManusyaServer manusya_servers = 1;
-}
-
-message RegisterManusyaResponse {
-    message Result {
-        UUID id = 1;
-        int32 code = 2;
-        string message = 3;
-    }
-
-    Header header = 1;
-    repeated Result results = 2;
-}
-
-message ListManusyaRequest {}
-
-message ListManusyaResponse {
-    Header header = 1;
-    repeated ManusyaServer manusya_servers = 2;
 }

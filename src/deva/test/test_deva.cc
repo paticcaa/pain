@@ -15,9 +15,8 @@ public:
             _mock_deva.group().c_str(), &pain::proto::deva::DevaService::Mkdir, &request, response);
     }
 
-    pain::Status open(const std::string& path,
-                      const pain::proto::deva::OpenFlag& flags,
-                      pain::proto::deva::OpenFileResponse* response) {
+    pain::Status
+    open(const std::string& path, pain::proto::deva::OpenFlag flags, pain::proto::deva::OpenFileResponse* response) {
         pain::proto::deva::OpenFileRequest request;
         request.set_path(path);
         request.set_flags(flags);
@@ -30,6 +29,26 @@ public:
         request.set_path(path);
         return pain::deva::call_rpc(
             _mock_deva.group().c_str(), &pain::proto::deva::DevaService::ReadDir, &request, response);
+    }
+
+    pain::Status manusya_heartbeat(const pain::UUID& uuid,
+                                   const char* ip,
+                                   int32_t port,
+                                   pain::proto::deva::ManusyaHeartbeatResponse* response) {
+        pain::proto::deva::ManusyaHeartbeatRequest request;
+        auto manusya_id = request.mutable_manusya_registration()->mutable_manusya_id();
+        manusya_id->mutable_uuid()->set_high(uuid.high());
+        manusya_id->mutable_uuid()->set_low(uuid.low());
+        manusya_id->set_ip(ip);
+        manusya_id->set_port(port);
+        return pain::deva::call_rpc(
+            _mock_deva.group().c_str(), &pain::proto::deva::DevaService::ManusyaHeartbeat, &request, response);
+    }
+
+    pain::Status list_manusya(pain::proto::deva::ListManusyaResponse* response) {
+        pain::proto::deva::ListManusyaRequest request;
+        return pain::deva::call_rpc(
+            _mock_deva.group().c_str(), &pain::proto::deva::DevaService::ListManusya, &request, response);
     }
 
     void TearDown() override {
@@ -104,15 +123,30 @@ TEST_F(TestDeva, CreateDirectoryAndFile) {
     EXPECT_TRUE(status.ok()) << status.error_str() << "(" << status.error_code() << ")";
     std::cout << "leader: " << leader << std::endl;
 
-    pain::proto::deva::MkdirResponse mkdir_response;
-    status = mkdir("/test", &mkdir_response);
-    ASSERT_TRUE(status.ok()) << status.error_str() << "(" << status.error_code() << ")";
-    std::cout << "mkdir response: " << mkdir_response.DebugString() << std::endl;
+    {
+        pain::proto::deva::MkdirResponse mkdir_response;
+        status = mkdir("/test", &mkdir_response);
+        ASSERT_TRUE(status.ok()) << status.error_str() << "(" << status.error_code() << ")";
+        std::cout << "mkdir response: " << mkdir_response.DebugString() << std::endl;
+    }
 
-    pain::proto::deva::OpenFileResponse response;
-    status = open("/test/test.txt", pain::proto::deva::OpenFlag::OPEN_CREATE, &response);
-    EXPECT_TRUE(status.ok()) << status.error_str() << "(" << status.error_code() << ")";
-    std::cout << "response: " << response.DebugString() << std::endl;
+    pain::proto::FileInfo file_info;
+    {
+        pain::proto::deva::OpenFileResponse response;
+        status = open("/test/test.txt", pain::proto::deva::OpenFlag::OPEN_CREATE, &response);
+        EXPECT_TRUE(status.ok()) << status.error_str() << "(" << status.error_code() << ")";
+        std::cout << "response: " << response.DebugString() << std::endl;
+        file_info.Swap(response.mutable_file_info());
+    }
+
+    {
+        pain::proto::deva::OpenFileResponse response;
+        status = open("/test/test.txt", pain::proto::deva::OpenFlag::OPEN_READ, &response);
+        EXPECT_TRUE(status.ok()) << status.error_str() << "(" << status.error_code() << ")";
+        std::cout << "response: " << response.DebugString() << std::endl;
+        EXPECT_EQ(response.file_info().file_id().high(), file_info.file_id().high());
+        EXPECT_EQ(response.file_info().file_id().low(), file_info.file_id().low());
+    }
 }
 
 TEST_F(TestDeva, ReadDir) {
@@ -200,6 +234,47 @@ TEST_F(TestDeva, Snapshot) {
     ASSERT_EQ(readdir_response.entries_size(), 1);
     EXPECT_EQ(readdir_response.entries(0).name(), "test.txt");
     EXPECT_EQ(readdir_response.entries(0).type(), pain::proto::FileType::FILE_TYPE_FILE);
+}
+
+TEST_F(TestDeva, ListManusya) {
+    _mock_deva.start();
+    SCOPE_EXIT {
+        _mock_deva.stop();
+    };
+    std::string leader;
+    auto status = _mock_deva.wait_for_leader(&leader);
+    ASSERT_TRUE(status.ok()) << status.error_str() << "(" << status.error_code() << ")";
+    std::cout << "leader: " << leader << std::endl;
+
+    {
+        pain::proto::deva::ListManusyaResponse response;
+        status = list_manusya(&response);
+        ASSERT_TRUE(status.ok()) << status.error_str() << "(" << status.error_code() << ")";
+        std::cout << "list_manusya response: " << response.DebugString() << std::endl;
+    }
+
+    {
+        // heartbeat
+        pain::proto::deva::ManusyaHeartbeatResponse response;
+        pain::UUID uuid(1, 2);
+        status = manusya_heartbeat(uuid, "127.0.0.1", 12345, &response); // NOLINT(readability-magic-numbers)
+        ASSERT_TRUE(status.ok()) << status.error_str() << "(" << status.error_code() << ")";
+        std::cout << "manusya_heartbeat response: " << response.DebugString() << std::endl;
+    }
+
+    {
+        pain::proto::deva::ListManusyaResponse response;
+        status = list_manusya(&response);
+        ASSERT_TRUE(status.ok()) << status.error_str() << "(" << status.error_code() << ")";
+        std::cout << "list_manusya response: " << response.DebugString() << std::endl;
+        pain::UUID uuid(1, 2);
+        ASSERT_EQ(response.manusya_descriptors_size(), 1);
+        EXPECT_EQ(response.manusya_descriptors(0).manusya_id().uuid().high(), uuid.high());
+        EXPECT_EQ(response.manusya_descriptors(0).manusya_id().uuid().low(), uuid.low());
+        EXPECT_EQ(response.manusya_descriptors(0).manusya_id().ip(), "127.0.0.1");
+        EXPECT_EQ(response.manusya_descriptors(0).manusya_id().port(), 12345);
+        EXPECT_TRUE(response.manusya_descriptors(0).is_alive());
+    }
 }
 
 } // namespace

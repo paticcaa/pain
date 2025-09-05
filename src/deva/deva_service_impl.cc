@@ -48,7 +48,18 @@ DEVA_SERVICE_METHOD(OpenFile) {
         response->mutable_header()->set_status(0);
         response->mutable_header()->set_message("ok");
     } else {
-        // TODO: open file
+        // readdir
+        // get file info
+        pain::proto::deva::store::GetFileInfoRequest get_file_info_request;
+        pain::proto::deva::store::GetFileInfoResponse get_file_info_response;
+        get_file_info_request.set_path(path);
+        auto status = bridge<Deva, OpType::kGetFileInfo>(1, _rsm, get_file_info_request, &get_file_info_response).get();
+        if (!status.ok()) {
+            PLOG_ERROR(("desc", "failed to get file info")("error", status.error_str()));
+        }
+        response->mutable_file_info()->Swap(get_file_info_response.mutable_file_info());
+        response->mutable_header()->set_status(0);
+        response->mutable_header()->set_message("ok");
     }
 
     response->mutable_header()->set_status(0);
@@ -135,6 +146,44 @@ DEVA_SERVICE_METHOD(SealChunk) {
 DEVA_SERVICE_METHOD(SealAndNewChunk) {
     brpc::ClosureGuard done_guard(done);
     DEFINE_SPAN(span, controller);
+}
+
+DEVA_SERVICE_METHOD(ManusyaHeartbeat) {
+    brpc::ClosureGuard done_guard(done);
+    DEFINE_SPAN(span, controller);
+    auto& manusya_registration = request->manusya_registration();
+    pain::proto::deva::store::ManusyaHeartbeatRequest manusya_heartbeat_request;
+    pain::proto::deva::store::ManusyaHeartbeatResponse manusya_heartbeat_response;
+
+    manusya_heartbeat_request.mutable_manusya_registration()->CopyFrom(manusya_registration);
+
+    auto status =
+        bridge<Deva, OpType::kManusyaHeartbeat>(1, _rsm, manusya_heartbeat_request, &manusya_heartbeat_response).get();
+    if (!status.ok()) {
+        PLOG_ERROR(("desc", "failed to handle manusya heartbeat")("error", status.error_str()));
+        response->mutable_header()->set_status(status.error_code());
+        response->mutable_header()->set_message(status.error_str());
+        return;
+    }
+    response->mutable_header()->set_status(0);
+    response->mutable_header()->set_message("ok");
+}
+
+DEVA_SERVICE_METHOD(ListManusya) {
+    brpc::ClosureGuard done_guard(done);
+    DEFINE_SPAN(span, controller);
+    pain::proto::deva::store::ListManusyaRequest list_manusya_request;
+    pain::proto::deva::store::ListManusyaResponse list_manusya_response;
+    auto status = bridge<Deva, OpType::kListManusya>(1, _rsm, list_manusya_request, &list_manusya_response).get();
+    if (!status.ok()) {
+        PLOG_ERROR(("desc", "failed to list manusya")("error", status.error_str()));
+        response->mutable_header()->set_status(status.error_code());
+        response->mutable_header()->set_message(status.error_str());
+        return;
+    }
+    response->mutable_manusya_descriptors()->Swap(list_manusya_response.mutable_manusya_descriptors());
+    response->mutable_header()->set_status(0);
+    response->mutable_header()->set_message("ok");
 }
 
 } // namespace pain::deva

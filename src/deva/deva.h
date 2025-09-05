@@ -8,6 +8,7 @@
 #include "common/txn_manager.h"
 #include "common/txn_store.h"
 #include "deva/container.h"
+#include "deva/manusya_descriptor.h"
 #include "deva/namespace.h"
 #include "deva/op.h"
 
@@ -58,6 +59,9 @@ public:
     DEVA_ENTRY(CheckInChunk);
     DEVA_ENTRY(SealChunk);
     DEVA_ENTRY(SealAndNewChunk);
+    DEVA_ENTRY(GetFileInfo);
+    DEVA_ENTRY(ManusyaHeartbeat);
+    DEVA_ENTRY(ListManusya);
 
     Status save_snapshot(std::string_view path, std::vector<std::string>* files) override;
     Status load_snapshot(std::string_view path) override;
@@ -69,14 +73,21 @@ private:
         return index != 0 && index <= _applied_index;
     }
 
+    Status update_file_info(const UUID& id, const proto::FileInfo& file_info);
+    Status get_file_info(const UUID& id, proto::FileInfo* file_info);
+    Status remove_file_info(const UUID& id);
+
 private:
     std::atomic<int> _use_count;
     common::StorePtr _store;
     Namespace _namespace;
-    std::unordered_map<UUID, proto::FileInfo> _file_infos;
+    const char* _file_info_key = "file_info";
     const char* _meta_key = "meta";
     const char* _applied_index_key = "applied_index";
     int64_t _applied_index = 0;
+
+    // don't need persist
+    std::unordered_map<UUID, ManusyaDescriptor> _manusya_descriptors;
 
     friend void intrusive_ptr_add_ref(Deva* deva) {
         ++deva->_use_count;

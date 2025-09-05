@@ -10,9 +10,7 @@ class AsuraServiceImpl : public pain::proto::asura::AsuraService {
 public:
     AsuraServiceImpl(common::StorePtr store) : _store(store) {}
     ASURA_RPC_ENTRY(RegisterDeva);
-    ASURA_RPC_ENTRY(RegisterManusya);
     ASURA_RPC_ENTRY(ListDeva);
-    ASURA_RPC_ENTRY(ListManusya);
 
 private:
     common::StorePtr _store;

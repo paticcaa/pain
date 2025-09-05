@@ -85,3 +85,26 @@ message DirEntry {
 message DirEntries {
     repeated DirEntry entries = 1;
 }
+
+message ManusyaID {
+    string ip = 1;
+    int32 port = 2;
+    UUID uuid = 3;
+}
+
+message StorageInfo {
+    string cluster_id = 1;
+    int64 ctime = 2;
+}
+
+message ManusyaRegistration {
+    ManusyaID manusya_id = 1;
+    StorageInfo storage_info = 2;
+}
+
+message ManusyaDescriptor {
+    ManusyaID manusya_id = 1;
+    StorageInfo storage_info = 2;
+    bool is_alive = 3;
+    uint64 last_heartbeat_time = 4;
+}

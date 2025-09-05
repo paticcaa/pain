@@ -22,6 +22,9 @@ enum class OpType : uint32_t {
     DEFINE_DEVA_OP(7, SealChunk, true),
     DEFINE_DEVA_OP(8, SealAndNewChunk, true),
     DEFINE_DEVA_OP(9, ReadDir, false),
+    DEFINE_DEVA_OP(10, GetFileInfo, false),
+    DEFINE_DEVA_OP(20, ManusyaHeartbeat, false),
+    DEFINE_DEVA_OP(21, ListManusya, false),
     DEFINE_DEVA_OP(100, MaxDevaOp, true),
 };
 

@@ -25,6 +25,8 @@ public:
     DEVA_SERVICE_METHOD(CheckInChunk);
     DEVA_SERVICE_METHOD(SealChunk);
     DEVA_SERVICE_METHOD(SealAndNewChunk);
+    DEVA_SERVICE_METHOD(ManusyaHeartbeat);
+    DEVA_SERVICE_METHOD(ListManusya);
 
 private:
     RsmPtr _rsm;

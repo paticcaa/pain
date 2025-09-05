@@ -18,6 +18,10 @@ service DevaService {
     rpc SealChunk(SealChunkRequest) returns (SealChunkResponse);
     rpc SealAndNewChunk(SealAndNewChunkRequest)
         returns (SealAndNewChunkResponse);
+
+    rpc ManusyaHeartbeat(ManusyaHeartbeatRequest)
+        returns (ManusyaHeartbeatResponse);
+    rpc ListManusya(ListManusyaRequest) returns (ListManusyaResponse);
 }
 
 enum OpenFlag {
@@ -113,4 +117,19 @@ message SealChunkRequest {
 
 message SealChunkResponse {
     Header header = 1;
+}
+
+message ManusyaHeartbeatRequest {
+    ManusyaRegistration manusya_registration = 1;
+}
+
+message ManusyaHeartbeatResponse {
+    Header header = 1;
+}
+
+message ListManusyaRequest {}
+
+message ListManusyaResponse {
+    Header header = 1;
+    repeated ManusyaDescriptor manusya_descriptors = 2;
 }

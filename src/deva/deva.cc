@@ -60,7 +60,10 @@ DEVA_METHOD(CreateFile) {
     file_info->set_mode(request->mode());
     file_info->set_uid(request->uid());
     file_info->set_gid(request->gid());
-    _file_infos[file_uuid] = *file_info;
+    status = update_file_info(file_uuid, *file_info);
+    if (!status.ok()) {
+        return status;
+    }
     return Status::OK();
 }
 
@@ -85,7 +88,10 @@ DEVA_METHOD(CreateDir) {
     file_info->set_mode(request->mode());
     file_info->set_uid(request->uid());
     file_info->set_gid(request->gid());
-    _file_infos[dir_uuid] = *file_info;
+    status = update_file_info(dir_uuid, *file_info);
+    if (!status.ok()) {
+        return status;
+    }
     return Status::OK();
 }
 
@@ -150,6 +156,76 @@ DEVA_METHOD(SealAndNewChunk) {
     return Status::OK();
 }
 
+DEVA_METHOD(GetFileInfo) {
+    SPAN(span);
+    PLOG_INFO(("desc", "get_file_info")("version", version)("index", index));
+    auto& path = request->path();
+    UUID file_uuid;
+    FileType file_type = FileType::kNone;
+    auto status = _namespace.lookup(path.c_str(), &file_uuid, &file_type);
+    if (!status.ok()) {
+        return status;
+    }
+    if (file_type != FileType::kFile) {
+        return Status(EINVAL, fmt::format("{} is not a file", path.c_str()));
+    }
+    proto::FileInfo file_info;
+    status = get_file_info(file_uuid, &file_info);
+    if (!status.ok()) {
+        return status;
+    }
+    response->mutable_file_info()->Swap(&file_info);
+    return Status::OK();
+}
+
+DEVA_METHOD(ManusyaHeartbeat) {
+    SPAN(span);
+    PLOG_INFO(("desc", "manusya_heartbeat")("version", version)("index", index));
+    auto& manusya_id = request->manusya_registration().manusya_id();
+    // auto& storage_info = request->manusya_registration().storage_info();
+    // TODO: check cluster id
+
+    UUID manusya_uuid(manusya_id.uuid().high(), manusya_id.uuid().low());
+    auto it = _manusya_descriptors.find(manusya_uuid);
+    if (it == _manusya_descriptors.end()) {
+        // new manusya
+        PLOG_INFO(("desc", "new manusya")              //
+                  ("manusya_uuid", manusya_uuid.str()) //
+                  ("ip", manusya_id.ip())              //
+                  ("port", manusya_id.port()));
+        ManusyaDescriptor manusya_descriptor;
+        manusya_descriptor.ip = manusya_id.ip();
+        manusya_descriptor.port = manusya_id.port();
+        manusya_descriptor.uuid = manusya_uuid;
+        manusya_descriptor.is_alive = true;
+        manusya_descriptor.update_heartbeat();
+        _manusya_descriptors[manusya_uuid] = manusya_descriptor;
+    } else {
+        auto& manusya_descriptor = it->second;
+        manusya_descriptor.ip = manusya_id.ip();
+        manusya_descriptor.port = manusya_id.port();
+        manusya_descriptor.update_heartbeat();
+    }
+    return Status::OK();
+}
+
+DEVA_METHOD(ListManusya) {
+    SPAN(span);
+    PLOG_INFO(("desc", "list_manusya")("version", version)("index", index));
+    auto manusya_descriptors = response->mutable_manusya_descriptors();
+    for (auto& [_, manusya_descriptor] : _manusya_descriptors) {
+        auto manusya_descriptor_proto = manusya_descriptors->Add();
+        manusya_descriptor_proto->mutable_manusya_id()->set_ip(manusya_descriptor.ip);
+        manusya_descriptor_proto->mutable_manusya_id()->set_port(manusya_descriptor.port);
+        manusya_descriptor_proto->mutable_manusya_id()->mutable_uuid()->set_high(manusya_descriptor.uuid.high());
+        manusya_descriptor_proto->mutable_manusya_id()->mutable_uuid()->set_low(manusya_descriptor.uuid.low());
+        manusya_descriptor_proto->mutable_storage_info()->set_cluster_id(manusya_descriptor.cluster_id);
+        manusya_descriptor_proto->set_is_alive(manusya_descriptor.is_alive);
+        manusya_descriptor_proto->set_last_heartbeat_time(manusya_descriptor.last_heartbeat_time);
+    }
+    return Status::OK();
+}
+
 Status Deva::set_applied_index(int64_t index) {
     if (index <= _applied_index) {
         PLOG_WARN(("desc", "index is applied already")("index", index));
@@ -169,6 +245,48 @@ Status Deva::set_applied_index(int64_t index) {
 
     status = txn->commit();
     return status;
+}
+
+Status Deva::update_file_info(const UUID& id, const proto::FileInfo& file_info) {
+    auto in_txn = common::TxnManager::instance().in_txn();
+    auto this_txn = _store->begin_txn();
+    auto txn = in_txn ? common::TxnManager::instance().get_txn_store() : this_txn.get();
+    if (txn == nullptr) {
+        return Status(EIO, "Failed to begin transaction");
+    }
+    auto status = txn->hset(_file_info_key, id.str(), file_info.SerializeAsString());
+    if (!status.ok()) {
+        return status;
+    }
+    if (in_txn) {
+        return Status::OK();
+    }
+    status = txn->commit();
+    if (!status.ok()) {
+        return status;
+    }
+    return status;
+}
+
+Status Deva::get_file_info(const UUID& id, proto::FileInfo* file_info) {
+    std::string file_info_str;
+    auto status = _store->hget(_file_info_key, id.str(), &file_info_str);
+    if (!status.ok()) {
+        return status;
+    }
+    auto ret = file_info->ParseFromString(file_info_str);
+    if (!ret) {
+        return Status(EIO, "Failed to parse file info");
+    }
+    return Status::OK();
+}
+
+Status Deva::remove_file_info(const UUID& id) {
+    auto status = _store->hdel(_file_info_key, id.str());
+    if (!status.ok()) {
+        return status;
+    }
+    return Status::OK();
 }
 
 Status Deva::save_snapshot(std::string_view path, std::vector<std::string>* files) {

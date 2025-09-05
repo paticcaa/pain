@@ -39,34 +39,6 @@ void AsuraServiceImpl::RegisterDeva(::google::protobuf::RpcController* controlle
     }
 }
 
-void AsuraServiceImpl::RegisterManusya(::google::protobuf::RpcController* controller,
-                                       [[maybe_unused]] const pain::proto::asura::RegisterManusyaRequest* request,
-                                       [[maybe_unused]] pain::proto::asura::RegisterManusyaResponse* response,
-                                       ::google::protobuf::Closure* done) { // NOLINT(readability-non-const-parameter)
-    ASURA_SPAN(span, controller);
-    brpc::ClosureGuard done_guard(done);
-    for (const auto& manusya_server : request->manusya_servers()) {
-        auto uuid = UUID(manusya_server.id().high(), manusya_server.id().low());
-        auto result = response->add_results();
-        result->mutable_id()->CopyFrom(manusya_server.id());
-        result->set_code(0);
-        result->set_message("ok");
-
-        if (!_store->hexists(ASURA_MANUSYA, uuid.str())) {
-            result->set_code(EEXIST);
-            result->set_message(
-                fmt::format("{} existed. ip:{}, port:{}", uuid.str(), manusya_server.ip(), manusya_server.port()));
-            continue;
-        }
-
-        auto status = _store->hset(ASURA_MANUSYA, uuid.str(), manusya_server.SerializeAsString());
-        if (!status.ok()) {
-            result->set_code(status.error_code());
-            result->set_message(status.error_cstr());
-        }
-    }
-}
-
 void AsuraServiceImpl::ListDeva(::google::protobuf::RpcController* controller,
                                 [[maybe_unused]] const pain::proto::asura::ListDevaRequest* request,
                                 [[maybe_unused]] pain::proto::asura::ListDevaResponse* response,
@@ -78,21 +50,6 @@ void AsuraServiceImpl::ListDeva(::google::protobuf::RpcController* controller,
         auto deva = response->add_deva_servers();
         auto value = it->value();
         deva->ParseFromArray(value.data(), value.size());
-        it->next();
-    }
-}
-
-void AsuraServiceImpl::ListManusya(::google::protobuf::RpcController* controller,
-                                   [[maybe_unused]] const pain::proto::asura::ListManusyaRequest* request,
-                                   [[maybe_unused]] pain::proto::asura::ListManusyaResponse* response,
-                                   ::google::protobuf::Closure* done) { // NOLINT(readability-non-const-parameter)
-    ASURA_SPAN(span, controller);
-    brpc::ClosureGuard done_guard(done);
-    auto it = _store->hgetall(ASURA_MANUSYA);
-    while (it->valid()) {
-        auto manusya = response->add_manusya_servers();
-        auto value = it->value();
-        manusya->ParseFromArray(value.data(), value.size());
         it->next();
     }
 }

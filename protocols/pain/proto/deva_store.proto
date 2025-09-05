@@ -18,6 +18,14 @@ message CreateFileResponse {
     FileInfo file_info = 1;
 }
 
+message GetFileInfoRequest {
+    string path = 1;
+}
+
+message GetFileInfoResponse {
+    FileInfo file_info = 1;
+}
+
 message CreateDirRequest {
     string path = 1;
     UUID dir_id = 2;
@@ -64,3 +72,15 @@ message SealChunkResponse {}
 message SealAndNewChunkRequest {}
 
 message SealAndNewChunkResponse {}
+
+message ManusyaHeartbeatRequest {
+    ManusyaRegistration manusya_registration = 1;
+}
+
+message ManusyaHeartbeatResponse {}
+
+message ListManusyaRequest {}
+
+message ListManusyaResponse {
+    repeated ManusyaDescriptor manusya_descriptors = 1;
+}
