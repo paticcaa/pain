@@ -16,7 +16,7 @@
 
 namespace pain::deva {
 
-DevaServiceImpl::DevaServiceImpl(RsmPtr rsm) : _rsm(rsm) {}
+DevaServiceImpl::DevaServiceImpl(common::RsmPtr rsm) : _rsm(rsm) {}
 
 DEVA_SERVICE_METHOD(OpenFile) {
     brpc::ClosureGuard done_guard(done);

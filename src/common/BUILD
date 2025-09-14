@@ -2,7 +2,7 @@ load('//:copts.bzl', 'PAIN_COPTS', 'PAIN_LINKOPTS', 'PAIN_TEST_COPTS')
 
 cc_library(
     name = "pain_common",
-    srcs = glob(["*.h", "*.cc"]),
+    srcs = glob(["*.h", "*.cc", "rsm/*.h", "rsm/*.cc"]),
     copts = PAIN_COPTS,
     linkopts = PAIN_LINKOPTS,
     deps = [
@@ -12,6 +12,7 @@ cc_library(
         "@boost.smart_ptr",
         "@rocksdb",
         "@braft",
+        "@magic_enum",
     ],
     visibility = ["//visibility:public"],
 )

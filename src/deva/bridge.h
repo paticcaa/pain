@@ -1,39 +1,23 @@
 #pragma once
 
-#include <braft/raft.h>
-#include <pain/base/future.h>
-#include <pain/base/types.h>
-#include <functional>
-#include "deva/container_op.h"
-#include "deva/op.h"
-#include "deva/rsm.h"
+#include "common/rsm/bridge.h"
+#include "deva/deva_op_factory.h"
 
 namespace pain::deva {
 
 template <typename ContainerType, OpType OpType, typename Request, typename Response>
 void bridge(int32_t version,
-            RsmPtr rsm,
+            common::RsmPtr rsm,
             const Request& request,
             Response* response,
             std::move_only_function<void(Status)> cb) {
-    // TODO: get rsm by partition id
-    auto op = new ContainerOp<ContainerType, Request, Response>(
-        version, OpType, rsm, request, response, [cb = std::move(cb)](Status status) mutable {
-            cb(std::move(status));
-        });
-    op->apply();
+    common::bridge<ContainerType>(static_cast<uint32_t>(OpType), version, rsm, request, response, std::move(cb));
 }
 
 // Future style
 template <typename ContainerType, OpType OpType, typename Request, typename Response>
-Future<Status> bridge(int32_t version, RsmPtr rsm, const Request& request, Response* response) {
-    Promise<Status> promise;
-    auto future = promise.get_future();
-    bridge<ContainerType, OpType>(
-        version, rsm, request, response, [promise = std::move(promise)](Status status) mutable {
-            promise.set_value(std::move(status));
-        });
-    return future;
+Future<Status> bridge(int32_t version, common::RsmPtr rsm, const Request& request, Response* response) {
+    return common::bridge<ContainerType>(static_cast<uint32_t>(OpType), version, rsm, request, response);
 }
 
 } // namespace pain::deva

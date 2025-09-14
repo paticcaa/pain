@@ -4,13 +4,13 @@
 #include <pain/base/types.h>
 #include <boost/intrusive_ptr.hpp>
 #include "pain/proto/deva_store.pb.h"
+#include "common/rsm/container.h"
 #include "common/store.h"
 #include "common/txn_manager.h"
 #include "common/txn_store.h"
-#include "deva/container.h"
+#include "deva/deva_op_factory.h"
 #include "deva/manusya_descriptor.h"
 #include "deva/namespace.h"
-#include "deva/op.h"
 
 #define DEVA_ENTRY(name)                                                                                               \
     Status name([[maybe_unused]] int32_t version,                                                                      \
@@ -21,7 +21,7 @@
                    [[maybe_unused]] const pain::proto::deva::store::name##Request* request,                            \
                    [[maybe_unused]] pain::proto::deva::store::name##Response* response,                                \
                    [[maybe_unused]] int64_t index) {                                                                   \
-        if (!need_apply(OpType::k##name)) {                                                                            \
+        if (!common::need_apply(static_cast<uint32_t>(OpType::k##name))) {                                             \
             return name(version, request, response, index);                                                            \
         }                                                                                                              \
         if (check_index_is_applied(index)) {                                                                           \
@@ -46,7 +46,7 @@ namespace pain::deva {
 
 class Deva;
 using DevaPtr = boost::intrusive_ptr<Deva>;
-class Deva : public Container {
+class Deva : public common::Container {
 public:
     Deva(common::StorePtr store) : _store(store), _namespace(store) {}
 
@@ -65,6 +65,10 @@ public:
 
     Status save_snapshot(std::string_view path, std::vector<std::string>* files) override;
     Status load_snapshot(std::string_view path) override;
+    common::OpFactory* op_factory() override {
+        static DevaOpFactory s_op_factory;
+        return &s_op_factory;
+    }
 
 private:
     Status create(const std::string& path, const ObjectId& id, FileType type);

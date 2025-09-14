@@ -5,14 +5,16 @@
 #include <string>
 #include <string_view>
 #include <boost/intrusive_ptr.hpp>
+#include "common/rsm/op_factory.h"
 
-namespace pain::deva {
+namespace pain::common {
 
 class Container {
 public:
     virtual ~Container() = default;
     virtual Status save_snapshot(std::string_view path, std::vector<std::string>* files) = 0;
     virtual Status load_snapshot(std::string_view path) = 0;
+    virtual OpFactory* op_factory() = 0;
 
 private:
     std::atomic<int> _use_count = 0;
@@ -30,4 +32,4 @@ private:
 
 using ContainerPtr = boost::intrusive_ptr<Container>;
 
-} // namespace pain::deva
+} // namespace pain::common

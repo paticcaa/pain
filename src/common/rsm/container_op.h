@@ -1,14 +1,14 @@
 #pragma once
 
 #include <braft/raft.h>
+#include <pain/base/macro.h>
 #include <pain/base/plog.h>
 #include <pain/base/types.h>
 #include <functional>
-#include "deva/macro.h"
-#include "deva/op.h"
-#include "deva/rsm.h"
+#include "common/rsm/op.h"
+#include "common/rsm/rsm.h"
 
-namespace pain::deva {
+namespace pain::common {
 
 class OpClosure : public braft::Closure {
 public:
@@ -34,14 +34,14 @@ private:
     std::shared_ptr<opentelemetry::trace::Span> _span;
 };
 
-OpPtr decode(int32_t version, OpType op_type, IOBuf* buf, RsmPtr rsm);
+OpPtr decode(int32_t version, uint32_t op_type, IOBuf* buf, RsmPtr rsm);
 
 template <typename ContainerType, typename Request, typename Response>
 class ContainerOp : public Op {
 public:
     using OnFinish = std::move_only_function<void(Status)>;
     ContainerOp(int32_t version,
-                OpType type,
+                uint32_t type,
                 RsmPtr rsm,
                 Request request,
                 Response* response = nullptr,
@@ -57,18 +57,18 @@ public:
         }
     }
 
-    OpType type() const override {
+    uint32_t type() const override {
         return _type;
     }
 
     void apply() override {
-        SPAN(span);
+        SPAN("common", span);
         PLOG_DEBUG(("desc", "apply op")("type", _type)("version", _version));
         if (need_apply(_type)) {
             braft::Task task;
             IOBuf buf;
             OpPtr self(this);
-            pain::deva::encode(_version, self, &buf);
+            pain::common::encode(_version, self, &buf);
             task.data = &buf;
             task.done = new OpClosure(self, span);
             task.expected_term = -1;
@@ -109,7 +109,7 @@ public:
 
 protected:
     int32_t _version;
-    OpType _type;
+    uint32_t _type;
     RsmPtr _rsm;
     Request _request;
     Response* _response;
@@ -117,4 +117,4 @@ protected:
     OnFinish _finish;
 };
 
-} // namespace pain::deva
+} // namespace pain::common
