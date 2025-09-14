@@ -11,6 +11,12 @@ message UUID {
     uint64 high = 2;
 }
 
+message ObjectId {
+    uint32 reserved = 1;
+    uint32 partition_id = 2;
+    UUID uuid = 3;
+}
+
 message Pair {
     string key = 1;
     string value = 2;

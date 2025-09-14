@@ -7,6 +7,7 @@ cc_library(
     linkopts = PAIN_LINKOPTS,
     deps = [
         "//src/base:pain_base",
+        "//protocols/pain/proto:cc_pain_common_proto",
         "@boost.assert",
         "@boost.smart_ptr",
         "@rocksdb",
