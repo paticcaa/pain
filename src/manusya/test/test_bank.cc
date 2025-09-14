@@ -34,7 +34,7 @@ TEST_F(TestBank, BasicCreateChunk) {
     ChunkOptions options;
     ChunkPtr chunk;
 
-    auto status = _bank->create_chunk(options, &chunk);
+    auto status = _bank->create_chunk(options, 0, &chunk);
     ASSERT_TRUE(status.ok()) << "Failed to create chunk: " << status.error_str();
     ASSERT_TRUE(chunk != nullptr);
     ASSERT_EQ(chunk->state(), ChunkState::kOpen);
@@ -48,42 +48,42 @@ TEST_F(TestBank, CreateMultipleChunks) {
     // 创建多个chunk
     for (int i = 0; i < 5; ++i) {
         ChunkPtr chunk;
-        auto status = _bank->create_chunk(options, &chunk);
+        auto status = _bank->create_chunk(options, i, &chunk);
         ASSERT_TRUE(status.ok()) << "Failed to create chunk " << i << ": " << status.error_str();
         ASSERT_TRUE(chunk != nullptr);
         chunks.push_back(chunk);
     }
 
     // 验证所有chunk都有不同的UUID
-    std::set<std::string> uuids;
-    std::vector<std::string> uuids_str;
+    std::set<std::string> chunk_ids;
+    std::vector<std::string> chunk_ids_str;
     for (const auto& chunk : chunks) {
-        uuids.insert(chunk->uuid().str());
-        uuids_str.push_back(chunk->uuid().str());
+        chunk_ids.insert(chunk->chunk_id().str());
+        chunk_ids_str.push_back(chunk->chunk_id().str());
     }
-    ASSERT_EQ(uuids.size(), 5) << "All chunks should have unique UUIDs:" << fmt::format("{}", uuids_str);
+    ASSERT_EQ(chunk_ids.size(), 5) << "All chunks should have unique UUIDs:" << fmt::format("{}", chunk_ids_str);
 }
 
 TEST_F(TestBank, GetChunkSuccess) {
     ChunkOptions options;
     ChunkPtr created_chunk;
 
-    auto status = _bank->create_chunk(options, &created_chunk);
+    auto status = _bank->create_chunk(options, 0, &created_chunk);
     ASSERT_TRUE(status.ok());
 
     ChunkPtr retrieved_chunk;
-    status = _bank->get_chunk(created_chunk->uuid(), &retrieved_chunk);
+    status = _bank->get_chunk(created_chunk->chunk_id(), &retrieved_chunk);
     ASSERT_TRUE(status.ok()) << "Failed to get chunk: " << status.error_str();
     ASSERT_TRUE(retrieved_chunk != nullptr);
-    ASSERT_EQ(retrieved_chunk->uuid().str(), created_chunk->uuid().str());
+    ASSERT_EQ(retrieved_chunk->chunk_id().str(), created_chunk->chunk_id().str());
     ASSERT_EQ(retrieved_chunk->state(), created_chunk->state());
 }
 
 TEST_F(TestBank, GetChunkNotFound) {
-    auto non_existent_uuid = UUID::generate();
+    auto non_existent_chunk_id = ObjectId::generate(0);
     ChunkPtr chunk;
 
-    auto status = _bank->get_chunk(non_existent_uuid, &chunk);
+    auto status = _bank->get_chunk(non_existent_chunk_id, &chunk);
     ASSERT_FALSE(status.ok());
     ASSERT_EQ(status.error_code(), ENOENT);
     ASSERT_EQ(status.error_str(), "Chunk not found");
@@ -93,85 +93,85 @@ TEST_F(TestBank, RemoveChunkSuccess) {
     ChunkOptions options;
     ChunkPtr chunk;
 
-    auto status = _bank->create_chunk(options, &chunk);
+    auto status = _bank->create_chunk(options, 0, &chunk);
     ASSERT_TRUE(status.ok());
 
-    auto uuid = chunk->uuid();
-    status = _bank->remove_chunk(uuid);
+    auto chunk_id = chunk->chunk_id();
+    status = _bank->remove_chunk(chunk_id);
     ASSERT_TRUE(status.ok()) << "Failed to remove chunk: " << status.error_str();
 
     // 验证chunk已被删除
     ChunkPtr retrieved_chunk;
-    status = _bank->get_chunk(uuid, &retrieved_chunk);
+    status = _bank->get_chunk(chunk_id, &retrieved_chunk);
     ASSERT_FALSE(status.ok());
     ASSERT_EQ(status.error_code(), ENOENT);
 }
 
 TEST_F(TestBank, RemoveChunkNotFound) {
-    auto non_existent_uuid = UUID::generate();
+    auto non_existent_chunk_id = ObjectId::generate(0);
 
-    auto status = _bank->remove_chunk(non_existent_uuid);
+    auto status = _bank->remove_chunk(non_existent_chunk_id);
     ASSERT_FALSE(status.ok());
     ASSERT_EQ(status.error_code(), ENOENT);
     ASSERT_EQ(status.error_str(), "Chunk not found");
 }
 
 TEST_F(TestBank, ListChunkEmpty) {
-    std::vector<UUID> listed_uuids;
-    auto start_uuid = UUID::generate();
+    std::vector<ObjectId> listed_chunk_ids;
+    auto start_chunk_id = ObjectId::generate(0);
 
-    _bank->list_chunk(start_uuid, 10, [&listed_uuids](UUID uuid) {
-        listed_uuids.push_back(uuid);
+    _bank->list_chunk(start_chunk_id, 10, [&listed_chunk_ids](ObjectId chunk_id) {
+        listed_chunk_ids.push_back(chunk_id);
     });
 
-    ASSERT_TRUE(listed_uuids.empty()) << "Should not list any chunks when bank is empty";
+    ASSERT_TRUE(listed_chunk_ids.empty()) << "Should not list any chunks when bank is empty";
 }
 
 TEST_F(TestBank, ListChunkWithLimit) {
     ChunkOptions options;
-    std::vector<UUID> created_uuids;
+    std::vector<ObjectId> created_chunk_ids;
 
     // 创建10个chunk
     for (int i = 0; i < 10; ++i) {
         ChunkPtr chunk;
-        auto status = _bank->create_chunk(options, &chunk);
+        auto status = _bank->create_chunk(options, i, &chunk);
         ASSERT_TRUE(status.ok());
-        created_uuids.push_back(chunk->uuid());
+        created_chunk_ids.push_back(chunk->chunk_id());
     }
 
     // 测试限制数量为5
-    std::vector<UUID> listed_uuids;
-    UUID start_uuid(0, 0);
-    _bank->list_chunk(start_uuid, 5, [&listed_uuids](UUID uuid) {
-        listed_uuids.push_back(uuid);
+    std::vector<ObjectId> listed_chunk_ids;
+    ObjectId start_chunk_id = ObjectId::generate(0);
+    _bank->list_chunk(start_chunk_id, 5, [&listed_chunk_ids](ObjectId chunk_id) {
+        listed_chunk_ids.push_back(chunk_id);
     });
 
-    ASSERT_EQ(listed_uuids.size(), 5) << "Should list exactly 5 chunks";
+    ASSERT_EQ(listed_chunk_ids.size(), 5) << "Should list exactly 5 chunks";
 }
 
 TEST_F(TestBank, ListChunkWithStartUUID) {
     ChunkOptions options;
-    std::vector<UUID> created_uuids;
+    std::vector<ObjectId> created_chunk_ids;
 
     // 创建5个chunk
     for (int i = 0; i < 5; ++i) {
         ChunkPtr chunk;
-        auto status = _bank->create_chunk(options, &chunk);
+        auto status = _bank->create_chunk(options, i, &chunk);
         ASSERT_TRUE(status.ok());
-        created_uuids.push_back(chunk->uuid());
+        created_chunk_ids.push_back(chunk->chunk_id());
     }
 
     // 排序UUID以便测试
-    std::sort(created_uuids.begin(), created_uuids.end());
+    std::sort(created_chunk_ids.begin(), created_chunk_ids.end());
 
     // 从第二个UUID开始列出
-    std::vector<UUID> listed_uuids;
-    _bank->list_chunk(created_uuids[1], 10, [&listed_uuids](UUID uuid) {
-        listed_uuids.push_back(uuid);
+    std::vector<ObjectId> listed_chunk_ids;
+    _bank->list_chunk(created_chunk_ids[1], 10, [&listed_chunk_ids](ObjectId chunk_id) {
+        listed_chunk_ids.push_back(chunk_id);
     });
 
-    ASSERT_EQ(listed_uuids.size(), 4) << "Should list 4 chunks starting from second UUID";
-    ASSERT_EQ(listed_uuids[0].str(), created_uuids[1].str()) << "First listed UUID should match start UUID";
+    ASSERT_EQ(listed_chunk_ids.size(), 4) << "Should list 4 chunks starting from second UUID";
+    ASSERT_EQ(listed_chunk_ids[0].str(), created_chunk_ids[1].str()) << "First listed UUID should match start UUID";
 }
 
 TEST_F(TestBank, LoadEmptyStore) {
@@ -191,15 +191,15 @@ TEST_F(TestBank, ConcurrentOperations) {
         threads.emplace_back([this, &options, &success_count, i]() {
             for (int j = 0; j < chunks_per_thread; ++j) {
                 ChunkPtr chunk;
-                auto status = _bank->create_chunk(options, &chunk);
+                auto status = _bank->create_chunk(options, i, &chunk);
                 if (status.ok()) {
                     success_count++;
 
                     // 尝试获取刚创建的chunk
                     ChunkPtr retrieved_chunk;
-                    status = _bank->get_chunk(chunk->uuid(), &retrieved_chunk);
+                    status = _bank->get_chunk(chunk->chunk_id(), &retrieved_chunk);
                     if (status.ok()) {
-                        ASSERT_EQ(retrieved_chunk->uuid().str(), chunk->uuid().str());
+                        ASSERT_EQ(retrieved_chunk->chunk_id().str(), chunk->chunk_id().str());
                     }
                 }
             }
@@ -218,7 +218,7 @@ TEST_F(TestBank, ChunkStateTransitions) {
     ChunkOptions options;
     ChunkPtr chunk;
 
-    auto status = _bank->create_chunk(options, &chunk);
+    auto status = _bank->create_chunk(options, 0, &chunk);
     ASSERT_TRUE(status.ok());
     ASSERT_EQ(chunk->state(), ChunkState::kOpen);
 
@@ -244,21 +244,21 @@ TEST_F(TestBank, StoreIntegration) {
     ChunkPtr chunk;
 
     // 创建chunk
-    auto status = _bank->create_chunk(options, &chunk);
+    auto status = _bank->create_chunk(options, 0, &chunk);
     ASSERT_TRUE(status.ok());
 
     // 验证chunk被正确存储
     ChunkPtr retrieved_chunk;
-    status = _bank->get_chunk(chunk->uuid(), &retrieved_chunk);
+    status = _bank->get_chunk(chunk->chunk_id(), &retrieved_chunk);
     ASSERT_TRUE(status.ok());
-    ASSERT_EQ(retrieved_chunk->uuid().str(), chunk->uuid().str());
+    ASSERT_EQ(retrieved_chunk->chunk_id().str(), chunk->chunk_id().str());
 
     // 删除chunk
-    status = _bank->remove_chunk(chunk->uuid());
+    status = _bank->remove_chunk(chunk->chunk_id());
     ASSERT_TRUE(status.ok());
 
     // 验证chunk已被删除
-    status = _bank->get_chunk(chunk->uuid(), &retrieved_chunk);
+    status = _bank->get_chunk(chunk->chunk_id(), &retrieved_chunk);
     ASSERT_FALSE(status.ok());
     ASSERT_EQ(status.error_code(), ENOENT);
 }
@@ -268,12 +268,12 @@ TEST_F(TestBank, ErrorHandling) {
     ChunkPtr* null_chunk_ptr = nullptr;
     ChunkOptions options;
 
-    auto status = _bank->create_chunk(options, null_chunk_ptr);
+    auto status = _bank->create_chunk(options, 0, null_chunk_ptr);
 
     // 测试无效的UUID
-    auto invalid_uuid = UUID::generate();
+    auto invalid_chunk_id = ObjectId::generate(0);
     ChunkPtr chunk;
-    status = _bank->get_chunk(invalid_uuid, &chunk);
+    status = _bank->get_chunk(invalid_chunk_id, &chunk);
     ASSERT_FALSE(status.ok());
     ASSERT_EQ(status.error_code(), ENOENT);
 }

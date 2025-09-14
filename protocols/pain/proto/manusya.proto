@@ -9,15 +9,16 @@ message ChunkOptions {};
 
 message CreateChunkRequest {
     ChunkOptions chunk_options = 1;
+    uint32 partition_id = 2;
 };
 
 message CreateChunkResponse {
     Header header = 1;
-    UUID chunk_id = 2;
+    ObjectId chunk_id = 2;
 };
 
 message AppendChunkRequest {
-    UUID chunk_id = 1;
+    ObjectId chunk_id = 1;
     uint64 offset = 2;
     uint32 length = 3;
     uint32 crc32 = 4;
@@ -29,7 +30,7 @@ message AppendChunkResponse {
 };
 
 message QueryAndSealChunkRequest {
-    UUID chunk_id = 1;
+    ObjectId chunk_id = 1;
 };
 
 message QueryAndSealChunkResponse {
@@ -38,7 +39,7 @@ message QueryAndSealChunkResponse {
 };
 
 message RemoveChunkRequest {
-    UUID chunk_id = 1;
+    ObjectId chunk_id = 1;
 };
 
 message RemoveChunkResponse {
@@ -46,18 +47,18 @@ message RemoveChunkResponse {
 };
 
 message ListChunkRequest {
-    UUID start = 1;
+    ObjectId start = 1;
     uint32 limit = 2;
 };
 
 message ListChunkResponse {
     Header header = 1;
     bool has_more = 2;
-    repeated UUID chunk_ids = 3;
+    repeated ObjectId chunk_ids = 3;
 };
 
 message ReadChunkRequest {
-    UUID chunk_id = 1;
+    ObjectId chunk_id = 1;
     uint64 offset = 2;
     uint32 length = 3;
 };
@@ -70,7 +71,7 @@ message ReadChunkResponse {
 };
 
 message QueryChunkRequest {
-    UUID chunk_id = 1;
+    ObjectId chunk_id = 1;
 };
 
 message QueryChunkResponse {

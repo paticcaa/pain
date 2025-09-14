@@ -154,25 +154,25 @@ TEST_F(TestObjectId, ToString) {
     ObjectId obj(123, test_uuid1);
     std::string str = obj.to_string();
 
-    EXPECT_EQ(str, fmt::format("123-{}", test_uuid1.str()));
+    EXPECT_EQ(str, fmt::format("0000007b-{}", test_uuid1.str()));
 }
 
 TEST_F(TestObjectId, ToStringWithZeroPartitionId) {
     ObjectId obj(0, test_uuid1);
     std::string str = obj.to_string();
 
-    EXPECT_EQ(str, fmt::format("0-{}", test_uuid1.str()));
+    EXPECT_EQ(str, fmt::format("00000000-{}", test_uuid1.str()));
 }
 
 TEST_F(TestObjectId, ToStringWithMaxPartitionId) {
     ObjectId obj(UINT32_MAX, test_uuid1);
     std::string str = obj.to_string();
 
-    EXPECT_EQ(str, fmt::format("{}-{}", UINT32_MAX, test_uuid1.str()));
+    EXPECT_EQ(str, fmt::format("{:08x}-{}", UINT32_MAX, test_uuid1.str()));
 }
 
 TEST_F(TestObjectId, FromString) {
-    std::string str = fmt::format("123-{}", test_uuid1.str());
+    std::string str = fmt::format("0000007b-{}", test_uuid1.str());
     ObjectId obj = ObjectId::from_str_or_die(str);
 
     EXPECT_EQ(obj.partition_id(), 123);
@@ -180,7 +180,7 @@ TEST_F(TestObjectId, FromString) {
 }
 
 TEST_F(TestObjectId, FromStringWithZeroPartitionId) {
-    std::string str = fmt::format("0-{}", test_uuid1.str());
+    std::string str = fmt::format("00000000-{}", test_uuid1.str());
     ObjectId obj = ObjectId::from_str_or_die(str);
 
     EXPECT_EQ(obj.partition_id(), 0);
@@ -188,7 +188,7 @@ TEST_F(TestObjectId, FromStringWithZeroPartitionId) {
 }
 
 TEST_F(TestObjectId, FromStringWithMaxPartitionId) {
-    std::string str = fmt::format("{}-{}", UINT32_MAX, test_uuid1.str());
+    std::string str = fmt::format("{:08x}-{}", UINT32_MAX, test_uuid1.str());
     ObjectId obj = ObjectId::from_str_or_die(str);
 
     EXPECT_EQ(obj.partition_id(), UINT32_MAX);
@@ -256,7 +256,7 @@ TEST_F(TestObjectId, EdgeCasePartitionIds) {
 // 错误处理测试
 TEST_F(TestObjectId, FromStringInvalidFormat) {
     // 测试缺少分隔符的情况
-    EXPECT_DEATH({ ObjectId::from_str_or_die("123550e8400-e29b-41d4-a716-446655440000"); }, "Invalid UUID string");
+    EXPECT_DEATH({ ObjectId::from_str_or_die("123550e8400-e29b-41d4-a716-446655440000"); }, "Invalid ObjectId string");
 
     // 测试空字符串
     EXPECT_DEATH({ ObjectId::from_str_or_die(""); }, "Invalid ObjectId string");
@@ -265,7 +265,8 @@ TEST_F(TestObjectId, FromStringInvalidFormat) {
     EXPECT_DEATH({ ObjectId::from_str_or_die("-"); }, "Invalid ObjectId string");
 
     // 测试多个分隔符
-    EXPECT_DEATH({ ObjectId::from_str_or_die("123-456-550e8400-e29b-41d4-a716-446655440000"); }, "Invalid UUID string");
+    EXPECT_DEATH({ ObjectId::from_str_or_die("123-456-550e8400-e29b-41d4-a716-446655440000"); },
+                 "Invalid ObjectId string");
 }
 
 TEST_F(TestObjectId, FromStringInvalidUUID) {
@@ -278,7 +279,7 @@ TEST_F(TestObjectId, FromStringInvalidUUID) {
 
 TEST_F(TestObjectId, FromStringInvalidPartitionId) {
     // 测试非数字 partition_id
-    EXPECT_DEATH({ ObjectId::from_str_or_die("abc-550e8400-e29b-41d4-a716-446655440000"); }, ".*");
+    EXPECT_DEATH({ ObjectId::from_str_or_die("abx-550e8400-e29b-41d4-a716-446655440000"); }, ".*");
 
     // 测试负数 partition_id（虽然 uint64_t 不能为负，但 stoull 会处理）
     EXPECT_DEATH({ ObjectId::from_str_or_die("-123-550e8400-e29b-41d4-a716-446655440000"); }, ".*");
@@ -307,6 +308,16 @@ TEST_F(TestObjectId, HashCompatibility) {
 
     // 不同对象应该有不同的哈希值（高概率）
     EXPECT_NE(std::hash<ObjectId>{}(obj1), std::hash<ObjectId>{}(obj3));
+}
+
+TEST_F(TestObjectId, Valid) {
+    EXPECT_TRUE(ObjectId::valid("00000000-00000000-0000-0000-0000-000000000000"));
+    EXPECT_TRUE(ObjectId::valid("00000000-00000000-0000-0000-0000-000000000001"));
+    EXPECT_TRUE(ObjectId::valid("00000000-00000000-0000-0000-0000-000000000002"));
+    EXPECT_TRUE(ObjectId::valid("00000000-00000000-0000-0000-0000-000000000003"));
+    EXPECT_TRUE(ObjectId::valid("00000000-00000000-0000-0000-0000-000000000004"));
+    EXPECT_FALSE(ObjectId::valid("0000000-00000000-0000-0000-0000-000000000005"));
+    EXPECT_FALSE(ObjectId::valid("0000000x-00000000-0000-0000-0000-000000000005"));
 }
 
 } // namespace

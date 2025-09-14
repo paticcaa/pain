@@ -3,6 +3,8 @@
 #include "pain/proto/deva.pb.h"
 #include "deva/rsm.h"
 
+#include <atomic>
+
 #define DEVA_SERVICE_METHOD(name)                                                                                      \
     void name(::google::protobuf::RpcController* controller,                                                           \
               const pain::proto::deva::name##Request* request,                                                         \
@@ -30,6 +32,7 @@ public:
 
 private:
     RsmPtr _rsm;
+    std::atomic<uint32_t> _partition_id = 0;
 };
 
 } // namespace pain::deva

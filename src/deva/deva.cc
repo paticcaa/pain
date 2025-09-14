@@ -1,6 +1,7 @@
 #include "deva/deva.h"
 #include <pain/base/plog.h>
 #include <pain/base/uuid.h>
+#include "common/object_id_util.h"
 #include "common/txn_manager.h"
 #include "deva/macro.h"
 
@@ -12,7 +13,7 @@
 
 namespace pain::deva {
 
-Status Deva::create(const std::string& path, const UUID& id, FileType type) {
+Status Deva::create(const std::string& path, const ObjectId& id, FileType type) {
     SPAN(span);
     PLOG_DEBUG(("desc", "create")("path", path)("id", id.str())("type", type));
     // get parent
@@ -20,7 +21,7 @@ Status Deva::create(const std::string& path, const UUID& id, FileType type) {
     auto dir = file_path.parent_path();
     auto filename = file_path.filename();
     auto file_type = FileType::kFile;
-    UUID parent_dir_uuid;
+    ObjectId parent_dir_uuid;
     auto status = _namespace.lookup(dir.c_str(), &parent_dir_uuid, &file_type);
     if (!status.ok()) {
         return status;
@@ -30,8 +31,7 @@ Status Deva::create(const std::string& path, const UUID& id, FileType type) {
         return Status(EINVAL, fmt::format("{} is not a directory", dir.c_str()));
     }
 
-    UUID file_uuid(id.high(), id.low());
-    status = _namespace.create(parent_dir_uuid, filename, type, file_uuid);
+    status = _namespace.create(parent_dir_uuid, filename, type, id);
     if (!status.ok()) {
         return status;
     }
@@ -44,14 +44,13 @@ DEVA_METHOD(CreateFile) {
     PLOG_DEBUG(("desc", "create_file")("version", version)("index", index)("request", request->DebugString()));
     auto& path = request->path();
     auto& file_id = request->file_id();
-    UUID file_uuid(file_id.high(), file_id.low());
+    ObjectId file_uuid = common::from_proto(file_id);
     auto status = create(path, file_uuid, FileType::kFile);
     if (!status.ok()) {
         return status;
     }
     auto file_info = response->mutable_file_info();
-    file_info->mutable_file_id()->set_high(file_uuid.high());
-    file_info->mutable_file_id()->set_low(file_uuid.low());
+    common::to_proto(file_uuid, file_info->mutable_file_id());
     file_info->set_type(pain::proto::FileType::FILE_TYPE_FILE);
     file_info->set_size(0);
     file_info->set_atime(request->atime());
@@ -72,14 +71,13 @@ DEVA_METHOD(CreateDir) {
     PLOG_DEBUG(("desc", "create_dir")("version", version)("index", index)("request", request->DebugString()));
     auto& path = request->path();
     auto& dir_id = request->dir_id();
-    UUID dir_uuid(dir_id.high(), dir_id.low());
+    ObjectId dir_uuid = common::from_proto(dir_id);
     auto status = create(path, dir_uuid, FileType::kDirectory);
     if (!status.ok()) {
         return status;
     }
     auto file_info = response->mutable_file_info();
-    file_info->mutable_file_id()->set_high(dir_uuid.high());
-    file_info->mutable_file_id()->set_low(dir_uuid.low());
+    common::to_proto(dir_uuid, file_info->mutable_file_id());
     file_info->set_type(pain::proto::FileType::FILE_TYPE_DIRECTORY);
     file_info->set_size(0);
     file_info->set_atime(request->atime());
@@ -99,7 +97,7 @@ DEVA_METHOD(ReadDir) {
     SPAN(span);
     PLOG_DEBUG(("desc", "read_dir")("version", version)("index", index)("request", request->DebugString()));
     auto& path = request->path();
-    UUID parent_dir_uuid;
+    ObjectId parent_dir_uuid;
     FileType file_type = FileType::kNone;
     auto status = _namespace.lookup(path.c_str(), &parent_dir_uuid, &file_type);
     if (!status.ok()) {
@@ -112,8 +110,7 @@ DEVA_METHOD(ReadDir) {
     _namespace.list(parent_dir_uuid, &entries);
     for (auto& entry : entries) {
         auto dir_entry = response->add_entries();
-        dir_entry->mutable_file_id()->set_high(entry.inode.high());
-        dir_entry->mutable_file_id()->set_low(entry.inode.low());
+        common::to_proto(entry.inode, dir_entry->mutable_file_id());
         dir_entry->set_type(static_cast<pain::proto::FileType>(entry.type));
         dir_entry->set_name(std::move(entry.name));
     }
@@ -160,7 +157,7 @@ DEVA_METHOD(GetFileInfo) {
     SPAN(span);
     PLOG_INFO(("desc", "get_file_info")("version", version)("index", index));
     auto& path = request->path();
-    UUID file_uuid;
+    ObjectId file_uuid;
     FileType file_type = FileType::kNone;
     auto status = _namespace.lookup(path.c_str(), &file_uuid, &file_type);
     if (!status.ok()) {
@@ -247,7 +244,7 @@ Status Deva::set_applied_index(int64_t index) {
     return status;
 }
 
-Status Deva::update_file_info(const UUID& id, const proto::FileInfo& file_info) {
+Status Deva::update_file_info(const ObjectId& id, const proto::FileInfo& file_info) {
     auto in_txn = common::TxnManager::instance().in_txn();
     auto this_txn = _store->begin_txn();
     auto txn = in_txn ? common::TxnManager::instance().get_txn_store() : this_txn.get();
@@ -268,7 +265,7 @@ Status Deva::update_file_info(const UUID& id, const proto::FileInfo& file_info) 
     return status;
 }
 
-Status Deva::get_file_info(const UUID& id, proto::FileInfo* file_info) {
+Status Deva::get_file_info(const ObjectId& id, proto::FileInfo* file_info) {
     std::string file_info_str;
     auto status = _store->hget(_file_info_key, id.str(), &file_info_str);
     if (!status.ok()) {
@@ -281,7 +278,7 @@ Status Deva::get_file_info(const UUID& id, proto::FileInfo* file_info) {
     return Status::OK();
 }
 
-Status Deva::remove_file_info(const UUID& id) {
+Status Deva::remove_file_info(const ObjectId& id) {
     auto status = _store->hdel(_file_info_key, id.str());
     if (!status.ok()) {
         return status;

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <pain/proto/asura.pb.h>
 #include <pain/status.h>
 #include <memory>
 

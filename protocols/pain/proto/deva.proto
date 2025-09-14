@@ -60,7 +60,7 @@ message ReadDirResponse {
 }
 
 message CloseFileRequest {
-    UUID file_id = 1;
+    ObjectId file_id = 1;
 }
 
 message CloseFileResponse {}
@@ -82,7 +82,7 @@ message SealFileResponse {
 }
 
 message SealAndNewChunkRequest {
-    UUID chunk_id = 1;
+    ObjectId chunk_id = 1;
     uint64 length = 2;
 }
 
@@ -111,7 +111,7 @@ message CheckInChunkResponse {
 }
 
 message SealChunkRequest {
-    UUID chunk_id = 1;
+    ObjectId chunk_id = 1;
     uint64 length = 2;
 }
 

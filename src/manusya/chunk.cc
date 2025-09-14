@@ -124,7 +124,7 @@ Status Chunk::read(uint64_t offset, uint64_t size, IOBuf* buf) const {
                       std::format("read out of range, offset:{}, size:{}, current size:{}", offset, size, _size));
     }
     FileHandlePtr fh;
-    auto status = _store->open(_uuid.str().c_str(), O_RDONLY, &fh).get();
+    auto status = _store->open(_chunk_id.str().c_str(), O_RDONLY, &fh).get();
     if (!status.ok()) {
         return status;
     }
@@ -132,7 +132,7 @@ Status Chunk::read(uint64_t offset, uint64_t size, IOBuf* buf) const {
     return status;
 }
 
-Status Chunk::create(const ChunkOptions& options, StorePtr store, ChunkPtr* chunk) {
+Status Chunk::create(const ChunkOptions& options, StorePtr store, const ObjectId& chunk_id, ChunkPtr* chunk) {
     SPAN(span);
     if (chunk == nullptr) {
         return Status(EINVAL, "chunk is nullptr");
@@ -141,33 +141,10 @@ Status Chunk::create(const ChunkOptions& options, StorePtr store, ChunkPtr* chun
         return Status(EINVAL, "store is nullptr");
     }
     auto c = ChunkPtr(new Chunk());
-    c->_uuid = UUID::generate();
+    c->_chunk_id = chunk_id;
     c->_options = options;
     c->_store = store;
-    c->_size = 0;
-    auto status = store->open(c->_uuid.str().c_str(), O_CREAT | O_RDWR | O_EXCL, &c->_fh).get();
-
-    if (!status.ok()) {
-        return status;
-    }
-    c->_state = ChunkState::kOpen;
-    *chunk = c;
-    return Status::OK();
-}
-
-Status Chunk::create(const ChunkOptions& options, StorePtr store, const UUID& uuid, ChunkPtr* chunk) {
-    SPAN(span);
-    if (chunk == nullptr) {
-        return Status(EINVAL, "chunk is nullptr");
-    }
-    if (store == nullptr) {
-        return Status(EINVAL, "store is nullptr");
-    }
-    auto c = ChunkPtr(new Chunk());
-    c->_uuid = uuid;
-    c->_options = options;
-    c->_store = store;
-    auto status = store->open(c->_uuid.str().c_str(), O_CREAT | O_RDWR | O_EXCL, &c->_fh).get();
+    auto status = store->open(c->_chunk_id.str().c_str(), O_CREAT | O_RDWR | O_EXCL, &c->_fh).get();
 
     if (!status.ok()) {
         return status;

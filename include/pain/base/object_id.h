@@ -9,6 +9,7 @@ namespace pain {
 
 class ObjectId {
 public:
+    ObjectId() : _reserved(0), _partition_id(0) {}
     ObjectId(uint32_t partition_id, UUID uuid) : _reserved(0), _partition_id(partition_id), _uuid(uuid) {}
 
     uint32_t partition_id() const {
@@ -17,6 +18,30 @@ public:
 
     UUID uuid() const {
         return _uuid;
+    }
+
+    static bool valid(std::string_view str) {
+        // such as: 00000000-73404092-a3c7-471c-8364-10e96c1dada1
+        constexpr size_t length = 45U;
+        if (str.length() != length) {
+            return false;
+        }
+
+        const std::string hexchars = "0123456789abcdef";
+        for (uint32_t i = 0; i < str.length(); ++i) {
+            char current = str[i];
+            if (i == 8 || i == 17 || i == 22 || i == 27 || i == 32) { // NOLINT(readability-magic-numbers)
+                if (current != '-') {
+                    return false;
+                }
+            } else {
+                if (hexchars.find(current) == std::string::npos) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     bool operator==(const ObjectId& other) const {
@@ -44,7 +69,15 @@ public:
     }
 
     std::string to_string() const {
-        return fmt::format("{}-{}", _partition_id, _uuid.str());
+        return fmt::format("{:08x}-{}", _partition_id, _uuid.str());
+    }
+
+    std::string str() const {
+        return to_string();
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const ObjectId& obj) {
+        return os << obj.str();
     }
 
     static std::optional<ObjectId> from_str(std::string_view str) {
@@ -53,12 +86,14 @@ public:
             return std::nullopt;
         }
         auto [partition_id_str, uuid_str] = split(str);
-        if (partition_id_str.empty() || uuid_str.empty()) {
+        if (partition_id_str.size() != 8UL || uuid_str.size() != 36UL) { // NOLINT
             return std::nullopt;
         }
         uint32_t pid = 0;
         try {
-            pid = std::stoull(partition_id_str.data());
+            size_t pos = 0;
+            pid = std::stoull(partition_id_str.data(), &pos, 16); // NOLINT
+            BOOST_ASSERT_MSG(pos == partition_id_str.size(), fmt::format("Invalid ObjectId string: {}", str).c_str());
         } catch (const std::exception& e) {
             return std::nullopt;
         }
@@ -71,12 +106,14 @@ public:
 
     static ObjectId from_str_or_die(std::string_view str) {
         auto [partition_id_str, uuid_str] = split(str);
-        if (partition_id_str.empty() || uuid_str.empty()) {
+        if (partition_id_str.size() != 8UL || uuid_str.size() != 36UL) { // NOLINT
             BOOST_ASSERT_MSG(false, fmt::format("Invalid ObjectId string: {}", str).c_str());
         }
         uint32_t pid = 0;
         try {
-            pid = std::stoull(partition_id_str.data());
+            size_t pos = 0;
+            pid = std::stoull(partition_id_str.data(), &pos, 16); // NOLINT
+            BOOST_ASSERT_MSG(pos == partition_id_str.size(), fmt::format("Invalid ObjectId string: {}", str).c_str());
         } catch (const std::exception& e) {
             BOOST_ASSERT_MSG(false, fmt::format("Invalid ObjectId string: {}", str).c_str());
         }
@@ -85,10 +122,14 @@ public:
         return ObjectId(pid, uuid);
     }
 
+    static ObjectId generate(uint32_t partition_id) {
+        return ObjectId(partition_id, UUID::generate());
+    }
+
 private:
     static std::pair<std::string_view, std::string_view> split(std::string_view str) {
         auto pos = str.find('-');
-        BOOST_ASSERT_MSG(pos != std::string::npos, "Invalid ObjectId string");
+        BOOST_ASSERT_MSG(pos != std::string::npos, fmt::format("Invalid ObjectId string: {}", str).c_str());
         return {str.substr(0, pos), str.substr(pos + 1)};
     }
 

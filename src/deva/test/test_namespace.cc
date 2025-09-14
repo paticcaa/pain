@@ -34,12 +34,12 @@ private:
 
 TEST_F(TestNamespace, create) {
     Namespace ns(_store);
-    UUID a = UUID::from_str_or_die("00000000-0000-0000-0000-000000000001");
-    UUID b = UUID::from_str_or_die("00000000-0000-0000-0000-000000000002");
-    UUID c = UUID::from_str_or_die("00000000-0000-0000-0000-000000000003");
-    UUID d = UUID::from_str_or_die("00000000-0000-0000-0000-000000000004");
-    UUID e = UUID::from_str_or_die("00000000-0000-0000-0000-000000000005");
-    UUID f = UUID::from_str_or_die("00000000-0000-0000-0000-000000000006");
+    ObjectId a = ObjectId::from_str_or_die("00000000-00000000-0000-0000-0000-000000000001");
+    ObjectId b = ObjectId::from_str_or_die("00000000-00000000-0000-0000-0000-000000000002");
+    ObjectId c = ObjectId::from_str_or_die("00000000-00000000-0000-0000-0000-000000000003");
+    ObjectId d = ObjectId::from_str_or_die("00000000-00000000-0000-0000-0000-000000000004");
+    ObjectId e = ObjectId::from_str_or_die("00000000-00000000-0000-0000-0000-000000000005");
+    ObjectId f = ObjectId::from_str_or_die("00000000-00000000-0000-0000-0000-000000000006");
     auto status = ns.create(ns.root(), "a", FileType::kDirectory, a);
     ASSERT_TRUE(status.ok()) << status.error_str();
     status = ns.create(ns.root(), "b", FileType::kDirectory, b);
@@ -147,12 +147,12 @@ TEST_F(TestNamespace, parse_path) {
 }
 
 TEST_F(TestNamespace, lookup) {
-    UUID a = UUID::from_str_or_die("00000000-0000-0000-0000-000000000001");
-    UUID b = UUID::from_str_or_die("00000000-0000-0000-0000-000000000002");
-    UUID c = UUID::from_str_or_die("00000000-0000-0000-0000-000000000003");
-    UUID d = UUID::from_str_or_die("00000000-0000-0000-0000-000000000004");
-    UUID e = UUID::from_str_or_die("00000000-0000-0000-0000-000000000005");
-    UUID f = UUID::from_str_or_die("00000000-0000-0000-0000-000000000006");
+    ObjectId a = ObjectId::from_str_or_die("00000000-00000000-0000-0000-0000-000000000001");
+    ObjectId b = ObjectId::from_str_or_die("00000000-00000000-0000-0000-0000-000000000002");
+    ObjectId c = ObjectId::from_str_or_die("00000000-00000000-0000-0000-0000-000000000003");
+    ObjectId d = ObjectId::from_str_or_die("00000000-00000000-0000-0000-0000-000000000004");
+    ObjectId e = ObjectId::from_str_or_die("00000000-00000000-0000-0000-0000-000000000005");
+    ObjectId f = ObjectId::from_str_or_die("00000000-00000000-0000-0000-0000-000000000006");
 
     Namespace ns(_store);
     ns.create(ns.root(), "a", FileType::kDirectory, a);
@@ -162,7 +162,7 @@ TEST_F(TestNamespace, lookup) {
     ns.create(a, "e", FileType::kDirectory, e);
     ns.create(a, "f", FileType::kFile, f);
 
-    UUID inode;
+    ObjectId inode;
     FileType file_type = FileType::kFile;
     auto status = ns.lookup("/", &inode, &file_type);
     ASSERT_TRUE(status.ok());
@@ -208,12 +208,12 @@ TEST_F(TestNamespace, lookup) {
 
 TEST_F(TestNamespace, lookup_and_list) {
     Namespace ns(_store);
-    UUID a = UUID::from_str_or_die("00000000-0000-0000-0000-000000000001");
-    UUID b = UUID::from_str_or_die("00000000-0000-0000-0000-000000000002");
-    UUID c = UUID::from_str_or_die("00000000-0000-0000-0000-000000000003");
-    UUID d = UUID::from_str_or_die("00000000-0000-0000-0000-000000000004");
-    UUID e = UUID::from_str_or_die("00000000-0000-0000-0000-000000000005");
-    UUID f = UUID::from_str_or_die("00000000-0000-0000-0000-000000000006");
+    ObjectId a = ObjectId::from_str_or_die("00000000-00000000-0000-0000-0000-000000000001");
+    ObjectId b = ObjectId::from_str_or_die("00000000-00000000-0000-0000-0000-000000000002");
+    ObjectId c = ObjectId::from_str_or_die("00000000-00000000-0000-0000-0000-000000000003");
+    ObjectId d = ObjectId::from_str_or_die("00000000-00000000-0000-0000-0000-000000000004");
+    ObjectId e = ObjectId::from_str_or_die("00000000-00000000-0000-0000-0000-000000000005");
+    ObjectId f = ObjectId::from_str_or_die("00000000-00000000-0000-0000-0000-000000000006");
     auto status = ns.create(ns.root(), "a", FileType::kDirectory, a);
     ASSERT_TRUE(status.ok()) << status.error_str();
     status = ns.create(ns.root(), "b", FileType::kDirectory, b);
@@ -229,7 +229,7 @@ TEST_F(TestNamespace, lookup_and_list) {
     ns.create(a, "e", FileType::kFile, e);
     ns.create(a, "f", FileType::kFile, f);
 
-    UUID inode;
+    ObjectId inode;
     FileType file_type = FileType::kFile;
     status = ns.lookup("/a", &inode, &file_type);
     ASSERT_TRUE(status.ok());
@@ -257,12 +257,12 @@ TEST_F(TestNamespace, lookup_and_list) {
 
 TEST_F(TestNamespace, lookup_and_list_in_txn) {
     Namespace ns(_store);
-    UUID a = UUID::from_str_or_die("00000000-0000-0000-0000-000000000001");
-    UUID b = UUID::from_str_or_die("00000000-0000-0000-0000-000000000002");
-    UUID c = UUID::from_str_or_die("00000000-0000-0000-0000-000000000003");
-    UUID d = UUID::from_str_or_die("00000000-0000-0000-0000-000000000004");
-    UUID e = UUID::from_str_or_die("00000000-0000-0000-0000-000000000005");
-    UUID f = UUID::from_str_or_die("00000000-0000-0000-0000-000000000006");
+    ObjectId a = ObjectId::from_str_or_die("00000000-00000000-0000-0000-0000-000000000001");
+    ObjectId b = ObjectId::from_str_or_die("00000000-00000000-0000-0000-0000-000000000002");
+    ObjectId c = ObjectId::from_str_or_die("00000000-00000000-0000-0000-0000-000000000003");
+    ObjectId d = ObjectId::from_str_or_die("00000000-00000000-0000-0000-0000-000000000004");
+    ObjectId e = ObjectId::from_str_or_die("00000000-00000000-0000-0000-0000-000000000005");
+    ObjectId f = ObjectId::from_str_or_die("00000000-00000000-0000-0000-0000-000000000006");
     auto txn = _store->begin_txn();
     PAIN_TXN(txn.get()) {
         auto status = ns.create(ns.root(), "a", FileType::kDirectory, a);

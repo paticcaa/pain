@@ -20,6 +20,7 @@ cc_library(
     linkopts = PAIN_LINKOPTS,
     deps = [
         "//src/base:pain_base",
+        "//src/common:pain_common",
         "//protocols/pain/proto:cc_pain_manusya_proto",
         "@brpc",
         "@boost.smart_ptr",
