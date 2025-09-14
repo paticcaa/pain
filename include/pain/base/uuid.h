@@ -3,6 +3,8 @@
 #include <uuid_v4/uuid_v4.h>
 #include <functional>
 #include <optional>
+#include <fmt/format.h>
+#include <boost/assert.hpp>
 
 namespace pain {
 
@@ -22,7 +24,7 @@ public:
         return *reinterpret_cast<const uint64_t*>(data + 8); // NOLINT
     }
 
-    static bool valid(const std::string& uuid) {
+    static bool valid(std::string_view uuid) {
         constexpr size_t guid_length = 36U;
         if (uuid.length() != guid_length) {
             return false;
@@ -45,17 +47,18 @@ public:
         return true;
     }
 
-    static std::optional<UUID> from_str(const std::string& str) {
+    static std::optional<UUID> from_str(std::string_view str) {
         if (!valid(str)) {
             return std::nullopt;
         }
 
-        auto uuid = UUIDv4::UUID::fromStrFactory(str);
+        auto uuid = UUIDv4::UUID::fromStrFactory(str.data());
         return UUID(uuid);
     }
 
-    static UUID from_str_or_die(const std::string& str) {
-        auto uuid = UUIDv4::UUID::fromStrFactory(str);
+    static UUID from_str_or_die(std::string_view str) {
+        BOOST_ASSERT_MSG(valid(str), fmt::format("Invalid UUID string: {}", str).c_str());
+        auto uuid = UUIDv4::UUID::fromStrFactory(str.data());
         return UUID(uuid);
     }
 
