@@ -35,4 +35,20 @@ inline void to_proto(const ObjectId& obj, proto::ObjectId* proto) {
 inline ObjectId from_proto(const proto::ObjectId& proto) {
     return ObjectId(proto.partition_id(), from_proto(proto.uuid()));
 }
+
 } // namespace pain::common
+
+inline bool operator==(const pain::proto::ObjectId& lhs, const pain::proto::ObjectId& rhs) {
+    return lhs.partition_id() == rhs.partition_id() && lhs.uuid().high() == rhs.uuid().high() &&
+           lhs.uuid().low() == rhs.uuid().low();
+}
+
+inline bool operator==(const pain::proto::ObjectId& lhs, const pain::ObjectId& rhs) {
+    return lhs.partition_id() == rhs.partition_id() && lhs.uuid().high() == rhs.uuid().high() &&
+           lhs.uuid().low() == rhs.uuid().low();
+}
+
+inline bool operator==(const pain::ObjectId& lhs, const pain::proto::ObjectId& rhs) {
+    return lhs.partition_id() == rhs.partition_id() && lhs.uuid().high() == rhs.uuid().high() &&
+           lhs.uuid().low() == rhs.uuid().low();
+}

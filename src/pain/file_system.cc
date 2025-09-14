@@ -1,5 +1,6 @@
 #include <braft/route_table.h>
 #include <brpc/channel.h>
+#include <pain/base/object_id.h>
 #include <pain/file_stream.h>
 #include <pain/file_stream_impl.h>
 #include <pain/file_system.h>
@@ -103,8 +104,9 @@ Status FileSystem::open(const char* path, int flags, FileStream** file_stream) {
     auto file_info = response.file_info();
     auto file_stream_impl = new FileStreamImpl();
     file_stream_impl->_file_info = file_info;
-    UUID uuid(file_info.file_id().high(), file_info.file_id().low());
-    file_stream_impl->_file_id = uuid.str();
+    UUID uuid(file_info.file_id().uuid().high(), file_info.file_id().uuid().low());
+    ObjectId id(file_info.file_id().partition_id(), uuid);
+    file_stream_impl->_file_id = id.str();
 
     auto fs = new FileStream();
     fs->_impl = file_stream_impl;

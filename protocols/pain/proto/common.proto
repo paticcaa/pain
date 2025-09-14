@@ -51,7 +51,7 @@ message ChunkConfig {
 }
 
 message ChunkInfo {
-    UUID uuid = 1;
+    ObjectId chunk_id = 1;
     uint64 index = 2;   // chunk index
     uint64 offset = 3;  // offset in file
     uint64 length = 4;  // length of chunk
@@ -68,7 +68,7 @@ enum FileType {
 }
 
 message FileInfo {
-    UUID file_id = 1;
+    ObjectId file_id = 1;
     FileType type = 2;
     uint64 size = 3;
     uint64 atime = 4;
@@ -82,8 +82,8 @@ message FileInfo {
 }
 
 message DirEntry {
-    UUID file_id = 1;
-    UUID parent_file_id = 2;
+    ObjectId file_id = 1;
+    ObjectId parent_file_id = 2;
     string name = 3;
     FileType type = 4;
 }

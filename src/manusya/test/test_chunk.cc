@@ -4,6 +4,7 @@
 #include <future>
 #include <thread>
 #include <vector>
+#include "include/pain/base/object_id.h"
 #include "manusya/chunk.h"
 #include "manusya/mem_store.h"
 
@@ -45,28 +46,28 @@ TEST_F(TestChunk, BasicCreate) {
     ChunkOptions options;
     ChunkPtr chunk;
 
-    auto status = Chunk::create(options, _store, &chunk);
+    auto status = Chunk::create(options, _store, ObjectId::generate(0), &chunk);
     ASSERT_TRUE(status.ok()) << "Failed to create chunk: " << status.error_str();
     ASSERT_TRUE(chunk != nullptr);
 
     // 验证初始状态
     ASSERT_EQ(chunk->state(), ChunkState::kOpen);
     ASSERT_EQ(chunk->size(), 0);
-    ASSERT_FALSE(chunk->uuid().str().empty());
+    ASSERT_FALSE(chunk->chunk_id().str().empty());
 }
 
 TEST_F(TestChunk, CreateWithUUID) {
     ChunkOptions options;
     ChunkPtr chunk;
-    auto uuid = UUID::generate();
+    auto chunk_id = ObjectId::generate(0);
 
-    auto status = Chunk::create(options, _store, uuid, &chunk);
+    auto status = Chunk::create(options, _store, chunk_id, &chunk);
     ASSERT_TRUE(status.ok()) << "Failed to create chunk with UUID: " << status.error_str();
     ASSERT_TRUE(chunk != nullptr);
 
     // 验证状态
     ASSERT_EQ(chunk->state(), ChunkState::kOpen);
-    ASSERT_EQ(chunk->uuid().str(), uuid.str());
+    ASSERT_EQ(chunk->chunk_id().str(), chunk_id.str());
 }
 
 TEST_F(TestChunk, CreateMultipleChunks) {
@@ -76,25 +77,25 @@ TEST_F(TestChunk, CreateMultipleChunks) {
     // 创建多个chunk
     for (int i = 0; i < 5; ++i) {
         ChunkPtr chunk;
-        auto status = Chunk::create(options, _store, &chunk);
+        auto status = Chunk::create(options, _store, ObjectId::generate(0), &chunk);
         ASSERT_TRUE(status.ok()) << "Failed to create chunk " << i << ": " << status.error_str();
         ASSERT_TRUE(chunk != nullptr);
         chunks.push_back(chunk);
     }
 
     // 验证所有chunk都有不同的UUID
-    std::set<std::string> uuids;
+    std::set<std::string> chunk_ids;
     for (const auto& chunk : chunks) {
-        uuids.insert(chunk->uuid().str());
+        chunk_ids.insert(chunk->chunk_id().str());
     }
-    ASSERT_EQ(uuids.size(), 5) << "All chunks should have unique UUIDs";
+    ASSERT_EQ(chunk_ids.size(), 5) << "All chunks should have unique UUIDs";
 }
 
 TEST_F(TestChunk, BasicAppend) {
     ChunkOptions options;
     ChunkPtr chunk;
 
-    auto status = Chunk::create(options, _store, &chunk);
+    auto status = Chunk::create(options, _store, ObjectId::generate(0), &chunk);
     ASSERT_TRUE(status.ok()) << "Failed to create chunk: " << status.error_str();
 
     // 追加数据
@@ -110,7 +111,7 @@ TEST_F(TestChunk, AppendMultipleTimes) {
     ChunkOptions options;
     ChunkPtr chunk;
 
-    auto status = Chunk::create(options, _store, &chunk);
+    auto status = Chunk::create(options, _store, ObjectId::generate(0), &chunk);
     ASSERT_TRUE(status.ok()) << "Failed to create chunk: " << status.error_str();
 
     // 多次追加数据
@@ -134,7 +135,7 @@ TEST_F(TestChunk, AppendWithOffset) {
     ChunkOptions options;
     ChunkPtr chunk;
 
-    auto status = Chunk::create(options, _store, &chunk);
+    auto status = Chunk::create(options, _store, ObjectId::generate(0), &chunk);
     ASSERT_TRUE(status.ok()) << "Failed to create chunk: " << status.error_str();
 
     // 追加数据到偏移量10
@@ -149,7 +150,7 @@ TEST_F(TestChunk, BasicRead) {
     ChunkOptions options;
     ChunkPtr chunk;
 
-    auto status = Chunk::create(options, _store, &chunk);
+    auto status = Chunk::create(options, _store, ObjectId::generate(0), &chunk);
     ASSERT_TRUE(status.ok()) << "Failed to create chunk: " << status.error_str();
 
     // 写入数据
@@ -169,7 +170,7 @@ TEST_F(TestChunk, ReadWithOffset) {
     ChunkOptions options;
     ChunkPtr chunk;
 
-    auto status = Chunk::create(options, _store, &chunk);
+    auto status = Chunk::create(options, _store, ObjectId::generate(0), &chunk);
     ASSERT_TRUE(status.ok()) << "Failed to create chunk: " << status.error_str();
 
     // 写入数据
@@ -189,7 +190,7 @@ TEST_F(TestChunk, ReadPartialData) {
     ChunkOptions options;
     ChunkPtr chunk;
 
-    auto status = Chunk::create(options, _store, &chunk);
+    auto status = Chunk::create(options, _store, ObjectId::generate(0), &chunk);
     ASSERT_TRUE(status.ok()) << "Failed to create chunk: " << status.error_str();
 
     // 写入数据
@@ -209,7 +210,7 @@ TEST_F(TestChunk, QueryAndSeal) {
     ChunkOptions options;
     ChunkPtr chunk;
 
-    auto status = Chunk::create(options, _store, &chunk);
+    auto status = Chunk::create(options, _store, ObjectId::generate(0), &chunk);
     ASSERT_TRUE(status.ok()) << "Failed to create chunk: " << status.error_str();
 
     // 写入一些数据
@@ -232,7 +233,7 @@ TEST_F(TestChunk, SealEmptyChunk) {
     ChunkOptions options;
     ChunkPtr chunk;
 
-    auto status = Chunk::create(options, _store, &chunk);
+    auto status = Chunk::create(options, _store, ObjectId::generate(0), &chunk);
     ASSERT_TRUE(status.ok()) << "Failed to create chunk: " << status.error_str();
 
     // 直接密封空chunk
@@ -251,7 +252,7 @@ TEST_F(TestChunk, AppendToSealedChunk) {
     ChunkOptions options;
     ChunkPtr chunk;
 
-    auto status = Chunk::create(options, _store, &chunk);
+    auto status = Chunk::create(options, _store, ObjectId::generate(0), &chunk);
     ASSERT_TRUE(status.ok()) << "Failed to create chunk: " << status.error_str();
 
     // 密封chunk
@@ -271,7 +272,7 @@ TEST_F(TestChunk, AppendWithInvalidOffset) {
     ChunkOptions options;
     ChunkPtr chunk;
 
-    auto status = Chunk::create(options, _store, &chunk);
+    auto status = Chunk::create(options, _store, ObjectId::generate(0), &chunk);
     ASSERT_TRUE(status.ok()) << "Failed to create chunk: " << status.error_str();
 
     // 写入一些数据
@@ -291,7 +292,7 @@ TEST_F(TestChunk, AppendWithGap) {
     ChunkOptions options;
     ChunkPtr chunk;
 
-    auto status = Chunk::create(options, _store, &chunk);
+    auto status = Chunk::create(options, _store, ObjectId::generate(0), &chunk);
     ASSERT_TRUE(status.ok()) << "Failed to create chunk: " << status.error_str();
 
     // 写入数据到偏移量0
@@ -311,7 +312,7 @@ TEST_F(TestChunk, ReadBeyondFileSize) {
     ChunkOptions options;
     ChunkPtr chunk;
 
-    auto status = Chunk::create(options, _store, &chunk);
+    auto status = Chunk::create(options, _store, ObjectId::generate(0), &chunk);
     ASSERT_TRUE(status.ok()) << "Failed to create chunk: " << status.error_str();
 
     // 写入少量数据
@@ -331,7 +332,7 @@ TEST_F(TestChunk, ReadFromInvalidOffset) {
     ChunkOptions options;
     ChunkPtr chunk;
 
-    auto status = Chunk::create(options, _store, &chunk);
+    auto status = Chunk::create(options, _store, ObjectId::generate(0), &chunk);
     ASSERT_TRUE(status.ok()) << "Failed to create chunk: " << status.error_str();
 
     // 写入数据
@@ -351,7 +352,7 @@ TEST_F(TestChunk, ReadZeroSize) {
     ChunkOptions options;
     ChunkPtr chunk;
 
-    auto status = Chunk::create(options, _store, &chunk);
+    auto status = Chunk::create(options, _store, ObjectId::generate(0), &chunk);
     ASSERT_TRUE(status.ok()) << "Failed to create chunk: " << status.error_str();
 
     // 写入数据
@@ -370,7 +371,7 @@ TEST_F(TestChunk, AppendEmptyData) {
     ChunkOptions options;
     ChunkPtr chunk;
 
-    auto status = Chunk::create(options, _store, &chunk);
+    auto status = Chunk::create(options, _store, ObjectId::generate(0), &chunk);
     ASSERT_TRUE(status.ok()) << "Failed to create chunk: " << status.error_str();
 
     // 追加空数据
@@ -386,7 +387,7 @@ TEST_F(TestChunk, LargeDataHandling) {
     ChunkOptions options;
     ChunkPtr chunk;
 
-    auto status = Chunk::create(options, _store, &chunk);
+    auto status = Chunk::create(options, _store, ObjectId::generate(0), &chunk);
     ASSERT_TRUE(status.ok()) << "Failed to create chunk: " << status.error_str();
 
     // 写入大量数据
@@ -413,7 +414,7 @@ TEST_F(TestChunk, AppendRequestQueueHandling) {
     ChunkOptions options;
     ChunkPtr chunk;
 
-    auto status = Chunk::create(options, _store, &chunk);
+    auto status = Chunk::create(options, _store, ObjectId::generate(0), &chunk);
     ASSERT_TRUE(status.ok()) << "Failed to create chunk: " << status.error_str();
 
     // 写入数据到偏移量0
@@ -434,7 +435,7 @@ TEST_F(TestChunk, AppendRequestTimeout) {
     ChunkOptions options;
     ChunkPtr chunk;
 
-    auto status = Chunk::create(options, _store, &chunk);
+    auto status = Chunk::create(options, _store, ObjectId::generate(0), &chunk);
     ASSERT_TRUE(status.ok()) << "Failed to create chunk: " << status.error_str();
 
     // 写入数据到偏移量0
@@ -457,7 +458,7 @@ TEST_F(TestChunk, AppendRequestTimeout) {
 TEST_F(TestChunk, CreateWithNullChunk) {
     ChunkOptions options;
 
-    auto status = Chunk::create(options, _store, nullptr);
+    auto status = Chunk::create(options, _store, ObjectId::generate(0), nullptr);
     ASSERT_FALSE(status.ok());
     ASSERT_EQ(status.error_code(), EINVAL);
     ASSERT_EQ(status.error_str(), "chunk is nullptr");
@@ -467,7 +468,7 @@ TEST_F(TestChunk, CreateWithNullStore) {
     ChunkOptions options;
     ChunkPtr chunk;
 
-    auto status = Chunk::create(options, nullptr, &chunk);
+    auto status = Chunk::create(options, nullptr, ObjectId::generate(0), &chunk);
     ASSERT_FALSE(status.ok());
     // 注意：当前实现没有检查store是否为nullptr
 }
@@ -476,7 +477,7 @@ TEST_F(TestChunk, ReadWithNullBuffer) {
     ChunkOptions options;
     ChunkPtr chunk;
 
-    auto status = Chunk::create(options, _store, &chunk);
+    auto status = Chunk::create(options, _store, ObjectId::generate(0), &chunk);
     ASSERT_TRUE(status.ok()) << "Failed to create chunk: " << status.error_str();
 
     // 写入数据
@@ -494,7 +495,7 @@ TEST_F(TestChunk, QueryAndSealWithNullLength) {
     ChunkOptions options;
     ChunkPtr chunk;
 
-    auto status = Chunk::create(options, _store, &chunk);
+    auto status = Chunk::create(options, _store, ObjectId::generate(0), &chunk);
     ASSERT_TRUE(status.ok()) << "Failed to create chunk: " << status.error_str();
 
     // 使用空长度指针查询并密封
@@ -508,7 +509,7 @@ TEST_F(TestChunk, ConcurrentAppends) {
     ChunkOptions options;
     ChunkPtr chunk;
 
-    auto status = Chunk::create(options, _store, &chunk);
+    auto status = Chunk::create(options, _store, ObjectId::generate(0), &chunk);
     ASSERT_TRUE(status.ok()) << "Failed to create chunk: " << status.error_str();
 
     // 并发写入数据
@@ -545,7 +546,7 @@ TEST_F(TestChunk, ConcurrentReads) {
     ChunkOptions options;
     ChunkPtr chunk;
 
-    auto status = Chunk::create(options, _store, &chunk);
+    auto status = Chunk::create(options, _store, ObjectId::generate(0), &chunk);
     ASSERT_TRUE(status.ok()) << "Failed to create chunk: " << status.error_str();
 
     // 写入一些数据
@@ -583,7 +584,7 @@ TEST_F(TestChunk, ReferenceCounting) {
     ChunkOptions options;
     ChunkPtr chunk;
 
-    auto status = Chunk::create(options, _store, &chunk);
+    auto status = Chunk::create(options, _store, ObjectId::generate(0), &chunk);
     ASSERT_TRUE(status.ok()) << "Failed to create chunk: " << status.error_str();
 
     // 验证引用计数
@@ -605,7 +606,7 @@ TEST_F(TestChunk, MultipleChunkReferences) {
     // 创建多个chunk并保持引用
     for (int i = 0; i < 5; ++i) {
         ChunkPtr chunk;
-        auto status = Chunk::create(options, _store, &chunk);
+        auto status = Chunk::create(options, _store, ObjectId::generate(0), &chunk);
         ASSERT_TRUE(status.ok()) << "Failed to create chunk " << i << ": " << status.error_str();
         chunks.push_back(chunk);
     }
@@ -625,7 +626,7 @@ TEST_F(TestChunk, StateTransitions) {
     ChunkOptions options;
     ChunkPtr chunk;
 
-    auto status = Chunk::create(options, _store, &chunk);
+    auto status = Chunk::create(options, _store, ObjectId::generate(0), &chunk);
     ASSERT_TRUE(status.ok()) << "Failed to create chunk: " << status.error_str();
 
     // 初始状态应该是 kOpen
@@ -644,7 +645,7 @@ TEST_F(TestChunk, StateAfterOperations) {
     ChunkOptions options;
     ChunkPtr chunk;
 
-    auto status = Chunk::create(options, _store, &chunk);
+    auto status = Chunk::create(options, _store, ObjectId::generate(0), &chunk);
     ASSERT_TRUE(status.ok()) << "Failed to create chunk: " << status.error_str();
 
     // 执行一些操作后状态应该保持为 kOpen
@@ -665,7 +666,7 @@ TEST_F(TestChunk, AppendAtMaxOffset) {
     ChunkOptions options;
     ChunkPtr chunk;
 
-    auto status = Chunk::create(options, _store, &chunk);
+    auto status = Chunk::create(options, _store, ObjectId::generate(0), &chunk);
     ASSERT_TRUE(status.ok()) << "Failed to create chunk: " << status.error_str();
 
     // 尝试在最大偏移量处追加数据
@@ -682,7 +683,7 @@ TEST_F(TestChunk, ReadAtMaxOffset) {
     ChunkOptions options;
     ChunkPtr chunk;
 
-    auto status = Chunk::create(options, _store, &chunk);
+    auto status = Chunk::create(options, _store, ObjectId::generate(0), &chunk);
     ASSERT_TRUE(status.ok()) << "Failed to create chunk: " << status.error_str();
 
     // 写入一些数据
@@ -702,7 +703,7 @@ TEST_F(TestChunk, AppendRequestOrdering) {
     ChunkOptions options;
     ChunkPtr chunk;
 
-    auto status = Chunk::create(options, _store, &chunk);
+    auto status = Chunk::create(options, _store, ObjectId::generate(0), &chunk);
     ASSERT_TRUE(status.ok()) << "Failed to create chunk: " << status.error_str();
 
     // 写入数据到偏移量0
@@ -727,7 +728,7 @@ TEST_F(TestChunk, ChunkOptionsAccess) {
     ChunkOptions options;
     ChunkPtr chunk;
 
-    auto status = Chunk::create(options, _store, &chunk);
+    auto status = Chunk::create(options, _store, ObjectId::generate(0), &chunk);
     ASSERT_TRUE(status.ok()) << "Failed to create chunk: " << status.error_str();
 }
 

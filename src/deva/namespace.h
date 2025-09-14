@@ -5,8 +5,8 @@
 #include <map>
 #include <fmt/format.h>
 
+#include <pain/base/object_id.h>
 #include <pain/base/types.h>
-#include <pain/base/uuid.h>
 #include "pain/proto/common.pb.h"
 #include "common/store.h"
 
@@ -19,7 +19,7 @@ enum class FileType {
 };
 
 struct DirEntry {
-    UUID inode;
+    ObjectId inode;
     std::string name;
     FileType type;
 };
@@ -28,18 +28,17 @@ class Namespace {
 public:
     Namespace(common::StorePtr store);
     Status load();
-    const UUID& root() const {
+    const ObjectId& root() const {
         return _root;
     }
-    Status create(const UUID& parent, const std::string& name, FileType type, const UUID& inode);
-    Status remove(const UUID& parent, const std::string& name);
-    void list(const UUID& parent, std::list<DirEntry>* entries) const;
-    Status lookup(const char* path, UUID* inode, FileType* file_type) const;
+    Status create(const ObjectId& parent, const std::string& name, FileType type, const ObjectId& inode);
+    Status remove(const ObjectId& parent, const std::string& name);
+    void list(const ObjectId& parent, std::list<DirEntry>* entries) const;
+    Status lookup(const char* path, ObjectId* inode, FileType* file_type) const;
 
 private:
     Status parse_path(const char* path, std::list<std::string_view>* components) const;
-    UUID _root;
-    // std::map<UUID, std::list<DirEntry>> _entries;
+    ObjectId _root;
     common::StorePtr _store;
     const char* _dentry_key = "dentry";
     const char* _inode_key = "inode";

@@ -3,9 +3,9 @@
 #include <bthread/mutex.h>
 #include <bthread/unstable.h>
 #include <pain/base/future.h>
+#include <pain/base/object_id.h>
 #include <pain/base/tracer.h>
 #include <pain/base/types.h>
-#include <pain/base/uuid.h>
 #include <cstdint>
 #include <boost/intrusive/set.hpp>
 #include <boost/intrusive_ptr.hpp>
@@ -63,11 +63,10 @@ public:
     Chunk() = default;
     ~Chunk() = default;
 
-    static Status create(const ChunkOptions& options, StorePtr store, ChunkPtr* chunk);
-    static Status create(const ChunkOptions& options, StorePtr store, const UUID& uuid, ChunkPtr* chunk);
+    static Status create(const ChunkOptions& options, StorePtr store, const ObjectId& chunk_id, ChunkPtr* chunk);
 
-    const UUID& uuid() const {
-        return _uuid;
+    const ObjectId& chunk_id() const {
+        return _chunk_id;
     }
     Status append(const IOBuf& buf, uint64_t offset);
     Status query_and_seal(uint64_t* length);
@@ -99,7 +98,7 @@ private:
         }
     }
 
-    UUID _uuid;
+    ObjectId _chunk_id;
     uint64_t _size = 0;
     ChunkState _state = ChunkState::kInit;
     std::atomic<int> _use_count = 0;

@@ -7,10 +7,11 @@
 #include <fmt/format.h>
 #include <argparse/argparse.hpp>
 
+#include <pain/base/object_id.h>
 #include <pain/base/tracer.h>
 #include <pain/base/types.h>
-#include <pain/base/uuid.h>
 #include "pain/proto/manusya.pb.h"
+#include "common/object_id_util.h"
 #include "sad/common.h"
 #include "sad/macro.h"
 
@@ -58,10 +59,12 @@ Status execute(argparse::ArgumentParser& parser) {
 
 REGISTER_MANUSYA_CMD(create_chunk, [](argparse::ArgumentParser& parser) {
     parser.add_description("create chunk");
+    parser.add_argument("-p", "--partition-id").default_value(1U).scan<'i', uint32_t>();
 });
 COMMAND(create_chunk) {
     SPAN(span);
     auto host = args.get<std::string>("--host");
+    auto partition_id = args.get<uint32_t>("--partition-id");
     brpc::Channel channel;
     brpc::ChannelOptions options;
     options.connect_timeout_ms = 2000; // NOLINT(readability-magic-numbers)
@@ -77,16 +80,15 @@ COMMAND(create_chunk) {
     pain::proto::manusya::ManusyaService_Stub stub(&channel);
     pain::inject_tracer(&cntl);
 
+    request.set_partition_id(partition_id);
     stub.CreateChunk(&cntl, &request, &response, nullptr);
     if (cntl.Failed()) {
         return Status(cntl.ErrorCode(), cntl.ErrorText());
     }
 
-    print(cntl, &response, [](Json& out) {
-        uint64_t low = out["chunk_id"]["low"];
-        uint64_t high = out["chunk_id"]["high"];
-        pain::UUID uuid(high, low);
-        out["chunk_id"] = uuid.str();
+    print(cntl, &response, [&](Json& out) {
+        pain::ObjectId chunk_id = common::from_proto(response.chunk_id());
+        out["chunk_id"] = chunk_id.str();
     });
     return Status::OK();
 }
@@ -105,8 +107,8 @@ COMMAND(append_chunk) {
     auto data = args.get<std::string>("--data");
     auto offset = args.get<uint64_t>("--offset");
 
-    if (!UUID::valid(chunk_id)) {
-        return Status(EINVAL, "Invalid chunk id");
+    if (!pain::ObjectId::valid(chunk_id)) {
+        return Status(EINVAL, fmt::format("Invalid chunk id: {}", chunk_id));
     }
 
     brpc::Channel channel;
@@ -124,10 +126,9 @@ COMMAND(append_chunk) {
     pain::proto::manusya::ManusyaService_Stub stub(&channel);
     inject_tracer(&cntl);
 
-    auto uuid = pain::UUID::from_str_or_die(chunk_id);
+    auto id = pain::ObjectId::from_str_or_die(chunk_id);
     request.set_offset(offset);
-    request.mutable_chunk_id()->set_low(uuid.low());
-    request.mutable_chunk_id()->set_high(uuid.high());
+    common::to_proto(id, request.mutable_chunk_id());
     cntl.request_attachment().append(data);
     stub.AppendChunk(&cntl, &request, &response, nullptr);
     if (cntl.Failed()) {
@@ -149,8 +150,8 @@ COMMAND(list_chunk) {
     auto start = args.get<std::string>("--start");
     auto limit = args.get<uint32_t>("--limit");
 
-    if (!UUID::valid(start)) {
-        return Status(EINVAL, "Invalid start id");
+    if (!pain::ObjectId::valid(start)) {
+        return Status(EINVAL, fmt::format("Invalid start id: {}", start));
     }
 
     brpc::Channel channel;
@@ -168,9 +169,8 @@ COMMAND(list_chunk) {
     pain::proto::manusya::ManusyaService::Stub stub(&channel);
     inject_tracer(&cntl);
 
-    auto uuid = pain::UUID::from_str_or_die(start);
-    request.mutable_start()->set_low(uuid.low());
-    request.mutable_start()->set_high(uuid.high());
+    auto id = pain::ObjectId::from_str_or_die(start);
+    common::to_proto(id, request.mutable_start());
     request.set_limit(limit);
 
     stub.ListChunk(&cntl, &request, &response, nullptr);
@@ -178,12 +178,11 @@ COMMAND(list_chunk) {
         return Status(cntl.ErrorCode(), cntl.ErrorText());
     }
 
-    print(cntl, &response, [](Json& out) {
-        for (auto& chunk_id : out["chunk_ids"]) {
-            uint64_t low = chunk_id["low"];
-            uint64_t high = chunk_id["high"];
-            UUID uuid(high, low);
-            chunk_id = uuid.str();
+    print(cntl, &response, [&](Json& out) {
+        out["chunk_ids"] = Json::array();
+        for (auto& chunk_id : response.chunk_ids()) {
+            pain::ObjectId id = common::from_proto(chunk_id);
+            out["chunk_ids"].push_back(id.str());
         }
     });
 
@@ -208,8 +207,8 @@ COMMAND(read_chunk) {
     auto length = args.get<uint32_t>("--length");
     auto output = args.get<std::string>("--output");
 
-    if (!UUID::valid(chunk_id)) {
-        return Status(EINVAL, "Invalid chunk id");
+    if (!pain::ObjectId::valid(chunk_id)) {
+        return Status(EINVAL, fmt::format("Invalid chunk id: {}", chunk_id));
     }
 
     brpc::Channel channel;
@@ -227,12 +226,11 @@ COMMAND(read_chunk) {
     pain::proto::manusya::ManusyaService::Stub stub(&channel);
     inject_tracer(&cntl);
 
-    auto uuid = pain::UUID::from_str_or_die(chunk_id);
+    auto id = pain::ObjectId::from_str_or_die(chunk_id);
 
     request.set_offset(offset);
     request.set_length(length);
-    request.mutable_chunk_id()->set_low(uuid.low());
-    request.mutable_chunk_id()->set_high(uuid.high());
+    common::to_proto(id, request.mutable_chunk_id());
     stub.ReadChunk(&cntl, &request, &response, nullptr);
     if (cntl.Failed()) {
         return Status(cntl.ErrorCode(), cntl.ErrorText());
@@ -260,8 +258,8 @@ COMMAND(seal_chunk) {
     auto chunk_id = args.get<std::string>("--chunk-id");
     auto host = args.get<std::string>("--host");
 
-    if (!UUID::valid(chunk_id)) {
-        return Status(EINVAL, "Invalid chunk id");
+    if (!pain::ObjectId::valid(chunk_id)) {
+        return Status(EINVAL, fmt::format("Invalid chunk id: {}", chunk_id));
     }
 
     brpc::Channel channel;
@@ -279,9 +277,8 @@ COMMAND(seal_chunk) {
     pain::proto::manusya::ManusyaService::Stub stub(&channel);
     inject_tracer(&cntl);
 
-    auto uuid = pain::UUID::from_str_or_die(chunk_id);
-    request.mutable_chunk_id()->set_low(uuid.low());
-    request.mutable_chunk_id()->set_high(uuid.high());
+    auto id = pain::ObjectId::from_str_or_die(chunk_id);
+    common::to_proto(id, request.mutable_chunk_id());
     stub.QueryAndSealChunk(&cntl, &request, &response, nullptr);
     if (cntl.Failed()) {
         return Status(cntl.ErrorCode(), cntl.ErrorText());
@@ -302,8 +299,8 @@ COMMAND(remove_chunk) {
     auto chunk_id = args.get<std::string>("--chunk-id");
     auto host = args.get<std::string>("--host");
 
-    if (!UUID::valid(chunk_id)) {
-        return Status(EINVAL, "Invalid chunk id");
+    if (!pain::ObjectId::valid(chunk_id)) {
+        return Status(EINVAL, fmt::format("Invalid chunk id: {}", chunk_id));
     }
 
     brpc::Channel channel;
@@ -321,9 +318,8 @@ COMMAND(remove_chunk) {
     pain::proto::manusya::ManusyaService::Stub stub(&channel);
     inject_tracer(&cntl);
 
-    auto uuid = pain::UUID::from_str_or_die(chunk_id);
-    request.mutable_chunk_id()->set_low(uuid.low());
-    request.mutable_chunk_id()->set_high(uuid.high());
+    auto id = pain::ObjectId::from_str_or_die(chunk_id);
+    common::to_proto(id, request.mutable_chunk_id());
     stub.RemoveChunk(&cntl, &request, &response, nullptr);
     if (cntl.Failed()) {
         return Status(cntl.ErrorCode(), cntl.ErrorText());
@@ -344,8 +340,8 @@ COMMAND(query_chunk) {
     auto chunk_id = args.get<std::string>("--chunk-id");
     auto host = args.get<std::string>("--host");
 
-    if (!UUID::valid(chunk_id)) {
-        return Status(EINVAL, "Invalid chunk id");
+    if (!pain::ObjectId::valid(chunk_id)) {
+        return Status(EINVAL, fmt::format("Invalid chunk id: {}", chunk_id));
     }
 
     brpc::Channel channel;
@@ -363,9 +359,8 @@ COMMAND(query_chunk) {
     pain::proto::manusya::ManusyaService::Stub stub(&channel);
     inject_tracer(&cntl);
 
-    auto uuid = pain::UUID::from_str_or_die(chunk_id);
-    request.mutable_chunk_id()->set_low(uuid.low());
-    request.mutable_chunk_id()->set_high(uuid.high());
+    auto id = pain::ObjectId::from_str_or_die(chunk_id);
+    common::to_proto(id, request.mutable_chunk_id());
     stub.QueryChunk(&cntl, &request, &response, nullptr);
     if (cntl.Failed()) {
         return Status(cntl.ErrorCode(), cntl.ErrorText());

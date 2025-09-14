@@ -5,7 +5,7 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source $SCRIPT_DIR/env.sh
 
-SAD=${SCRIPT_DIR}/../output/bin/sad
+SAD=${SCRIPT_DIR}/../bazel-bin/src/sad/sad
 
 chunk_id=$($SAD manusya create-chunk --host $PAIN_MANUSYA_ADDRESS | jq .chunk_id | tr -d '"')
 echo "chunk id: $chunk_id"

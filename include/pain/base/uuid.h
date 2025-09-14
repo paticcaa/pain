@@ -25,6 +25,7 @@ public:
     }
 
     static bool valid(std::string_view uuid) {
+        // such as: 73404092-a3c7-471c-8364-10e96c1dada1
         constexpr size_t guid_length = 36U;
         if (uuid.length() != guid_length) {
             return false;

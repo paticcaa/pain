@@ -3,6 +3,7 @@
 
 #include <pain/base/uuid.h>
 #include "pain/proto/deva_store.pb.h"
+#include "common/object_id_util.h"
 #include "deva/bridge.h"
 #include "deva/deva.h"
 #include "deva/macro.h"
@@ -27,10 +28,11 @@ DEVA_SERVICE_METHOD(OpenFile) {
     if ((flags & pain::proto::deva::OpenFlag::OPEN_CREATE) != 0) {
         pain::proto::deva::store::CreateFileRequest create_request;
         pain::proto::deva::store::CreateFileResponse create_response;
-        auto file_id = UUID::generate();
+        // TODO: using config
+        auto partition_id = (++_partition_id) % 10; // NOLINT
+        auto file_id = ObjectId::generate(partition_id);
         create_request.set_path(path);
-        create_request.mutable_file_id()->set_high(file_id.high());
-        create_request.mutable_file_id()->set_low(file_id.low());
+        common::to_proto(file_id, create_request.mutable_file_id());
         create_request.set_mode(0666); // NOLINT
         create_request.set_uid(0);
         create_request.set_gid(0);
@@ -82,10 +84,10 @@ DEVA_SERVICE_METHOD(Mkdir) {
     auto& path = request->path();
     pain::proto::deva::store::CreateDirRequest create_request;
     pain::proto::deva::store::CreateDirResponse create_response;
-    auto dir_id = UUID::generate();
+    auto partition_id = (++_partition_id) % 10; // NOLINT
+    auto dir_id = ObjectId::generate(partition_id);
     create_request.set_path(path);
-    create_request.mutable_dir_id()->set_high(dir_id.high());
-    create_request.mutable_dir_id()->set_low(dir_id.low());
+    common::to_proto(dir_id, create_request.mutable_dir_id());
     create_request.set_mode(0777); // NOLINT
     create_request.set_uid(0);
     create_request.set_gid(0);

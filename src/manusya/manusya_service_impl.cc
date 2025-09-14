@@ -5,6 +5,7 @@
 #include <pain/base/plog.h>
 #include <pain/base/tracer.h>
 #include "butil/endpoint.h"
+#include "common/object_id_util.h"
 #include "manusya/bank.h"
 #include "manusya/chunk.h"
 #include "manusya/macro.h"
@@ -30,7 +31,7 @@ MANUSYA_SERVICE_METHOD(CreateChunk) {
     ChunkOptions options;
 
     ChunkPtr chunk;
-    auto status = Bank::instance().create_chunk(options, &chunk);
+    auto status = Bank::instance().create_chunk(options, request->partition_id(), &chunk);
     if (!status.ok()) {
         PLOG_ERROR(("desc", "failed to create chunk")("error", status.error_str()));
         response->mutable_header()->set_status(status.error_code());
@@ -38,25 +39,24 @@ MANUSYA_SERVICE_METHOD(CreateChunk) {
         return;
     }
 
-    response->mutable_chunk_id()->set_low(chunk->uuid().low());
-    response->mutable_chunk_id()->set_high(chunk->uuid().high());
+    common::to_proto(chunk->chunk_id(), response->mutable_chunk_id());
 }
 
 MANUSYA_SERVICE_METHOD(AppendChunk) {
     DEFINE_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
-    UUID uuid(request->chunk_id().high(), request->chunk_id().low());
-    span->SetAttribute("chunk", uuid.str());
+    ObjectId chunk_id = common::from_proto(request->chunk_id());
+    span->SetAttribute("chunk", chunk_id.str());
     PLOG_DEBUG(("desc", __func__)                                                //
                ("remote_side", butil::endpoint2str(cntl->remote_side()).c_str()) //
-               ("chunk", uuid.str())                                             //
+               ("chunk", chunk_id.str())                                         //
                ("offset", request->offset())                                     //
                ("attached", cntl->request_attachment().size()));
 
     ChunkPtr chunk;
-    auto status = Bank::instance().get_chunk(uuid, &chunk);
+    auto status = Bank::instance().get_chunk(chunk_id, &chunk);
     if (!status.ok()) {
-        PLOG_ERROR(("desc", "chunk not found")("uuid", uuid.str()));
+        PLOG_ERROR(("desc", "chunk not found")("chunk", chunk_id.str()));
         response->mutable_header()->set_status(ENOENT);
         response->mutable_header()->set_message("Chunk not found");
         return;
@@ -65,7 +65,7 @@ MANUSYA_SERVICE_METHOD(AppendChunk) {
     status = chunk->append(cntl->request_attachment(), request->offset());
     if (!status.ok()) {
         PLOG_ERROR(("desc", "failed to append chunk") //
-                   ("uuid", uuid.str())               //
+                   ("chunk", chunk_id.str())          //
                    ("errno", status.error_code())     //
                    ("error", status.error_str()));
         response->mutable_header()->set_status(status.error_code());
@@ -81,36 +81,35 @@ MANUSYA_SERVICE_METHOD(ListChunk) {
     DEFINE_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
 
-    auto uuid = UUID(request->start().high(), request->start().low());
+    auto object_id = common::from_proto(request->start());
 
     PLOG_DEBUG(("desc", __func__)                                                //
                ("remote_side", butil::endpoint2str(cntl->remote_side()).c_str()) //
-               ("start", uuid.str())                                             //
+               ("start", object_id.str())                                        //
                ("limit", request->limit()));
 
-    Bank::instance().list_chunk(uuid, request->limit(), [&](UUID uuid) {
+    Bank::instance().list_chunk(object_id, request->limit(), [&](ObjectId object_id) {
         auto* u = response->add_chunk_ids();
-        u->set_low(uuid.low());
-        u->set_high(uuid.high());
+        common::to_proto(object_id, u);
     });
 }
 
 MANUSYA_SERVICE_METHOD(ReadChunk) {
     DEFINE_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
-    UUID uuid(request->chunk_id().high(), request->chunk_id().low());
-    span->SetAttribute("chunk", uuid.str());
+    auto object_id = common::from_proto(request->chunk_id());
+    span->SetAttribute("chunk", object_id.str());
 
     PLOG_DEBUG(("desc", __func__)                                                //
                ("remote_side", butil::endpoint2str(cntl->remote_side()).c_str()) //
-               ("chunk", uuid.str())                                             //
+               ("chunk", object_id.str())                                        //
                ("offset", request->offset())                                     //
                ("attached", cntl->request_attachment().size()));
 
     ChunkPtr chunk;
-    auto status = Bank::instance().get_chunk(uuid, &chunk);
+    auto status = Bank::instance().get_chunk(object_id, &chunk);
     if (!status.ok()) {
-        PLOG_ERROR(("desc", "chunk not found")("uuid", uuid.str()));
+        PLOG_ERROR(("desc", "chunk not found")("chunk", object_id.str()));
         response->mutable_header()->set_status(ENOENT);
         response->mutable_header()->set_message("Chunk not found");
         return;
@@ -118,7 +117,7 @@ MANUSYA_SERVICE_METHOD(ReadChunk) {
 
     status = chunk->read(request->offset(), request->length(), &cntl->response_attachment());
     if (!status.ok()) {
-        PLOG_ERROR(("desc", "failed to read chunk")("uuid", uuid.str())("error", status.error_str()));
+        PLOG_ERROR(("desc", "failed to read chunk")("chunk", object_id.str())("error", status.error_str()));
         cntl->SetFailed(status.error_code(), "%s", status.error_cstr());
         return;
     }
@@ -127,17 +126,17 @@ MANUSYA_SERVICE_METHOD(ReadChunk) {
 MANUSYA_SERVICE_METHOD(QueryAndSealChunk) {
     DEFINE_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
-    UUID uuid(request->chunk_id().high(), request->chunk_id().low());
-    span->SetAttribute("chunk", uuid.str());
+    auto object_id = common::from_proto(request->chunk_id());
+    span->SetAttribute("chunk", object_id.str());
 
     PLOG_DEBUG(("desc", __func__)                                                //
                ("remote_side", butil::endpoint2str(cntl->remote_side()).c_str()) //
-               ("chunk", uuid.str()));
+               ("chunk", object_id.str()));
 
     ChunkPtr chunk;
-    auto status = Bank::instance().get_chunk(uuid, &chunk);
+    auto status = Bank::instance().get_chunk(object_id, &chunk);
     if (!status.ok()) {
-        PLOG_ERROR(("desc", "chunk not found")("uuid", uuid.str()));
+        PLOG_ERROR(("desc", "chunk not found")("chunk", object_id.str()));
         cntl->SetFailed(ENOENT, "Chunk not found");
         return;
     }
@@ -145,7 +144,7 @@ MANUSYA_SERVICE_METHOD(QueryAndSealChunk) {
     uint64_t size = 0;
     status = chunk->query_and_seal(&size);
     if (!status.ok()) {
-        PLOG_ERROR(("desc", "failed to seal chunk")("uuid", uuid.str())("error", status.error_str()));
+        PLOG_ERROR(("desc", "failed to seal chunk")("chunk", object_id.str())("error", status.error_str()));
         response->mutable_header()->set_status(status.error_code());
         response->mutable_header()->set_message(status.error_str());
         return;
@@ -157,16 +156,16 @@ MANUSYA_SERVICE_METHOD(QueryAndSealChunk) {
 MANUSYA_SERVICE_METHOD(RemoveChunk) {
     DEFINE_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
-    UUID uuid(request->chunk_id().high(), request->chunk_id().low());
-    span->SetAttribute("chunk", uuid.str());
+    auto object_id = common::from_proto(request->chunk_id());
+    span->SetAttribute("chunk", object_id.str());
 
     PLOG_DEBUG(("desc", __func__)                                                //
                ("remote_side", butil::endpoint2str(cntl->remote_side()).c_str()) //
-               ("chunk", uuid.str()));
+               ("chunk", object_id.str()));
 
-    auto status = Bank::instance().remove_chunk(uuid);
+    auto status = Bank::instance().remove_chunk(object_id);
     if (!status.ok()) {
-        PLOG_ERROR(("desc", "failed to remove chunk")("uuid", uuid.str())("error", status.error_str()));
+        PLOG_ERROR(("desc", "failed to remove chunk")("chunk", object_id.str())("error", status.error_str()));
         response->mutable_header()->set_status(status.error_code());
         response->mutable_header()->set_message(status.error_str());
         return;
@@ -176,17 +175,17 @@ MANUSYA_SERVICE_METHOD(RemoveChunk) {
 MANUSYA_SERVICE_METHOD(QueryChunk) {
     DEFINE_SPAN(span, controller);
     brpc::ClosureGuard done_guard(done);
-    UUID uuid(request->chunk_id().high(), request->chunk_id().low());
-    span->SetAttribute("chunk", uuid.str());
+    auto object_id = common::from_proto(request->chunk_id());
+    span->SetAttribute("chunk", object_id.str());
 
     PLOG_DEBUG(("desc", __func__)                                                //
                ("remote_side", butil::endpoint2str(cntl->remote_side()).c_str()) //
-               ("chunk", uuid.str()));
+               ("chunk", object_id.str()));
 
     ChunkPtr chunk;
-    auto status = Bank::instance().get_chunk(uuid, &chunk);
+    auto status = Bank::instance().get_chunk(object_id, &chunk);
     if (!status.ok()) {
-        PLOG_ERROR(("desc", "chunk not found")("uuid", uuid.str()));
+        PLOG_ERROR(("desc", "chunk not found")("chunk", object_id.str()));
         response->mutable_header()->set_status(ENOENT);
         response->mutable_header()->set_message("Chunk not found");
         return;

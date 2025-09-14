@@ -1,20 +1,21 @@
 #include "deva/namespace.h"
 #include <pain/base/plog.h>
 #include <pain/base/scope_exit.h>
+#include "common/object_id_util.h"
 #include "common/txn_manager.h"
 #include "common/txn_store.h"
 
 namespace pain::deva {
 
 Namespace::Namespace(common::StorePtr store) : _store(store) {
-    _root = UUID::from_str_or_die("00000000-0000-0000-0000-000000000000");
+    _root = ObjectId::from_str_or_die("00000000-00000000-0000-0000-0000-000000000000");
 }
 
 Status Namespace::load() {
     return Status::OK();
 }
 
-Status Namespace::create(const UUID& parent, const std::string& name, FileType type, const UUID& inode) {
+Status Namespace::create(const ObjectId& parent, const std::string& name, FileType type, const ObjectId& inode) {
     auto in_txn = common::TxnManager::instance().in_txn();
     auto this_txn = _store->begin_txn();
     auto txn = in_txn ? common::TxnManager::instance().get_txn_store() : this_txn.get();
@@ -47,17 +48,15 @@ Status Namespace::create(const UUID& parent, const std::string& name, FileType t
         if (dentry.name() == name) {
             return Status(EEXIST, "File name already exists");
         }
-        if (dentry.file_id().high() == inode.high() && dentry.file_id().low() == inode.low()) {
+        if (dentry.file_id() == inode) {
             return Status(EEXIST, "File inode already exists");
         }
     }
     // create dentry
     auto dentry = dentries.add_entries();
     dentry->set_name(name);
-    dentry->mutable_file_id()->set_high(inode.high());
-    dentry->mutable_file_id()->set_low(inode.low());
-    dentry->mutable_parent_file_id()->set_high(parent.high());
-    dentry->mutable_parent_file_id()->set_low(parent.low());
+    common::to_proto(inode, dentry->mutable_file_id());
+    common::to_proto(parent, dentry->mutable_parent_file_id());
     dentry->set_type(static_cast<proto::FileType>(type));
     dentries_str.clear();
     if (!dentries.SerializeToString(&dentries_str)) {
@@ -68,8 +67,7 @@ Status Namespace::create(const UUID& parent, const std::string& name, FileType t
 
     // insert file info
     proto::FileInfo file_info;
-    file_info.mutable_file_id()->set_high(inode.high());
-    file_info.mutable_file_id()->set_low(inode.low());
+    common::to_proto(inode, file_info.mutable_file_id());
     file_info.set_type(static_cast<proto::FileType>(type));
     file_info.set_size(0);
     file_info.set_ctime(0);
@@ -98,7 +96,7 @@ Status Namespace::create(const UUID& parent, const std::string& name, FileType t
     return Status::OK();
 }
 
-Status Namespace::remove(const UUID& parent, const std::string& name) {
+Status Namespace::remove(const ObjectId& parent, const std::string& name) {
     auto in_txn = common::TxnManager::instance().in_txn();
     auto this_txn = _store->begin_txn();
     auto txn = in_txn ? common::TxnManager::instance().get_txn_store() : this_txn.get();
@@ -126,7 +124,7 @@ Status Namespace::remove(const UUID& parent, const std::string& name) {
         return Status(EBADMSG, "Failed to parse dentries");
     }
     // remove dentry
-    UUID file_id;
+    ObjectId file_id;
     auto entry =
         std::find_if(dentries.entries().begin(), dentries.entries().end(), [&name](const proto::DirEntry& dentry) {
             return dentry.name() == name;
@@ -134,7 +132,7 @@ Status Namespace::remove(const UUID& parent, const std::string& name) {
     if (entry == dentries.entries().end()) {
         return Status(ENOENT, "No such file or directory");
     }
-    file_id = UUID(entry->file_id().high(), entry->file_id().low());
+    file_id = common::from_proto(entry->file_id());
     dentries.mutable_entries()->erase(entry);
     // set dentries
     if (!dentries.SerializeToString(&dentries_str)) {
@@ -163,7 +161,7 @@ Status Namespace::remove(const UUID& parent, const std::string& name) {
     return Status::OK();
 }
 
-void Namespace::list(const UUID& parent, std::list<DirEntry>* entries) const {
+void Namespace::list(const ObjectId& parent, std::list<DirEntry>* entries) const {
     entries->clear();
     std::string dentries_str;
     auto in_txn = common::TxnManager::instance().in_txn();
@@ -184,7 +182,7 @@ void Namespace::list(const UUID& parent, std::list<DirEntry>* entries) const {
     }
     for (const auto& dentry : dentries.entries()) {
         entries->emplace_back(
-            UUID(dentry.file_id().high(), dentry.file_id().low()), dentry.name(), static_cast<FileType>(dentry.type()));
+            common::from_proto(dentry.file_id()), dentry.name(), static_cast<FileType>(dentry.type()));
     }
     if (in_txn) {
         return;
@@ -218,14 +216,14 @@ Status Namespace::parse_path(const char* path, std::list<std::string_view>* comp
     return Status::OK();
 }
 
-Status Namespace::lookup(const char* path, UUID* inode, FileType* file_type) const {
+Status Namespace::lookup(const char* path, ObjectId* inode, FileType* file_type) const {
     std::list<std::string_view> components;
     auto status = parse_path(path, &components);
     if (!status.ok()) {
         return status;
     }
 
-    UUID parent = _root;
+    ObjectId parent = _root;
     *file_type = FileType::kDirectory;
 
     auto in_txn = common::TxnManager::instance().in_txn();
@@ -255,7 +253,7 @@ Status Namespace::lookup(const char* path, UUID* inode, FileType* file_type) con
         if (entry->type() == static_cast<proto::FileType>(FileType::kFile) && component != components.back()) {
             return Status(ENOENT, fmt::format("Not a directory: {}", component));
         }
-        parent = UUID(entry->file_id().high(), entry->file_id().low());
+        parent = common::from_proto(entry->file_id());
         *file_type = static_cast<FileType>(entry->type());
     }
     *inode = parent;

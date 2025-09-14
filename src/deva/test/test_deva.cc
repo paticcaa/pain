@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include "pain/base/scope_exit.h"
 #include "pain/proto/deva.pb.h"
+#include "common/object_id_util.h"
 #include "deva/mock/mock_deva.h"
 #include "deva/sdk/rpc_client.h"
 
@@ -144,8 +145,7 @@ TEST_F(TestDeva, CreateDirectoryAndFile) {
         status = open("/test/test.txt", pain::proto::deva::OpenFlag::OPEN_READ, &response);
         EXPECT_TRUE(status.ok()) << status.error_str() << "(" << status.error_code() << ")";
         std::cout << "response: " << response.DebugString() << std::endl;
-        EXPECT_EQ(response.file_info().file_id().high(), file_info.file_id().high());
-        EXPECT_EQ(response.file_info().file_id().low(), file_info.file_id().low());
+        EXPECT_TRUE(response.file_info().file_id() == file_info.file_id());
     }
 }
 

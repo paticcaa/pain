@@ -67,15 +67,15 @@ public:
     Status load_snapshot(std::string_view path) override;
 
 private:
-    Status create(const std::string& path, const UUID& id, FileType type);
+    Status create(const std::string& path, const ObjectId& id, FileType type);
     Status set_applied_index(int64_t applied_index);
     bool check_index_is_applied(int64_t index) const {
         return index != 0 && index <= _applied_index;
     }
 
-    Status update_file_info(const UUID& id, const proto::FileInfo& file_info);
-    Status get_file_info(const UUID& id, proto::FileInfo* file_info);
-    Status remove_file_info(const UUID& id);
+    Status update_file_info(const ObjectId& id, const proto::FileInfo& file_info);
+    Status get_file_info(const ObjectId& id, proto::FileInfo* file_info);
+    Status remove_file_info(const ObjectId& id);
 
 private:
     std::atomic<int> _use_count;

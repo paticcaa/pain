@@ -25,7 +25,11 @@ int main(int argc, char* argv[]) {
     }
     std::unique_ptr<pain::FileSystem> fs_guard(fs);
     pain::FileStream* file = nullptr;
-    status = fs->open("/hello.txt", O_CREAT | O_WRONLY, &file);
+    srand(time(nullptr));
+    int32_t random_index = rand() % 10; // NOLINT
+    std::string file_name = fmt::format("/hello-{}.txt", random_index);
+    std::cout << "open file: " << file_name << std::endl;
+    status = fs->open(file_name.c_str(), O_CREAT | O_WRONLY, &file);
     if (!status.ok()) {
         std::cerr << "open file failed: " << status.error_str() << std::endl;
         return 1;

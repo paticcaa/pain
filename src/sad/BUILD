@@ -8,6 +8,7 @@ cc_binary(
     deps = [
         "//src/base:pain_base",
         "//src/pain:pain_core",
+        "//src/common:pain_common",
         "//protocols/pain/proto:cc_pain_proto",
         "//protocols/pain/proto:cc_pain_deva_proto",
         "//protocols/pain/proto:cc_pain_manusya_proto",

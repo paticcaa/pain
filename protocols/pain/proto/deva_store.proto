@@ -5,7 +5,7 @@ import "pain/proto/common.proto";
 
 message CreateFileRequest {
     string path = 1;
-    UUID file_id = 2;
+    ObjectId file_id = 2;
     uint64 atime = 3;
     uint64 mtime = 4;
     uint64 ctime = 5;
@@ -28,7 +28,7 @@ message GetFileInfoResponse {
 
 message CreateDirRequest {
     string path = 1;
-    UUID dir_id = 2;
+    ObjectId dir_id = 2;
     uint64 atime = 3;
     uint64 mtime = 4;
     uint64 ctime = 5;
