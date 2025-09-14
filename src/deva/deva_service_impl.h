@@ -1,7 +1,7 @@
 #pragma once
 
 #include "pain/proto/deva.pb.h"
-#include "deva/rsm.h"
+#include "common/rsm/rsm.h"
 
 #include <atomic>
 
@@ -15,7 +15,7 @@ namespace pain::deva {
 
 class DevaServiceImpl : public pain::proto::deva::DevaService {
 public:
-    DevaServiceImpl(RsmPtr rsm);
+    DevaServiceImpl(common::RsmPtr rsm);
     ~DevaServiceImpl() override = default;
     DEVA_SERVICE_METHOD(OpenFile);
     DEVA_SERVICE_METHOD(CloseFile);
@@ -31,7 +31,7 @@ public:
     DEVA_SERVICE_METHOD(ListManusya);
 
 private:
-    RsmPtr _rsm;
+    common::RsmPtr _rsm;
     std::atomic<uint32_t> _partition_id = 0;
 };
 

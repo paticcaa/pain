@@ -1,10 +1,10 @@
-#include "deva/op.h"
+#include "common/rsm/op.h"
 #include <pain/base/plog.h>
 #include <functional>
 #include "butil/iobuf.h"
 #include "butil/time.h"
 
-namespace pain::deva {
+namespace pain::common {
 
 void encode(int32_t version, OpPtr op, IOBuf* buf) {
     OpMeta op_meta = {};
@@ -19,7 +19,7 @@ void encode(int32_t version, OpPtr op, IOBuf* buf) {
     buf->append(meta);
 }
 
-OpPtr decode(IOBuf* buf, std::move_only_function<OpPtr(int32_t, OpType, IOBuf*)> decode) {
+OpPtr decode(IOBuf* buf, std::move_only_function<OpPtr(int32_t, uint32_t, IOBuf*)> decode) {
     OpMeta op_meta = {};
     static_assert(sizeof(op_meta) == 64, "OpMeta size must be 64byte"); // NOLINT(readability-magic-numbers)
     uint32_t op_size = 0;
@@ -35,4 +35,4 @@ OpPtr decode(IOBuf* buf, std::move_only_function<OpPtr(int32_t, OpType, IOBuf*)>
     return op;
 }
 
-} // namespace pain::deva
+} // namespace pain::common

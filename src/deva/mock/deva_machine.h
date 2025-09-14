@@ -2,9 +2,9 @@
 #include <butil/debug/leak_annotations.h>
 #include <pain/base/types.h>
 #include "common/rocksdb_store.h"
+#include "common/rsm/rsm.h"
 #include "deva/deva.h"
 #include "deva/deva_service_impl.h"
-#include "deva/rsm.h"
 
 namespace pain::deva::mock {
 
@@ -36,7 +36,7 @@ public:
         common::RocksdbStorePtr store;
         auto status = common::RocksdbStore::open(rocksdb_path.c_str(), &store);
         BOOST_ASSERT_MSG(status.ok(), "Fail to open rocksdb store");
-        _rsm = new Rsm(addr, group, node_options, new Deva(store));
+        _rsm = new common::Rsm(addr, group, node_options, new Deva(store));
     }
 
     Status start() {
@@ -71,7 +71,7 @@ private:
     std::string _address;
     std::string _node_conf;
     brpc::Server _server;
-    RsmPtr _rsm;
+    common::RsmPtr _rsm;
 };
 
 } // namespace pain::deva::mock
