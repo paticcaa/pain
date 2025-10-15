@@ -4,7 +4,7 @@
     "integrity": "sha256-mEiQm3Wcx/FgCt2dfScrfZzN55K89k4Y0pgBP8z5bYo=",
     "patch_strip": 1,
     "overlay": {
-      "BUILD": "sha256-81xqFNelVG4nJITO6n8CieIpT8LD1XTv4ZITGjOPESw=",
-      "spdk_libs.bzl": "sha256-pQjOuHEKrH12RDoKGP8lXupUCh+zOKABBzePqS7ZU1E="
+      "BUILD": "sha256-FxPqpHGB1yWpb3G92yLHHjFlauvll19hZ1Lb28LRN/w=",
+      "spdk_libs.bzl": "sha256-xDWgEJpc//2y0H3AcsqaPAU0URCV3fR2DrVFLPMlRB0="
     }
 }
