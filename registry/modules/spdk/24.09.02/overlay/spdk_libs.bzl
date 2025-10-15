@@ -163,7 +163,6 @@ def create_library_targets():
             "-lssl",
             "-lmlx5",
             "-lmlx4",
-            "-lmana",
             "-llz4",
         ],
     )
