@@ -29,24 +29,21 @@ sudo apt install ansible
 ansible-galaxy collection install prometheus.prometheus
 
 # Install development tools and system packages
-sudo apt install -y clang-format-16
-sudo apt install -y libaio-dev
-sudo apt install -y uuid-dev
-sudo apt install -y libibverbs-dev
-sudo apt install -y librdmacm-dev
-sudo apt install -y libelf-dev
-sudo apt install -y libssl-dev
-sudo apt install -y liblz4-dev
-sudo apt install -y libnuma-dev
-sudo apt install -y python3
-sudo apt install -y python3-pip
-sudo apt install -y patchelf
-sudo apt install -y python3-pyelftools
-sudo apt install -y meson
-sudo apt install -y nasm
-sudo apt install -y ccache
-sudo apt install -y autoconf automake libtool pkg-config
-sudo apt install -y openssh-server 
+
+## basic development tools
+sudo apt install -y p7zip clang-format-16 ccache clang-tidy patchelf meson nasm autoconf automake libtool pkg-config
+
+## Python related
+sudo apt install -y python3 python3-pip python3-dev python3-pyelftools
+
+## system tool
+sudo apt install -y unzip openssh-server
+
+## development library
+sudo apt install -y libcunit1-dev libaio-dev libssl-dev libjson-c-dev libcmocka-dev uuid-dev libiscsi-dev liblz4-dev libkeyutils-dev libncurses5-dev libncursesw5-dev libfuse3-dev libibverbs-dev librdmacm-dev libelf-dev libnuma-dev
+
+## create clang-format symbol link
+sudo ln -sf /usr/bin/clang-format-16 /usr/bin/clang-format
 ```
 
 ## Build and Development
