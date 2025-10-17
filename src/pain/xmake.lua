@@ -1,7 +1,0 @@
-target("pain")
-    set_kind("static")
-    add_files("**.cc")
-    add_deps("pain_proto")
-    add_deps("pain_base")
-    add_packages("protobuf-cpp")
-    add_packages("uuid_v4")

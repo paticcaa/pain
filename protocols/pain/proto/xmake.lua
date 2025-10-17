@@ -1,8 +1,0 @@
-target("pain_proto")
-    set_kind("static")
-    add_files("*.proto", {proto_rootdir = "protocols", proto_public = true})
-    add_rules("protobuf.cpp")
-    add_packages("protobuf-cpp", {public = true})
-    on_load(function (target)
-        target:add("headerfiles", path.join(target:autogendir(), "rules/protobuf/protocols/(pain/proto/*.pb.h)"))
-    end)
